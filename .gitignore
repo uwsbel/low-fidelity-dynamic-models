@@ -1,0 +1,50 @@
+# Ignore executables
+*.exe
+*.out
+*.app
+
+# Ignore common image formats
+*.jpg
+*.jpeg
+*.png
+*.gif
+*.svg
+*.bmp
+*.ico
+*.webp
+
+# Ignore CMake intermediaries in all subdirectories recursively
+**/CMakeFiles/
+**/CMakeCache.txt
+**/CMakeScripts/
+**/CMakeTmp/
+**/CMakeLists.txt.user
+**/Makefile
+**/cmake_install.cmake
+**/CMakeCustom.txt
+**/CMakeDoxyfile.in
+
+# Ignore build directories
+**/build/
+
+# Ignore output directories
+**/output/
+
+# Ignore Visual Studio Files
+*.suo
+*.user
+*.sln
+*.vcproj
+*.vcxproj
+*.sw?
+**/.vscode/
+
+# Ignore macOS .DS_Store files
+*.DS_Store
+
+# Ignore Windows Thumbs.db files
+Thumbs.db
+
+# Ignore user-specific config files
+.env
+.env.local
