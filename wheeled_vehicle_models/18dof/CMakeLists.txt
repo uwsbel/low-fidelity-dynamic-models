@@ -74,6 +74,7 @@ set(SEDAN_PROGRAMS
 # Add sundials demos if required
 if(USE_SUNDIALS)
   set(HMMWV_PROGRAMS ${HMMWV_PROGRAMS}
+      demo_hmmwv_sundials_withFSA
       demo_hmmwv_sundials
   )
   set(SEDAN_PROGRAMS ${SEDAN_PROGRAMS}
