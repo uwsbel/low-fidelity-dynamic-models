@@ -64,7 +64,7 @@ const d18::TMeasyParam& UserData::GetTireParam() {
 }
 
 // =============================================================================
-d18Solver::d18Solver()
+d18SolverSundials::d18SolverSundials()
     : m_method(CV_BDF),
       m_mode(CV_NORMAL),
       m_neq(0),
@@ -81,9 +81,9 @@ d18Solver::d18Solver()
       m_output(false),
       m_verbose(false) {}
 
-void d18Solver::Construct(const std::string& vehicle_params_file,
-                          const std::string& tire_params_file,
-                          const std::string& driver_inputs_file) {
+void d18SolverSundials::Construct(const std::string& vehicle_params_file,
+                                  const std::string& tire_params_file,
+                                  const std::string& driver_inputs_file) {
     // Load vehicle parameters
     setVehParamsJSON(m_data.m_veh_param, vehicle_params_file.c_str());
     setTireParamsJSON(m_data.m_tire_param, tire_params_file.c_str());
@@ -101,7 +101,7 @@ void d18Solver::Construct(const std::string& vehicle_params_file,
     m_tend = RCONST(m_data.m_driver_data.back().m_time);
 }
 
-d18Solver::~d18Solver() {
+d18SolverSundials::~d18SolverSundials() {
     CVodeFree(&m_cvode_mem);
 
     N_VDestroy_Serial(m_y0);
@@ -112,20 +112,20 @@ d18Solver::~d18Solver() {
     SUNContext_Free(&m_sunctx);
 }
 
-void d18Solver::SetMaxStep(double hmax) {
+void d18SolverSundials::SetMaxStep(double hmax) {
     m_hmax = RCONST(hmax);
 }
 
-void d18Solver::SetTolerances(double rtol, double atol) {
+void d18SolverSundials::SetTolerances(double rtol, double atol) {
     m_rtol = RCONST(rtol);
     m_atol = RCONST(atol);
 }
 
-void d18Solver::SetSensitivityParameters(int param_flags, const std::vector<double>& params) {
+void d18SolverSundials::SetSensitivityParameters(int param_flags, const std::vector<double>& params) {
     SetSensitivityParameters(param_flags, params.data());
 }
 
-void d18Solver::SetSensitivityParameters(int param_flags, const double* params) {
+void d18SolverSundials::SetSensitivityParameters(int param_flags, const double* params) {
     m_data.m_param_flags = param_flags;
 
     size_t num_params = 0;
@@ -153,30 +153,30 @@ void d18Solver::SetSensitivityParameters(int param_flags, const double* params) 
     }
 }
 
-void d18Solver::SetSensitivityParameterScales(const std::vector<double>& scales) {
+void d18SolverSundials::SetSensitivityParameterScales(const std::vector<double>& scales) {
     SetSensitivityParameterScales(scales.data());
 }
 
-void d18Solver::SetSensitivityParameterScales(const double* scales) {
+void d18SolverSundials::SetSensitivityParameterScales(const double* scales) {
     for (int is = 0; is < m_ns; is++) {
         m_data.m_param_scales[is] = scales[is];
     }
 }
 
-void d18Solver::SetReferencePath(const std::string& reference_path_file) {
+void d18SolverSundials::SetReferencePath(const std::string& reference_path_file) {
     LoadPath(m_data.m_ref_path, reference_path_file);
 }
 
-void d18Solver::SetOutput(const std::string& output_file) {
+void d18SolverSundials::SetOutput(const std::string& output_file) {
     m_output = true;
     m_output_file = output_file;
 }
 
-int d18Solver::Initialize(d18::VehicleState& vehicle_states,
-                          d18::TMeasyState& tire_states_LF,
-                          d18::TMeasyState& tire_states_RF,
-                          d18::TMeasyState& tire_states_LR,
-                          d18::TMeasyState& tire_states_RR) {
+int d18SolverSundials::Initialize(d18::VehicleState& vehicle_states,
+                                  d18::TMeasyState& tire_states_LF,
+                                  d18::TMeasyState& tire_states_RF,
+                                  d18::TMeasyState& tire_states_LR,
+                                  d18::TMeasyState& tire_states_RR) {
     // Cache initial transmission gear
     m_data.SetCurrentGear(vehicle_states._current_gr);
 
@@ -347,7 +347,7 @@ int d18Solver::Initialize(d18::VehicleState& vehicle_states,
     return 0;
 }
 
-bool d18Solver::Solve(bool fsa) {
+bool d18SolverSundials::Solve(bool fsa) {
     int retval;
 
     // Reinitialize solver
@@ -369,7 +369,7 @@ bool d18Solver::Solve(bool fsa) {
     return true;
 }
 
-Objective d18Solver::Evaluate_FSA(bool gradient) {
+Objective d18SolverSundials::Evaluate_FSA(bool gradient) {
     assert(m_data.HasReferencePath());
 
     Objective cf = {false, 0.0, std::vector<realtype>()};
@@ -422,7 +422,7 @@ Objective d18Solver::Evaluate_FSA(bool gradient) {
     return cf;
 }
 
-bool d18Solver::Integrate(bool fsa) {
+bool d18SolverSundials::Integrate(bool fsa) {
     realtype dtout = 0.01;  // 10 Hz output frequency
     realtype t = 0;
     int retval;
@@ -492,7 +492,7 @@ bool d18Solver::Integrate(bool fsa) {
     return true;
 }
 
-void d18Solver::Write(CSV_writer& csv, realtype t, N_Vector y, N_Vector* yS) {
+void d18SolverSundials::Write(CSV_writer& csv, realtype t, N_Vector y, N_Vector* yS) {
     csv << t;
     csv << Ith(y, 12 + m_offset) << Ith(y, 13 + m_offset) << Ith(y, 14 + m_offset) << Ith(y, 15 + m_offset)
         << Ith(y, 16 + m_offset) << Ith(y, 17 + m_offset);

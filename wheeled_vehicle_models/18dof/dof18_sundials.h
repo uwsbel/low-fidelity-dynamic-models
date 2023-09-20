@@ -1,5 +1,5 @@
-#ifndef D18DOF_SUNDIALS_H
-#define D18DOF_SUNDIALS_H
+#ifndef DOF18_SUNDIALS_H
+#define DOF18_SUNDIALS_H
 
 #include <math.h>
 #include <stdint.h>
@@ -86,7 +86,7 @@ class UserData {
     std::vector<realtype> m_params;
     std::vector<realtype> m_param_scales;
 
-    friend class d18Solver;
+    friend class d18SolverSundials;
 };
 
 // =============================================================================
@@ -97,10 +97,10 @@ struct Objective {
     std::vector<realtype> gradient;
 };
 
-class d18Solver {
+class d18SolverSundials {
   public:
-    d18Solver();
-    ~d18Solver();
+    d18SolverSundials();
+    ~d18SolverSundials();
 
     void Construct(const std::string& vehicle_params_file,
                    const std::string& tire_params_file,

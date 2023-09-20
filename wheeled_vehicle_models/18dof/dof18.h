@@ -1,5 +1,5 @@
-#ifndef D18DOF_H
-#define D18DOF_H
+#ifndef DOF18_H
+#define DOF18_H
 
 #include <math.h>
 #include <stdint.h>

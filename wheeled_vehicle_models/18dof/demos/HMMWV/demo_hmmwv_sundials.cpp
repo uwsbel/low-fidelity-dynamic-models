@@ -12,8 +12,8 @@ int main(int argc, char** argv) {
     std::string path_file = "../data/reference/chrono_acc.txt";
 
     // Vehicle specification
-    std::string vehParamsJSON = (char*)"../data/json/HMMWV.json";
-    std::string tireParamsJSON = (char*)"../data/json/TMeasy.json";
+    std::string vehParamsJSON = (char*)"../data/json/HMMWV/vehicle.json";
+    std::string tireParamsJSON = (char*)"../data/json/HMMWV/tmeasy.json";
 
     // Parameters (engine torque map)
     ////std::vector<double> params = {300, 382, 490, 579, 650, 706, 746, 774, 789, 793,
@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
                                   100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
 
     // Construct the solver
-    d18Solver solver;
+    d18SolverSundials solver;
     solver.Construct(vehParamsJSON, tireParamsJSON, driver_file);
 
     // Set optional inputs

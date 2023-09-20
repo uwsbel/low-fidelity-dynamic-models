@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <iterator>
 
-#include "dof18_sundials.h"
+#include "dof18_halfImplicit.h"
 
 using namespace d18;
 
@@ -11,16 +11,15 @@ int main(int argc, char** argv) {
     std::string driver_file = "../data/input/" + std::string(argv[1]) + ".txt";
 
     // Vehicle specification
-    std::string vehParamsJSON = (char*)"../data/json/Sedan.json";
-    std::string tireParamsJSON = (char*)"../data/json/sedan_TMeasy.json";
+    std::string vehParamsJSON = (char*)"../data/json/HMMWV/vehicle.json";
+    std::string tireParamsJSON = (char*)"../data/json/HMMWV/tmeasy.json";
 
     // Construct the solver
-    d18Solver solver;
+    d18SolverHalfImplicit solver;
     solver.Construct(vehParamsJSON, tireParamsJSON, driver_file);
 
-    // Set optional inputs
-    solver.SetTolerances(1e-5, 1e-3);
-    solver.SetMaxStep(1e-2);
+    // Set time step
+    solver.SetTimeStep(1e-5);
 
     // Initialize solver (set initial conditions)
     VehicleState veh_st;
@@ -31,9 +30,8 @@ int main(int argc, char** argv) {
     solver.Initialize(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st);
 
     // Enable output
-    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_sedan18Sundials.csv");
-    solver.SetVerbose(false);
-
+    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv18Hi.csv");
+    solver.SetOutputFrequency(100);
     // Solve without quadratures (no reference path required)
-    solver.Solve(false);
+    solver.Solve();
 }

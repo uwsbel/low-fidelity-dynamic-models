@@ -48,28 +48,43 @@ set(UTILS_FILES
     ${CMAKE_SOURCE_DIR}/../utils/utils.cpp
 )
 
-# Use sundials or half implicit solver
+# Use half implicit solver by default
+set(SOLVER_FILES
+  dof18_halfImplicit.h
+  dof18_halfImplicit.cpp
+)
+# Add sundials solver if required
 if(USE_SUNDIALS)
-  set(SOLVER_FILES
+  set(SOLVER_FILES ${SOLVER_FILES}
       dof18_sundials.h
       dof18_sundials.cpp
   )
-else()
-  set(SOLVER_FILES
-      dof18_halfImplicit.h
-      dof18_halfImplicit.cpp
+endif()
+
+# Build half implicit demos by default
+# HMMWV demos
+set(HMMWV_PROGRAMS
+    demo_hmmwv_hi
+)
+# Sedan demos
+set(SEDAN_PROGRAMS
+    demo_sedan_hi
+)
+
+# Add sundials demos if required
+if(USE_SUNDIALS)
+  set(HMMWV_PROGRAMS ${HMMWV_PROGRAMS}
+      demo_hmmwv_sundials
+  )
+  set(SEDAN_PROGRAMS ${SEDAN_PROGRAMS}
+      demo_sedan_sundials
   )
 endif()
 
-# Append to this list the name of the programs you want to build
-set(PROGRAMS
-    demo_sedan_sundials
-    demo_hmmwv_sundials
-)
-
+# Add snopt demos if required
 if(USE_SNOPT)
-  set(PROGRAMS ${PROGRAMS}
-      demo_snopt.cpp
+  set(HMMWV_PROGRAMS ${HMMWV_PROGRAMS}
+      demo_snopt
   )
 endif()
 
@@ -79,9 +94,32 @@ include_directories(${CMAKE_SOURCE_DIR})
 include_directories(${CMAKE_SOURCE_DIR}/../utils)
 include_directories(${CMAKE_SOURCE_DIR}/../third_party)
 
-foreach(PROGRAM ${PROGRAMS})
+# -----------------------------------------------------
+## Build HMMWV demos
+# -----------------------------------------------------
+foreach(PROGRAM ${HMMWV_PROGRAMS})
   message(STATUS "...add ${PROGRAM}")
-  add_executable(${PROGRAM} ${CMAKE_SOURCE_DIR}/demos/${PROGRAM}.cpp ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES})
+  add_executable(${PROGRAM} ${CMAKE_SOURCE_DIR}/demos/HMMWV/${PROGRAM}.cpp ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES})
+
+  # Link sundials libraries if required
+  if(USE_SUNDIALS)
+    target_link_libraries(${PROGRAM} PUBLIC SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense )
+  endif()
+
+  # Link snopt libraries if required
+  if(USE_SNOPT)
+    target_include_directories(${PROGRAM} PUBLIC ${SNOPT_INCLUDE_DIR})
+    target_link_libraries(${PROGRAM} PUBLIC ${SNOPT_LIBRARY})
+  endif()
+
+endforeach()
+
+# -----------------------------------------------------
+## Build Sedan demos
+# -----------------------------------------------------
+foreach(PROGRAM ${SEDAN_PROGRAMS})
+  message(STATUS "...add ${PROGRAM}")
+  add_executable(${PROGRAM} ${CMAKE_SOURCE_DIR}/demos/Sedan/${PROGRAM}.cpp ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES})
 
   # Link sundials libraries if required
   if(USE_SUNDIALS)
