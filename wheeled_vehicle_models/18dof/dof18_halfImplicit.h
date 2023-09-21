@@ -26,10 +26,7 @@ class d18SolverHalfImplicit {
     void SetTimeStep(double step) { m_step = step; }
 
     // Set the output file path
-    void SetOutput(const std::string& output_file);
-
-    // Set the data output frequency (Hz)
-    void SetOutputFrequency(int freq) { m_output_freq = freq; }
+    void SetOutput(const std::string& output_file, double output_freq);
 
     // Solve uptill the end time specified in the driver inputs
     void Solve();
@@ -41,6 +38,10 @@ class d18SolverHalfImplicit {
                     d18::TMeasyState& tire_states_LR,
                     d18::TMeasyState& tire_states_RR);
 
+    void IntegrateStep(double t, double throttle, double steering, double braking);
+
+    void WriteToFile();
+
     // Vehicle states and tire states
     d18::VehicleState m_veh_state;
     d18::TMeasyState m_tirelf_state;
@@ -48,17 +49,22 @@ class d18SolverHalfImplicit {
     d18::TMeasyState m_tirelr_state;
     d18::TMeasyState m_tirerr_state;
 
+    CSV_writer m_csv;
+
   private:
     void Integrate();
 
-    void Write(CSV_writer& csv, double t);
+    void Write(double t);
 
     void rhsFun(double t);
 
+    void rhsFun(double t, DriverInput& controls);  // We need to provide controls when we are stepping
+
     double m_tend;                  // final integration time
     double m_step;                  // integration time step
+    int m_timeStepsStored;          // Keeps track of time steps stored if we need data output
     bool m_output;                  // data output flag
-    double m_output_freq;           // data output frequency
+    double m_dtout;                 // time interval between data output
     std::string m_output_file;      // output file path
     d18::VehicleParam m_veh_param;  // vehicle parameters
     d18::TMeasyParam m_tire_param;  // Tire parameters

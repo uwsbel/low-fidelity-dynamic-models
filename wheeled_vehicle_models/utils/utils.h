@@ -41,8 +41,7 @@ DriverInput GetDriverInput(double time, const DriverData& driver_data);
 
 struct PathPoint {
     PathPoint() : m_t(0), m_x(0), m_y(0) {}
-    PathPoint(double time, double x, double y)
-        : m_t(time), m_x(x), m_y(y) {}
+    PathPoint(double time, double x, double y) : m_t(time), m_x(x), m_y(y) {}
 
     static bool compare(const PathPoint& a, const PathPoint& b) { return a.m_t < b.m_t; };
 
@@ -123,6 +122,12 @@ class CSV_writer {
         ofile << header;
         ofile << m_ss.str();
         ofile.close();
+    }
+
+    // To clear the stream buffer
+    void clearData() {
+        m_ss.str("");  // Set the content of the stream buffer to an empty string
+        m_ss.clear();  // Clear any error flags that might have been set
     }
 
     const std::string& delim() const { return m_delim; }

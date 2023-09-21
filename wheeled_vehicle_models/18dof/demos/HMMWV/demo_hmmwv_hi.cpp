@@ -19,7 +19,7 @@ int main(int argc, char** argv) {
     solver.Construct(vehParamsJSON, tireParamsJSON, driver_file);
 
     // Set time step
-    solver.SetTimeStep(1e-5);
+    solver.SetTimeStep(1e-3);
 
     // Initialize solver (set initial conditions)
     VehicleState veh_st;
@@ -30,8 +30,7 @@ int main(int argc, char** argv) {
     solver.Initialize(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st);
 
     // Enable output
-    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv18Hi.csv");
-    solver.SetOutputFrequency(100);
+    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv18Hi.csv", 100);
     // Solve without quadratures (no reference path required)
     solver.Solve();
 }
