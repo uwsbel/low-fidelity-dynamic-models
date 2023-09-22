@@ -149,9 +149,13 @@ void d18SolverHalfImplicit::Integrate() {
 /// @brief Function call to integrate by just a single time step. This function will always integrate to the t + m_step
 /// where m_step is set using the SetTimeStep function.
 /// @param t current time
-void d18SolverHalfImplicit::IntegrateStep(double t, double throttle, double steering, double braking) {
+/// @param throttle throttle input
+/// @param steering steering input
+/// @param braking braking input
+/// @return t + m_step
+double d18SolverHalfImplicit::IntegrateStep(double t, double throttle, double steering, double braking) {
     // Store header and first time step
-    if (m_output && t < m_step) {
+    if (m_output && (t < m_step)) {
         Write(t);
         m_timeStepsStored++;
     }
@@ -200,13 +204,16 @@ void d18SolverHalfImplicit::IntegrateStep(double t, double throttle, double stee
     m_veh_state._psi += m_veh_state._wz * m_step;
     m_veh_state._phi += m_veh_state._wx * m_step;
 
+    double new_time = t + m_step;
     // Write the output
     if (m_output) {
-        if (std::abs(t - m_timeStepsStored * m_dtout) < 1e-7) {
-            Write(t);
+        if (std::abs(new_time - m_timeStepsStored * m_dtout) < 1e-7) {
+            Write(new_time);
             m_timeStepsStored++;
         }
     }
+
+    return new_time;
 }
 
 // ======================================================================================================================

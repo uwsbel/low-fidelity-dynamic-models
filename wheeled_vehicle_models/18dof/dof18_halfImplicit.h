@@ -25,6 +25,12 @@ class d18SolverHalfImplicit {
     // Set the solver time step
     void SetTimeStep(double step) { m_step = step; }
 
+    double GetEndT() { return m_tend; }
+
+    double GetStep() { return m_step; }
+
+    DriverData GetDriverData() { return m_driver_data; }
+
     // Set the output file path
     void SetOutput(const std::string& output_file, double output_freq);
 
@@ -38,7 +44,7 @@ class d18SolverHalfImplicit {
                     d18::TMeasyState& tire_states_LR,
                     d18::TMeasyState& tire_states_RR);
 
-    void IntegrateStep(double t, double throttle, double steering, double braking);
+    double IntegrateStep(double t, double throttle, double steering, double braking);
 
     void WriteToFile();
 
@@ -49,8 +55,6 @@ class d18SolverHalfImplicit {
     d18::TMeasyState m_tirelr_state;
     d18::TMeasyState m_tirerr_state;
 
-    CSV_writer m_csv;
-
   private:
     void Integrate();
 
@@ -60,6 +64,7 @@ class d18SolverHalfImplicit {
 
     void rhsFun(double t, DriverInput& controls);  // We need to provide controls when we are stepping
 
+    CSV_writer m_csv;               // CSV writer object
     double m_tend;                  // final integration time
     double m_step;                  // integration time step
     int m_timeStepsStored;          // Keeps track of time steps stored if we need data output

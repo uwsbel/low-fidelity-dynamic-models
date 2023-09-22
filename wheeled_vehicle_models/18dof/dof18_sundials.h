@@ -15,22 +15,25 @@
 #include <sunlinsol/sunlinsol_dense.h>
 #include <sunmatrix/sunmatrix_dense.h>
 #include <sunnonlinsol/sunnonlinsol_fixedpoint.h>
-
 // Some sundials defines to make life easier
-#define Ith(v, i) NV_Ith_S(v, i)
 
-#define ZERO RCONST(0.0)
-#define ONE RCONST(1.00)
+// Don't need any of this in the python wrapper
+#ifndef SWIG
 
-#if defined(SUNDIALS_EXTENDED_PRECISION)
-    #define GSYM "Lg"
-    #define ESYM "Le"
-    #define FSYM "Lf"
-#else
-    #define GSYM "g"
-    #define ESYM "e"
-    #define FSYM "f"
-#endif
+    #define Ith(v, i) NV_Ith_S(v, i)
+
+    #define ZERO RCONST(0.0)
+    #define ONE RCONST(1.00)
+
+    #if defined(SUNDIALS_EXTENDED_PRECISION)
+        #define GSYM "Lg"
+        #define ESYM "Le"
+        #define FSYM "Lf"
+    #else
+        #define GSYM "g"
+        #define ESYM "e"
+        #define FSYM "f"
+    #endif
 
 // =============================================================================
 
@@ -96,6 +99,8 @@ struct Objective {
     realtype value;
     std::vector<realtype> gradient;
 };
+
+#endif
 
 class d18SolverSundials {
   public:
@@ -164,6 +169,8 @@ class d18SolverSundials {
 
 // =============================================================================
 
+// Again don't need any of this in the python wrapper
+#ifndef SWIG
 void packY(const d18::VehicleState& v_states,
            const d18::TMeasyState& tirelf_st,
            const d18::TMeasyState& tirerf_st,
@@ -234,5 +241,5 @@ static int check_retval(void* returnvalue, const char* funcname, int opt) {
 
     return (0);
 }
-
+#endif
 #endif

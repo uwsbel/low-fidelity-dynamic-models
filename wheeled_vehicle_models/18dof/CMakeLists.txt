@@ -1,8 +1,8 @@
-cmake_minimum_required(VERSION 3.2)
+cmake_minimum_required(VERSION 3.8)
 project(d18dof)
-
 # -----------------------------------------------------
-
+set(CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_BINARY_DIR  ${CMAKE_SOURCE_DIR}/build)
 
 # -----------------------------------------------------
@@ -37,6 +37,15 @@ if(USE_SNOPT)
     set(SNOPT_INCLUDE_DIR "" CACHE PATH "Path to SNOPT headers")
 endif()
 
+# -----------------------------------------------------
+
+# Option to build Python module
+option(BUILD_PYTHON_MODULE "Build Python module" OFF)
+if(BUILD_PYTHON_MODULE)
+    message(STATUS "Building Python module")
+    add_subdirectory(py)
+endif()
+
 
 set(MODEL_FILES
     dof18.h
@@ -65,6 +74,7 @@ endif()
 # HMMWV demos
 set(HMMWV_PROGRAMS
     demo_hmmwv_hi
+    demo_hmmwv_hi_step
 )
 # Sedan demos
 set(SEDAN_PROGRAMS
