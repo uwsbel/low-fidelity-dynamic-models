@@ -8,11 +8,13 @@
     #include "dof18.h"
     using namespace d18;
     #include "dof18_halfImplicit.h"
+    #include "dof18_sundials.h"
 %}
 
 %include "../../utils/utils.h"
 %include "../dof18.h"
 %include "../dof18_halfImplicit.h"
+%include "../dof18_sundials.h"
 
 
 typedef std::vector<DriverInput> DriverData;
