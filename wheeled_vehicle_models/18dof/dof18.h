@@ -125,6 +125,44 @@ struct TMeasyParam {
           _sysP2n(sysP2n),
           _step(step) {}
 
+    // copy constructor
+    TMeasyParam(const TMeasyParam& other)
+        : _jw(other._jw),
+          _rr(other._rr),
+          _mu(other._mu),
+          _r0(other._r0),
+          _pn(other._pn),
+          _pnmax(other._pnmax),
+          _cx(other._cx),
+          _cy(other._cy),
+          _kt(other._kt),
+          _dx(other._dx),
+          _dy(other._dy),
+          _rdyncoPn(other._rdyncoPn),
+          _rdyncoP2n(other._rdyncoP2n),
+          _fzRdynco(other._fzRdynco),
+          _rdyncoCrit(other._rdyncoCrit),
+          _dfx0Pn(other._dfx0Pn),
+          _dfx0P2n(other._dfx0P2n),
+          _fxmPn(other._fxmPn),
+          _fxmP2n(other._fxmP2n),
+          _fxsPn(other._fxsPn),
+          _fxsP2n(other._fxsP2n),
+          _sxmPn(other._sxmPn),
+          _sxmP2n(other._sxmP2n),
+          _sxsPn(other._sxsPn),
+          _sxsP2n(other._sxsP2n),
+          _dfy0Pn(other._dfy0Pn),
+          _dfy0P2n(other._dfy0P2n),
+          _fymPn(other._fymPn),
+          _fymP2n(other._fymP2n),
+          _fysPn(other._fysPn),
+          _fysP2n(other._fysP2n),
+          _symPn(other._symPn),
+          _symP2n(other._symP2n),
+          _sysPn(other._sysPn),
+          _sysP2n(other._sysP2n) {}
+
     // basic tire parameters
     double _jw;  // wheel inertia
     double _rr;  // rolling resistance of tire
@@ -208,6 +246,24 @@ struct TMeasyState {
           _fz(fz),
           _vsx(vsx),
           _vsy(vsy) {}
+
+    // Copy constructor
+    TMeasyState(const TMeasyState& other)
+        : _xe(other._xe),
+          _ye(other._ye),
+          _xedot(other._xedot),
+          _yedot(other._yedot),
+          _omega(other._omega),
+          _dOmega(other._dOmega),
+          _xt(other._xt),
+          _rStat(other._rStat),
+          _fx(other._fx),
+          _fy(other._fy),
+          _fz(other._fz),
+          _vsx(other._vsx),
+          _vsy(other._vsy),
+          _My(other._My),
+          _engTor(other._engTor) {}
 
     // the actual state that are intgrated
     double _xe, _ye;        // long and lat tire deflection
@@ -322,6 +378,44 @@ struct VehicleParam {
           _driveType(driveType),
           _whichWheels(whichWheels) {}
 
+    // Copy constructor
+    VehicleParam(const VehicleParam& other)
+        : _a(other._a),
+          _b(other._b),
+          _h(other._h),
+          _m(other._m),
+          _jz(other._jz),
+          _jx(other._jx),
+          _jxz(other._jxz),
+          _cf(other._cf),
+          _cr(other._cr),
+          _muf(other._muf),
+          _mur(other._mur),
+          _hrcf(other._hrcf),
+          _hrcr(other._hrcr),
+          _krof(other._krof),
+          _kror(other._kror),
+          _brof(other._brof),
+          _bror(other._bror),
+          _nonLinearSteer(other._nonLinearSteer),
+          _maxSteer(other._maxSteer),
+          _crankInertia(other._crankInertia),
+          _tcbool(other._tcbool),
+          _maxBrakeTorque(other._maxBrakeTorque),
+          _c1(other._c1),
+          _c0(other._c0),
+          _step(other._step),
+          _throttleMod(other._throttleMod),
+          _driveType(other._driveType),
+          _whichWheels(other._whichWheels),
+          _steerMap(other._steerMap),
+          _gearRatios(other._gearRatios),
+          _powertrainMap(other._powertrainMap),
+          _lossesMap(other._lossesMap),
+          _CFmap(other._CFmap),
+          _TRmap(other._TRmap),
+          _shiftMap(other._shiftMap) {}
+
     double _a, _b;        // distance c.g. - front axle & distance c.g. - rear axle (m)
     double _h;            // height of c.g
     double _m;            // total vehicle mass (kg)
@@ -411,11 +505,31 @@ struct VehicleState {
           _crankOmega(0.),
           _current_gr(0) {}
 
+    // copy constructor
+    VehicleState(const VehicleState& other)
+        : _x(other._x),
+          _y(other._y),
+          _dx(other._dx),
+          _dy(other._dy),
+          _u(other._u),
+          _v(other._v),
+          _psi(other._psi),
+          _wz(other._wz),
+          _phi(other._phi),
+          _wx(other._wx),
+          _udot(other._udot),
+          _vdot(other._vdot),
+          _wxdot(other._wxdot),
+          _wzdot(other._wzdot),
+          _tor(other._tor),
+          _crankOmega(other._crankOmega),
+          _dOmega_crank(other._dOmega_crank),
+          _current_gr(other._current_gr) {}
+
     // special constructor in case need to start simulation
     // from some other state
-    double _x, _y;  // x and y position
-    double _dx,
-        _dy;           // This is basically u and v but transformed to global coordinates
+    double _x, _y;     // x and y position
+    double _dx, _dy;   // This is basically u and v but transformed to global coordinates
     double _u, _v;     // x and y velocity
     double _psi, _wz;  // yaw angle and yaw rate
     double _phi, _wx;  // roll angle and roll rate

@@ -22,6 +22,10 @@ class d18SolverHalfImplicit {
     void Construct(const std::string& veh_params_file,
                    const std::string& tire_params_file,
                    const std::string& driver_file);
+
+    // Constructor for when a controller is used and we don't have a driver file
+    void Construct(const std::string& vehicle_params_file, const std::string& tire_params_file);
+
     // Set the solver time step
     void SetTimeStep(double step) { m_step = step; }
 

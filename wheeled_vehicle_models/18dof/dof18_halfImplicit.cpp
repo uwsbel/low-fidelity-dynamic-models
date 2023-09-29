@@ -34,6 +34,14 @@ void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
     m_tend = m_driver_data.back().m_time;
 }
 
+// Overload for situations when a controller is used and we don't have a driver data file
+void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file, const std::string& tire_params_file) {
+    // Load vehicle and tire parameters
+    setVehParamsJSON(m_veh_param, vehicle_params_file.c_str());
+    setTireParamsJSON(m_tire_param, tire_params_file.c_str());
+    // Initialize tire parameters that depend on other parameters
+    tireInit(m_tire_param);
+}
 // ======================================================================================================================
 
 /// @brief Initialize vehicle and tire states in case something other than non zero is needed
@@ -69,6 +77,8 @@ void d18SolverHalfImplicit::SetOutput(const std::string& output_file, double out
 
 /// @brief Solve the system of equations by calling the integrate function
 void d18SolverHalfImplicit::Solve() {
+    assert(!m_driver_data.empty() && "No controls provided, please use construct to pass path to driver inputs");
+
     // For now just integrate to final time
     Integrate();
 }
