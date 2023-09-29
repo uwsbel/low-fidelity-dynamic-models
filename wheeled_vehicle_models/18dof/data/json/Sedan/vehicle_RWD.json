@@ -12,8 +12,8 @@
     "mur": 54.543,
     "hrcf": 0.41377,
     "hrcr": 0.39577,
-    "krof": 40000,
-    "kror": 40000,
+    "krof": 10000,
+    "kror": 10000,
     "brof": 3000,
     "bror": 3000,
     "nonLinearSteer": false,
@@ -21,7 +21,7 @@
     "crankInertia": 1.0,
     "gearRatios": [
         0.053,
-        0.1058,
+        0.0978,
         0.1568,
         0.2126,
         0.2552,
@@ -29,8 +29,8 @@
     ],
     "shiftMap": [
         [
-            1200,
-            4500
+            1000,
+            4000
         ],
         [
             1200,
@@ -243,6 +243,6 @@
     "c0": 0,
     "step": 0.001,
     "throttleMod": false,
-    "4wd": true,
+    "4wd": false,
     "rearWheels": true
 }

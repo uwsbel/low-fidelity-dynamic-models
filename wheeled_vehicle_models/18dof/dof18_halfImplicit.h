@@ -54,6 +54,8 @@ class d18SolverHalfImplicit {
     d18::TMeasyState m_tirerf_state;
     d18::TMeasyState m_tirelr_state;
     d18::TMeasyState m_tirerr_state;
+    d18::VehicleParam m_veh_param;  // vehicle parameters
+    d18::TMeasyParam m_tire_param;  // Tire parameters
 
   private:
     void Integrate();
@@ -64,16 +66,30 @@ class d18SolverHalfImplicit {
 
     void rhsFun(double t, DriverInput& controls);  // We need to provide controls when we are stepping
 
-    CSV_writer m_csv;               // CSV writer object
-    double m_tend;                  // final integration time
-    double m_step;                  // integration time step
-    int m_timeStepsStored;          // Keeps track of time steps stored if we need data output
-    bool m_output;                  // data output flag
-    double m_dtout;                 // time interval between data output
-    std::string m_output_file;      // output file path
-    d18::VehicleParam m_veh_param;  // vehicle parameters
-    d18::TMeasyParam m_tire_param;  // Tire parameters
-    DriverData m_driver_data;       // driver inputs
+    CSV_writer m_csv;           // CSV writer object
+    double m_tend;              // final integration time
+    double m_step;              // integration time step
+    int m_timeStepsStored;      // Keeps track of time steps stored if we need data output
+    bool m_output;              // data output flag
+    double m_dtout;             // time interval between data output
+    std::string m_output_file;  // output file path
+    DriverData m_driver_data;   // driver inputs
+
+    ////////// DEBUG
+    double M_DEBUG_LF_TIRE_FX;
+    double M_DEBUG_RF_TIRE_FX;
+    double M_DEBUG_LR_TIRE_FX;
+    double M_DEBUG_RR_TIRE_FX;
+
+    double M_DEBUG_LF_TIRE_FY;
+    double M_DEBUG_RF_TIRE_FY;
+    double M_DEBUG_LR_TIRE_FY;
+    double M_DEBUG_RR_TIRE_FY;
+
+    double M_DEBUG_LF_TIRE_FZ;
+    double M_DEBUG_RF_TIRE_FZ;
+    double M_DEBUG_LR_TIRE_FZ;
+    double M_DEBUG_RR_TIRE_FZ;
 };
 
 #endif

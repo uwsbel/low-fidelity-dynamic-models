@@ -30,15 +30,15 @@ path_chrono = "../../wheeled_vehicle_models/chrono_reference_data/v8_sedan_withT
 
 # 8dof file name
 dataSun = pd.read_csv(
-    path_out + file + "_sedan18Sundials.csv", sep=' ', header=None)
+    path_out + file + "_sedan18Sundials2wd.csv", sep=' ', header=None)
 
 data8 = pd.read_csv(
-    path_out + file + "_sedan18Hi.csv", sep=' ', header='infer')
+    path_out + file + "_sedan18Hi2wd.csv", sep=' ', header='infer')
 
 # Chrono file name
 
 dataChrono = pd.read_csv(
-    path_chrono + file + "_4wd1e5.csv", sep=',', header='infer')
+    path_chrono + file + "_2wd1e5.csv", sep=',', header='infer')
 
 # print dataChrono columnes
 print(path_chrono + file + ".csv")

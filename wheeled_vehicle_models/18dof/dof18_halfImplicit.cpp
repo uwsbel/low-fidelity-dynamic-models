@@ -241,6 +241,21 @@ void d18SolverHalfImplicit::rhsFun(double t) {
     // Powertrain dynamics
     computePowertrainRHS(m_veh_state, m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_param,
                          m_tire_param, controls);
+    //////// DEBUG
+    M_DEBUG_LF_TIRE_FX = m_tirelf_state._fx;
+    M_DEBUG_RF_TIRE_FX = m_tirerf_state._fx;
+    M_DEBUG_LR_TIRE_FX = m_tirelr_state._fx;
+    M_DEBUG_RR_TIRE_FX = m_tirerr_state._fx;
+
+    M_DEBUG_LF_TIRE_FY = m_tirelf_state._fy;
+    M_DEBUG_RF_TIRE_FY = m_tirerf_state._fy;
+    M_DEBUG_LR_TIRE_FY = m_tirelr_state._fy;
+    M_DEBUG_RR_TIRE_FY = m_tirerr_state._fy;
+
+    M_DEBUG_LF_TIRE_FZ = m_tirelf_state._fz;
+    M_DEBUG_RF_TIRE_FZ = m_tirerf_state._fz;
+    M_DEBUG_LR_TIRE_FZ = m_tirelr_state._fz;
+    M_DEBUG_RR_TIRE_FZ = m_tirerr_state._fz;
 
     // Vehicle dynamics
     tireToVehTransform(m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_state, m_veh_param,
@@ -301,12 +316,28 @@ void d18SolverHalfImplicit::Write(double t) {
         m_csv << "sp_tor";
         m_csv << "current_gear";
         m_csv << "engine_omega";
-        m_csv << "tiredef_lf";
-        m_csv << "tiredef_rf";
-        m_csv << "tiredef_lr";
-        m_csv << "tiredef_rr";
+        m_csv << "lf_tireForce_x";
+        m_csv << "rf_tireForce_x";
+        m_csv << "lr_tireForce_x";
+        m_csv << "rr_tireForce_x";
+        m_csv << "lf_tireForce_y";
+        m_csv << "rf_tireForce_y";
+        m_csv << "lr_tireForce_y";
+        m_csv << "rr_tireForce_y";
+        m_csv << "lf_tireForce_z";
+        m_csv << "rf_tireForce_z";
+        m_csv << "lr_tireForce_z";
+        m_csv << "rr_tireForce_z";
         m_csv << std::endl;
 
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
         m_csv << 0;
         m_csv << 0;
         m_csv << 0;
@@ -351,10 +382,18 @@ void d18SolverHalfImplicit::Write(double t) {
     m_csv << m_veh_state._tor / 4.;
     m_csv << m_veh_state._current_gr + 1;
     m_csv << m_veh_state._crankOmega;
-    m_csv << m_tirelf_state._xe;
-    m_csv << m_tirerf_state._xe;
-    m_csv << m_tirelr_state._xe;
-    m_csv << m_tirerr_state._xe;
+    m_csv << M_DEBUG_LF_TIRE_FX;
+    m_csv << M_DEBUG_RF_TIRE_FX;
+    m_csv << M_DEBUG_LR_TIRE_FX;
+    m_csv << M_DEBUG_RR_TIRE_FX;
+    m_csv << M_DEBUG_LF_TIRE_FY;
+    m_csv << M_DEBUG_RF_TIRE_FY;
+    m_csv << M_DEBUG_LR_TIRE_FY;
+    m_csv << M_DEBUG_RR_TIRE_FY;
+    m_csv << M_DEBUG_LF_TIRE_FZ;
+    m_csv << M_DEBUG_RF_TIRE_FZ;
+    m_csv << M_DEBUG_LR_TIRE_FZ;
+    m_csv << M_DEBUG_RR_TIRE_FZ;
     m_csv << std::endl;
 }
 

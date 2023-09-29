@@ -257,6 +257,19 @@ void d18::computeTireRHS(TMeasyState& t_states,
     double vsy = t_states._vsy;  // y slip velocity
     double vsx = t_states._vsx;  // x slip velocity
 
+    // If the wheel is off contact, set all states to 0 and return
+    if (fz <= 0) {
+        t_states._xe = 0;
+        t_states._ye = 0;
+        t_states._omega = 0;
+        t_states._xt = 0;
+        t_states._rStat = t_params._r0;
+        t_states._fx = 0;
+        t_states._fy = 0;
+        t_states._My = 0;
+        return;
+    }
+
     // get our tire deflections so that we can get the loaded radius
     t_states._xt = fz / t_params._kt;
     t_states._rStat = t_params._r0 - t_states._xt;
