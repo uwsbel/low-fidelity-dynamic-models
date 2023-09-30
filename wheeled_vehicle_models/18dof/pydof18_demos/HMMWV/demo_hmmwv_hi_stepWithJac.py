@@ -1,5 +1,6 @@
 # This demo is intended to provide an example of how to use the Low fidelity models with the ART vehicle for doing something like a PID control where you might have to interate multiple times in a loop from the same state
 
+import time
 import numpy as np
 import pydof18 as dof18
 import sys
@@ -34,12 +35,17 @@ new_time = 0
 
 driver_data = solver.GetDriverData()
 
-
+# time this loop
+start = time.time()
 while (t < (endTime - timeStep / 10.)):
     controls = dof18.GetDriverInput(t, driver_data)
     new_time = solver.IntegrateStepWithJacobian(
         t, controls.m_throttle, controls.m_steering, 0, True)
-    state_jac = np.array(solver.GetJacobianState())
-    print(state_jac)
+    # state_jac = np.array(solver.GetJacobianState())
+    # print(state_jac)
 
     t = new_time
+
+end = time.time()
+# Print time in ms
+print("Time taken: ", (end - start) * 1000)

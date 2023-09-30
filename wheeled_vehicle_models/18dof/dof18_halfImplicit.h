@@ -8,6 +8,10 @@
 
 #include "dof18.h"
 
+#ifdef USE_OPENMP
+    #include <omp.h>
+#endif
+
 // =============================================================================
 // Define the solver class
 // =============================================================================
@@ -93,6 +97,10 @@ class d18SolverHalfImplicit {
     // Jacobian matrix incase user needs finite differencing
     std::vector<std::vector<double>> m_jacobian_state;
     std::vector<std::vector<double>> m_jacobian_controls;
+
+#ifdef USE_OPENMP
+    int m_num_threads;  // number of threads
+#endif
 
     ////////// DEBUG
 #ifdef DEBUG

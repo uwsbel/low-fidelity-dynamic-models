@@ -1,9 +1,11 @@
 #include <numeric>
 #include <algorithm>
 #include <iterator>
+#include <chrono>
 
 #include "dof18_halfImplicit.h"
 
+using std::chrono::high_resolution_clock;
 using namespace d18;
 
 void printVectorOfVectors(const std::vector<std::vector<double>>& vec) {
@@ -46,19 +48,30 @@ int main(int argc, char** argv) {
     double t = 0;
     double new_time = 0;
     DriverData driver_data = solver.GetDriverData();  // Get the driver data associated with input file
+
+    // Time the while loop
+    auto start = high_resolution_clock::now();
+
     // Start the loop
     while (t < (endTime - timeStep / 10.)) {
         auto controls = GetDriverInput(t, driver_data);  // Get the controls for the current time
         new_time =
             solver.IntegrateStepWithJacobian(t, controls.m_throttle, controls.m_steering, controls.m_braking, true);
 
-        // Print the Jacobian state and controls
+// Print the Jacobian state and controls
+#ifdef DEBUG
         std::cout << "Jacobian state: " << std::endl;
         printVectorOfVectors(solver.GetJacobianState());
         std::cout << "Jacobian controls: " << std::endl;
         printVectorOfVectors(solver.GetJacobianControls());
         std::cout << std::endl;
+#endif
 
         t = new_time;
     }
+
+    auto stop = high_resolution_clock::now();
+    auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
+    // Print time in milli seconds
+    std::cout << "Time taken by function: " << duration.count() / 1000.0 << " milliseconds" << std::endl;
 }

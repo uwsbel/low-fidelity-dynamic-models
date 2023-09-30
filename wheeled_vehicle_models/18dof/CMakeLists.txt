@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.12)
 project(d18dof)
 # -----------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
@@ -19,6 +19,15 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
 endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-O3)
+endif()
+
+# -----------------------------------------------------
+
+# Option to use openMP for parallelization
+option(USE_OPENMP "Use OpenMP for Jacobian" OFF)
+if(USE_OPENMP)
+    find_package(OpenMP REQUIRED)
+    add_definitions(-DUSE_OPENMP)
 endif()
 
 # -----------------------------------------------------
@@ -114,7 +123,11 @@ foreach(PROGRAM ${HMMWV_PROGRAMS})
   message(STATUS "...add ${PROGRAM}")
   add_executable(${PROGRAM} ${CMAKE_SOURCE_DIR}/demos/HMMWV/${PROGRAM}.cpp ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES})
 
-  # Link sundials libraries if required
+  if(USE_OPENMP)
+    target_link_libraries(${PROGRAM} PUBLIC OpenMP::OpenMP_CXX)
+  endif()
+
+    # Link sundials libraries if required
   if(USE_SUNDIALS)
     target_link_libraries(${PROGRAM} PUBLIC SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense )
   endif()
@@ -134,6 +147,9 @@ foreach(PROGRAM ${SEDAN_PROGRAMS})
   message(STATUS "...add ${PROGRAM}")
   add_executable(${PROGRAM} ${CMAKE_SOURCE_DIR}/demos/Sedan/${PROGRAM}.cpp ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES})
 
+  if(USE_OPENMP)
+    target_link_libraries(${PROGRAM} PUBLIC OpenMP::OpenMP_CXX)
+  endif()
   # Link sundials libraries if required
   if(USE_SUNDIALS)
     target_link_libraries(${PROGRAM} PUBLIC SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense )

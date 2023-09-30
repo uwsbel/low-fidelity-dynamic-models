@@ -10,7 +10,13 @@
 
 using namespace d18;
 // ======================================================================================================================
-d18SolverHalfImplicit::d18SolverHalfImplicit() : m_tend(0), m_step(0.001), m_output(false), m_csv(" ") {}
+d18SolverHalfImplicit::d18SolverHalfImplicit() : m_tend(0), m_step(0.001), m_output(false), m_csv(" ") {
+#ifdef USE_OPENMP
+    m_num_threads = omp_get_num_procs() / 4;
+    // m_num_threads = 6;
+    omp_set_num_threads(m_num_threads);
+#endif
+}
 d18SolverHalfImplicit::~d18SolverHalfImplicit() {}
 // ======================================================================================================================
 
@@ -298,6 +304,8 @@ double d18SolverHalfImplicit::IntegrateStepWithJacobian(double t,
         std::vector<double> delY(y.begin(), y.end());
         // In a loop pertub each state and get the corresponding perturbed ydot
         int ySize = y.size();
+
+#pragma omp parallel for simd
         for (int i = 0; i < ySize; i++) {
             // Perterbation is 1e-3 * y (since some states are really small values wile some are huge)
             delY[i] = std::abs(delY[i] * 1e-3);
@@ -321,7 +329,8 @@ double d18SolverHalfImplicit::IntegrateStepWithJacobian(double t,
             PerturbRhsFun(perturbedYPlus, controls, ydotPlus);
             PerturbRhsFun(perturbedYMinus, controls, ydotMinus);
 
-            // Update the jacobian matrix
+// Update the jacobian matrix
+#pragma omp simd
             for (int j = 0; j < ySize; j++) {
                 m_jacobian_state[j][i] = (ydotPlus[j] - ydotMinus[j]) / (2 * delY[i]);
             }
@@ -335,6 +344,7 @@ double d18SolverHalfImplicit::IntegrateStepWithJacobian(double t,
         std::vector<double> delControls = {1e-3, 1e-3};
         // In a loop pertub each control and get the corresponding perturbed ydot
         int controlSize = delControls.size();
+
         for (int i = 0; i < controlSize; i++) {
             // perturb controls at i
             std::vector<double> perturbedControlsPlus = {steering, throttle};
@@ -440,7 +450,8 @@ void d18SolverHalfImplicit::rhsFun(double t) {
     // Powertrain dynamics
     computePowertrainRHS(m_veh_state, m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_param,
                          m_tire_param, controls);
-    //////// DEBUG
+//////// DEBUG
+#ifdef DEBUG
     M_DEBUG_LF_TIRE_FX = m_tirelf_state._fx;
     M_DEBUG_RF_TIRE_FX = m_tirerf_state._fx;
     M_DEBUG_LR_TIRE_FX = m_tirelr_state._fx;
@@ -455,6 +466,7 @@ void d18SolverHalfImplicit::rhsFun(double t) {
     M_DEBUG_RF_TIRE_FZ = m_tirerf_state._fz;
     M_DEBUG_LR_TIRE_FZ = m_tirelr_state._fz;
     M_DEBUG_RR_TIRE_FZ = m_tirerr_state._fz;
+#endif
 
     // Vehicle dynamics
     tireToVehTransform(m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_state, m_veh_param,

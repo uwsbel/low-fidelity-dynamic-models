@@ -15,6 +15,10 @@ find_package(PythonLibs REQUIRED)
 message(STATUS "Found python: ${Python3_EXECUTABLE}")
 INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIR})
 
+# Option to use openMP for parallelization
+if(USE_OPENMP)
+    find_package(OpenMP REQUIRED)
+endif()
 
 # ---------------------------------------------------------------------
 # Find SWIG
@@ -64,11 +68,27 @@ endif()
 if(USE_SUNDIALS)
     SET_SOURCE_FILES_PROPERTIES(dof18Sundials.i PROPERTIES CPLUSPLUS ON)
     SWIG_ADD_LIBRARY(${LIBRARY_NAME} LANGUAGE python SOURCES ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES} dof18Sundials.i)
-    SWIG_LINK_LIBRARIES(${LIBRARY_NAME} ${PYTHON_LIBRARIES} SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense)
+
+    # Link to OpenMP if required
+    if(USE_OPENMP)
+        SWIG_LINK_LIBRARIES(${LIBRARY_NAME} ${PYTHON_LIBRARIES} SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense OpenMP::OpenMP_CXX)
+    else()
+        SWIG_LINK_LIBRARIES(${LIBRARY_NAME} ${PYTHON_LIBRARIES} SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense)
+    endif()
+
+
 else()
     SET_SOURCE_FILES_PROPERTIES(dof18.i PROPERTIES CPLUSPLUS ON)
     SWIG_ADD_LIBRARY(${LIBRARY_NAME} LANGUAGE python SOURCES ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES} dof18.i)
-    SWIG_LINK_LIBRARIES(${LIBRARY_NAME} ${PYTHON_LIBRARIES})
+
+    # Link to OpenMP if required
+    if(USE_OPENMP)
+        SWIG_LINK_LIBRARIES(${LIBRARY_NAME} ${PYTHON_LIBRARIES} OpenMP::OpenMP_CXX)
+    else()
+        SWIG_LINK_LIBRARIES(${LIBRARY_NAME} ${PYTHON_LIBRARIES})
+    endif()
+
+
 endif()
 
 # ---------------------------------------------------------------------
