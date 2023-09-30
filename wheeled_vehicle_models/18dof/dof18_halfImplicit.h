@@ -50,6 +50,10 @@ class d18SolverHalfImplicit {
 
     double IntegrateStep(double t, double throttle, double steering, double braking);
 
+    // Updates the Jacobian state and controls jacobian apart from integrating at each
+    // In case you don't want it to update at each step, set the boolean to off
+    double IntegrateStepWithJacobian(double t, double throttle, double steering, double braking, bool on);
+
     void WriteToFile();
 
     // Vehicle states and tire states
@@ -61,6 +65,10 @@ class d18SolverHalfImplicit {
     d18::VehicleParam m_veh_param;  // vehicle parameters
     d18::TMeasyParam m_tire_param;  // Tire parameters
 
+    // Jacobian matrix incase user needs finite differencing
+    std::vector<std::vector<double>> m_jacobian_state;
+    std::vector<std::vector<double>> m_jacobian_controls;
+
   private:
     void Integrate();
 
@@ -69,6 +77,9 @@ class d18SolverHalfImplicit {
     void rhsFun(double t);
 
     void rhsFun(double t, DriverInput& controls);  // We need to provide controls when we are stepping
+
+    // For finite differencing for applications in MPC to perturb either controls or y
+    void PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot);
 
     CSV_writer m_csv;           // CSV writer object
     double m_tend;              // final integration time
@@ -95,5 +106,33 @@ class d18SolverHalfImplicit {
     double M_DEBUG_LR_TIRE_FZ;
     double M_DEBUG_RR_TIRE_FZ;
 };
+
+#ifndef SWIG
+// Utility functions to help with finite differencing
+void packY(const d18::VehicleState& v_states,
+           const d18::TMeasyState& tirelf_st,
+           const d18::TMeasyState& tirerf_st,
+           const d18::TMeasyState& tirelr_st,
+           const d18::TMeasyState& tirerr_st,
+           bool has_TC,
+           std::vector<double>& y);
+
+void packYDOT(const d18::VehicleState& v_states,
+              const d18::TMeasyState& tirelf_st,
+              const d18::TMeasyState& tirerf_st,
+              const d18::TMeasyState& tirelr_st,
+              const d18::TMeasyState& tirerr_st,
+              bool has_TC,
+              std::vector<double>& ydot);
+
+void unpackY(const std::vector<double>& y,
+             bool has_TC,
+             d18::VehicleState& v_states,
+             d18::TMeasyState& tirelf_st,
+             d18::TMeasyState& tirerf_st,
+             d18::TMeasyState& tirelr_st,
+             d18::TMeasyState& tirerr_st);
+
+#endif
 
 #endif

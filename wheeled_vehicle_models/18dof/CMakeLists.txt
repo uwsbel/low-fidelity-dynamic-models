@@ -75,6 +75,7 @@ endif()
 set(HMMWV_PROGRAMS
     demo_hmmwv_hi
     demo_hmmwv_hi_step
+    demo_hmmwv_hi_stepWithJac
 )
 # Sedan demos
 set(SEDAN_PROGRAMS
