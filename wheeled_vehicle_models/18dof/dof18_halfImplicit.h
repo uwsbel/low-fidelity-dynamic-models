@@ -35,6 +35,10 @@ class d18SolverHalfImplicit {
 
     DriverData GetDriverData() { return m_driver_data; }
 
+    // Jacobian getter functions
+    std::vector<std::vector<double>> GetJacobianState() { return m_jacobian_state; }
+    std::vector<std::vector<double>> GetJacobianControls() { return m_jacobian_controls; }
+
     // Set the output file path
     void SetOutput(const std::string& output_file, double output_freq);
 
@@ -65,10 +69,6 @@ class d18SolverHalfImplicit {
     d18::VehicleParam m_veh_param;  // vehicle parameters
     d18::TMeasyParam m_tire_param;  // Tire parameters
 
-    // Jacobian matrix incase user needs finite differencing
-    std::vector<std::vector<double>> m_jacobian_state;
-    std::vector<std::vector<double>> m_jacobian_controls;
-
   private:
     void Integrate();
 
@@ -90,7 +90,12 @@ class d18SolverHalfImplicit {
     std::string m_output_file;  // output file path
     DriverData m_driver_data;   // driver inputs
 
+    // Jacobian matrix incase user needs finite differencing
+    std::vector<std::vector<double>> m_jacobian_state;
+    std::vector<std::vector<double>> m_jacobian_controls;
+
     ////////// DEBUG
+#ifdef DEBUG
     double M_DEBUG_LF_TIRE_FX;
     double M_DEBUG_RF_TIRE_FX;
     double M_DEBUG_LR_TIRE_FX;
@@ -105,6 +110,7 @@ class d18SolverHalfImplicit {
     double M_DEBUG_RF_TIRE_FZ;
     double M_DEBUG_LR_TIRE_FZ;
     double M_DEBUG_RR_TIRE_FZ;
+#endif
 };
 
 #ifndef SWIG

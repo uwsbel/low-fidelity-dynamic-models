@@ -54,9 +54,9 @@ int main(int argc, char** argv) {
 
         // Print the Jacobian state and controls
         std::cout << "Jacobian state: " << std::endl;
-        printVectorOfVectors(solver.m_jacobian_state);
+        printVectorOfVectors(solver.GetJacobianState());
         std::cout << "Jacobian controls: " << std::endl;
-        printVectorOfVectors(solver.m_jacobian_controls);
+        printVectorOfVectors(solver.GetJacobianControls());
         std::cout << std::endl;
 
         t = new_time;

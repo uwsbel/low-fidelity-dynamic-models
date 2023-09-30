@@ -553,6 +553,7 @@ void d18SolverHalfImplicit::Write(double t) {
         m_csv << "sp_tor";
         m_csv << "current_gear";
         m_csv << "engine_omega";
+#ifdef DEBUG
         m_csv << "lf_tireForce_x";
         m_csv << "rf_tireForce_x";
         m_csv << "lr_tireForce_x";
@@ -565,6 +566,7 @@ void d18SolverHalfImplicit::Write(double t) {
         m_csv << "rf_tireForce_z";
         m_csv << "lr_tireForce_z";
         m_csv << "rr_tireForce_z";
+#endif
         m_csv << std::endl;
 
         m_csv << 0;
@@ -589,6 +591,7 @@ void d18SolverHalfImplicit::Write(double t) {
         m_csv << 0;
         m_csv << 0;
         m_csv << 0;
+#ifdef DEBUG
         m_csv << 0;
         m_csv << 0;
         m_csv << 0;
@@ -597,6 +600,7 @@ void d18SolverHalfImplicit::Write(double t) {
         m_csv << 0;
         m_csv << 0;
         m_csv << 0;
+#endif
         m_csv << std::endl;
         return;
     }
@@ -619,6 +623,7 @@ void d18SolverHalfImplicit::Write(double t) {
     m_csv << m_veh_state._tor / 4.;
     m_csv << m_veh_state._current_gr + 1;
     m_csv << m_veh_state._crankOmega;
+#ifdef DEBUG
     m_csv << M_DEBUG_LF_TIRE_FX;
     m_csv << M_DEBUG_RF_TIRE_FX;
     m_csv << M_DEBUG_LR_TIRE_FX;
@@ -631,6 +636,7 @@ void d18SolverHalfImplicit::Write(double t) {
     m_csv << M_DEBUG_RF_TIRE_FZ;
     m_csv << M_DEBUG_LR_TIRE_FZ;
     m_csv << M_DEBUG_RR_TIRE_FZ;
+#endif
     m_csv << std::endl;
 }
 
