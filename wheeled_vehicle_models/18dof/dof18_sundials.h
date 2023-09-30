@@ -241,5 +241,8 @@ static int check_retval(void* returnvalue, const char* funcname, int opt) {
 
     return (0);
 }
+
+void printSUNMatrix(SUNMatrix A, sunindextype matrows, sunindextype matcols);
+
 #endif
 #endif

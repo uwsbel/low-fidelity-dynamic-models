@@ -15,6 +15,7 @@ endif()
 # If specified set the CMake mode
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(-g -ggdb3)
+    add_definitions(-DDEBUG)
 endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-O3)

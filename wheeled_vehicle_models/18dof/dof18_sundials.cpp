@@ -445,6 +445,12 @@ bool d18SolverSundials::Integrate(bool fsa) {
                 retval = CVode(m_cvode_mem, iout * dtout, y, &t, CV_NORMAL);
                 if (check_retval(&retval, "CVode", 1))
                     return false;
+                SUNMatrix J = SUNDenseMatrix(m_neq, m_neq, m_sunctx);
+// Get the RHS jacobian and print only in debug mode
+#ifdef DEBUG
+                CVodeGetJac(m_cvode_mem, &J);
+                printSUNMatrix(J, m_neq, m_neq);
+#endif
 
                 if (m_verbose) {
                     CVodePrintAllStats(m_cvode_mem, stdout, SUN_OUTPUTFORMAT_TABLE);
@@ -775,4 +781,15 @@ int printStatsCvode(void* cvode_mem) {
     printf(" %6ld   %6ld+%-4ld     %4ld (%3ld)     |  %3ld  %3ld\n", nst, nfe, nfeLS, nsetups, nje, ncfn, netf);
 
     return retval;
+}
+
+void printSUNMatrix(SUNMatrix A, sunindextype matrows, sunindextype matcols) {
+    realtype* Adata = SUNDenseMatrix_Data(A);
+    std::cout << "Jacobian state: " << std::endl;
+    for (sunindextype i = 0; i < matrows; i++) {
+        for (sunindextype j = 0; j < matcols; j++) {
+            printf("%.4f  ", Adata[j * matrows + i]);
+        }
+        printf("\n");
+    }
 }
