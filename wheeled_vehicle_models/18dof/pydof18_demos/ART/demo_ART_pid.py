@@ -18,11 +18,11 @@ def dof18_model(solverOld, t, required_time, throttle, steering):
     solverNew.SetTimeStep(1e-3)
 
     # Copy over the solver states that were there at the start of the iterations
-    solverNew.m_veh_st = dof18.VehicleState(solver.m_veh_state)
-    solverNew.m_tirelf_st = dof18.TMeasyState(solver.m_tirelf_state)
-    solverNew.m_tirerf_st = dof18.TMeasyState(solver.m_tirerf_state)
-    solverNew.m_tirelr_st = dof18.TMeasyState(solver.m_tirelr_state)
-    solverNew.m_tirerr_st = dof18.TMeasyState(solver.m_tirerr_state)
+    solverNew.m_veh_st = dof18.VehicleState(solverOld.m_veh_state)
+    solverNew.m_tirelf_st = dof18.TMeasyState(solverOld.m_tirelf_state)
+    solverNew.m_tirerf_st = dof18.TMeasyState(solverOld.m_tirerf_state)
+    solverNew.m_tirelr_st = dof18.TMeasyState(solverOld.m_tirelr_state)
+    solverNew.m_tirerr_st = dof18.TMeasyState(solverOld.m_tirerr_state)
 
     # Integrate till the required time
     while t < required_time:
