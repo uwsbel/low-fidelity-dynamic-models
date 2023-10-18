@@ -315,7 +315,7 @@ struct VehicleParam {
           _c0(0.),
           _step(1e-2),
           _throttleMod(0),
-          _driveType(1),
+          _driveType(0),
           _whichWheels(1) {}
 
     // constructor
@@ -563,22 +563,18 @@ void differentialSplit(double torque,
 // setting vehicle parameters using a JSON file
 void setVehParamsJSON(VehicleParam& v_params, const char* fileName);
 
-void vehToTireTransform(TMeasyState& tirelf_st,
-                        TMeasyState& tirerf_st,
-                        TMeasyState& tirelr_st,
-                        TMeasyState& tirerr_st,
-                        const VehicleState& v_states,
-                        const std::vector<double>& loads,
-                        const VehicleParam& v_params,
-                        double steering);
+void  vehToTireTransform(TMeasyState& tiref_st,
+                             TMeasyState& tirer_st,
+                             const VehicleState& v_states,
+                             const std::vector<double>& loads,
+                             const VehicleParam& v_params,
+                             double steering);
 
-void tireToVehTransform(TMeasyState& tirelf_st,
-                        TMeasyState& tirerf_st,
-                        TMeasyState& tirelr_st,
-                        TMeasyState& tirerr_st,
-                        const VehicleState& v_states,
-                        const VehicleParam& v_params,
-                        double steering);
+void tireToVehTransform(TMeasyState& tiref_st,
+                             TMeasyState& tirer_st, 
+                             const VehicleState& v_states,
+                             const VehicleParam& v_params,
+                             double steering);
 
 // ------------------------------ Tire functions
 
@@ -600,18 +596,16 @@ void computeTireLoads(std::vector<double>& loads,
                       const TMeasyParam& t_params);
 void computeTireRHS(TMeasyState& t_states, const TMeasyParam& t_params, const VehicleParam& v_params, double steering);
 void computePowertrainRHS(VehicleState& v_states,
-                          TMeasyState& tirelf_st,
-                          TMeasyState& tirerf_st,
-                          TMeasyState& tirelr_st,
-                          TMeasyState& tirerr_st,
-                          const VehicleParam& v_params,
-                          const TMeasyParam& t_params,
-                          const DriverInput& controls);
+                               TMeasyState& tiref_st,
+                               TMeasyState& tirer_st,
+                               const VehicleParam& v_params,
+                               const TMeasyParam& t_params,
+                               const DriverInput& controls) ;
 void computeVehRHS(VehicleState& v_states,
                    const VehicleParam& v_params,
                    const std::vector<double>& fx,
                    const std::vector<double>& fy);
 
-}  // namespace d18
+}  
 
 #endif
