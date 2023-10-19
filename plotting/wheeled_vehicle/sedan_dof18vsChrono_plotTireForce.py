@@ -77,6 +77,9 @@ axes[1, 1].set_ylim([-4000, 4000])
 
 axes[1, 1].legend()
 
+# Set sup title for this plot
+fig.suptitle("Tire Forces about Vehicle X Axis")
+
 # Show this plot
 mpl.show()
 
@@ -125,6 +128,8 @@ axes2[1, 1].set_title("rr_tireForce_y")
 axes2[1, 1].set_ylim([-7000, 7000])
 axes2[1, 1].legend()
 
+fig2.suptitle("Tire Forces about Vehicle Y Axis")
+
 # Show this plot
 mpl.show()
 
@@ -169,5 +174,15 @@ axes3[1, 1].set_xlabel("Time (s)")
 axes3[1, 1].set_title("rr_tireForce_z")
 axes3[1, 1].legend()
 
+fig3.suptitle("Tire Forces about Vehicle Z Axis")
+
 # Show this plot
 mpl.show()
+
+saveIT = int(sys.argv[2])
+
+if (saveIT):
+    # Save each plot as a png file with good resolution
+    fig.savefig(path_out + "image/" + file + "_tireForce_x.png", dpi=300)
+    fig2.savefig(path_out + "image/" + file + "_tireForce_y.png", dpi=300)
+    fig3.savefig(path_out + "image/" + file + "_tireForce_z.png", dpi=300)

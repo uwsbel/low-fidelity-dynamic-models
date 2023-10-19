@@ -88,7 +88,9 @@ fig.suptitle(f"{file}")
 
 fig.tight_layout()
 save = int(sys.argv[2])
+path_out = "../../wheeled_vehicle_models/18dof/data/output/image/"
 
 if (save):
-    fig.savefig(f'./images/sedan_chvs18_{file}.eps', format='eps', dpi=3000)
+    fig.savefig(path_out + file + '_chronoComp.png', dpi=300)
 mpl.show()
+print(path_out)
