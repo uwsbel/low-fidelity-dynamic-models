@@ -367,12 +367,11 @@ void d18::computeTireRHS(TMeasyState& t_states,
     t_states._My = -sineStep(vta, vx_min, 0., vx_max, 1.) * t_params._rr * fz * t_states._rStat * sgn(t_states._omega);
 
     // some normalised slip velocities
-    // double vtxs = r_eff * std::abs(t_states._omega) * hsxn + 0.01;
-    // double vtys = r_eff * std::abs(t_states._omega) * hsyn + 0.01;
+    double vtxs = r_eff * std::abs(t_states._omega) * hsxn + 0.01;
+    double vtys = r_eff * std::abs(t_states._omega) * hsyn + 0.01;
 
-    double vtxs = r_eff * std::abs(t_states._omega) * hsxn;
-    double vtys = r_eff * std::abs(t_states._omega) * hsyn;
-
+    // double vtxs = r_eff * std::abs(t_states._omega) * hsxn;
+    // double vtys = r_eff * std::abs(t_states._omega) * hsyn;
 
     // Tire velocities for the RHS
     t_states._xedot = (-vtxs * t_params._cx * t_states._xe - fos * vsx) / (vtxs * t_params._dx + fos);

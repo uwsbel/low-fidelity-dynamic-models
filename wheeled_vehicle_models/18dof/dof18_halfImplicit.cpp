@@ -599,11 +599,11 @@ void d18SolverHalfImplicit::Write(double t) {
         m_csv << 0;
         m_csv << 0;
         m_csv << 0;
-        m_csv << 0;
-        m_csv << 0;
-        m_csv << 0;
-        m_csv << 0;
 #ifdef DEBUG
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
         m_csv << 0;
         m_csv << 0;
         m_csv << 0;
