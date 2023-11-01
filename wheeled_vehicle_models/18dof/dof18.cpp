@@ -113,10 +113,86 @@ void d18::vehToTireTransform(TMeasyState& tirelf_st,
     tirerr_st._vsx = v_states._u + (v_states._wz * v_params._cr) / 2.;
 }
 
+// Vehicle to tire transform overload for TMeasy tire without relaxation
+void d18::vehToTireTransform(TMeasyNrState& tirelf_st,
+                             TMeasyNrState& tirerf_st,
+                             TMeasyNrState& tirelr_st,
+                             TMeasyNrState& tirerr_st,
+                             const VehicleState& v_states,
+                             const std::vector<double>& loads,
+                             const VehicleParam& v_params,
+                             double steering) {
+    // Get the steering considering the mapping might be non linear
+    double delta = 0;
+    if (v_params._nonLinearSteer) {
+        // Extract steer map
+        std::vector<MapEntry> steer_map = v_params._steerMap;
+        delta = getMapY(steer_map, steering);
+    } else {
+        delta = steering * v_params._maxSteer;
+    }
+
+    // left front
+    tirelf_st._fz = loads[0];
+    tirelf_st._vsy = v_states._v + v_states._wz * v_params._a;
+    tirelf_st._vsx =
+        (v_states._u - (v_states._wz * v_params._cf) / 2.) * std::cos(delta) + tirelf_st._vsy * std::sin(delta);
+
+    // right front
+    tirerf_st._fz = loads[1];
+    tirerf_st._vsy = v_states._v + v_states._wz * v_params._a;
+    tirerf_st._vsx =
+        (v_states._u + (v_states._wz * v_params._cf) / 2.) * std::cos(delta) + tirerf_st._vsy * std::sin(delta);
+
+    // left rear - No steer
+    tirelr_st._fz = loads[2];
+    tirelr_st._vsy = v_states._v - v_states._wz * v_params._b;
+    tirelr_st._vsx = v_states._u - (v_states._wz * v_params._cr) / 2.;
+
+    // rigth rear - No steer
+    tirerr_st._fz = loads[3];
+    tirerr_st._vsy = v_states._v - v_states._wz * v_params._b;
+    tirerr_st._vsx = v_states._u + (v_states._wz * v_params._cr) / 2.;
+}
+
 void d18::tireToVehTransform(TMeasyState& tirelf_st,
                              TMeasyState& tirerf_st,
                              TMeasyState& tirelr_st,
                              TMeasyState& tirerr_st,
+                             const VehicleState& v_states,
+                             const VehicleParam& v_params,
+                             double steering) {
+    // Get the steering considering the mapping might be non linear
+    double delta = 0;
+    if (v_params._nonLinearSteer) {
+        // Extract steer map
+        std::vector<MapEntry> steer_map = v_params._steerMap;
+        delta = getMapY(steer_map, steering);
+    } else {
+        delta = steering * v_params._maxSteer;
+    }
+
+    double _fx, _fy;
+
+    // left front
+    _fx = tirelf_st._fx * std::cos(delta) - tirelf_st._fy * std::sin(delta);
+    _fy = tirelf_st._fx * std::sin(delta) + tirelf_st._fy * std::cos(delta);
+    tirelf_st._fx = _fx;
+    tirelf_st._fy = _fy;
+
+    // right front
+    _fx = tirerf_st._fx * std::cos(delta) - tirerf_st._fy * std::sin(delta);
+    _fy = tirerf_st._fx * std::sin(delta) + tirerf_st._fy * std::cos(delta);
+    tirerf_st._fx = _fx;
+    tirerf_st._fy = _fy;
+
+    // rear tires - No steer so no need to transform
+}
+
+void d18::tireToVehTransform(TMeasyNrState& tirelf_st,
+                             TMeasyNrState& tirerf_st,
+                             TMeasyNrState& tirelr_st,
+                             TMeasyNrState& tirerr_st,
                              const VehicleState& v_states,
                              const VehicleParam& v_params,
                              double steering) {
@@ -153,6 +229,14 @@ void d18::tireToVehTransform(TMeasyState& tirelf_st,
 
 // Code for the TM easy tire model implemented with the 8DOF model
 void d18::tireInit(TMeasyParam& t_params) {
+    // calculates some critical values that are needed
+    t_params._fzRdynco = (t_params._pn * (t_params._rdyncoP2n - 2.0 * t_params._rdyncoPn + 1.)) /
+                         (2. * (t_params._rdyncoP2n - t_params._rdyncoPn));
+
+    t_params._rdyncoCrit = InterpL(t_params._fzRdynco, t_params._rdyncoPn, t_params._rdyncoP2n, t_params._pn);
+}
+
+void d18::tireInit(TMeasyNrParam& t_params) {
     // calculates some critical values that are needed
     t_params._fzRdynco = (t_params._pn * (t_params._rdyncoP2n - 2.0 * t_params._rdyncoPn + 1.)) /
                          (2. * (t_params._rdyncoP2n - t_params._rdyncoPn));
@@ -203,10 +287,62 @@ void d18::tmxy_combined(double& f, double& fos, double s, double df0, double sm,
     }
 }
 
+void d18::computeCombinedColumbForce(double& fx,
+                                     double& fy,
+                                     double mu,
+                                     const TMeasyNrState& t_states,
+                                     const TMeasyNrParam& t_params) {
+    fx = tanh(-2.0 * t_states._vsx / t_params._vcoulomb) * t_states._fz * mu;
+    fy = tanh(-2.0 * t_states._vsy / t_params._vcoulomb) * t_states._fz * mu;
+
+    // Nromalize F to the circle
+    if (std::hypot(fx, fy) > t_states._fz * mu) {
+        double f = t_states._fz * mu / std::hypot(fx, fy);
+        fx *= f;
+        fy *= f;
+    }
+}
+
 void d18::computeTireLoads(std::vector<double>& loads,
                            const VehicleState& v_states,
                            const VehicleParam& v_params,
                            const TMeasyParam& t_params) {
+    double huf = t_params._r0;
+    double hur = t_params._r0;
+
+    double Z1 = (v_params._m * G * v_params._b) / (2. * (v_params._a + v_params._b)) + (v_params._muf * G) / 2.;
+
+    double Z2 = ((v_params._muf * huf) / v_params._cf + v_params._m * v_params._b * (v_params._h - v_params._hrcf) /
+                                                            (v_params._cf * (v_params._a + v_params._b))) *
+                (v_states._vdot + v_states._wz * v_states._u);
+
+    double Z3 = (v_params._krof * v_states._phi + v_params._brof * v_states._wx) / v_params._cf;
+
+    double Z4 = ((v_params._m * v_params._h + v_params._muf * huf + v_params._mur * hur) *
+                 (v_states._udot - v_states._wz * v_states._v)) /
+                (2. * (v_params._a + v_params._b));
+
+    // evaluate the vertical forces for front
+    loads[0] = (Z1 - Z2 - Z3 - Z4) > 0. ? (Z1 - Z2 - Z3 - Z4) : 0.;  // lf
+    loads[1] = (Z1 + Z2 + Z3 - Z4) > 0. ? (Z1 + Z2 + Z3 - Z4) : 0.;  // rf
+
+    Z1 = (v_params._m * G * v_params._a) / (2. * (v_params._a + v_params._b)) + (v_params._mur * G) / 2.;
+
+    Z2 = ((v_params._mur * hur) / v_params._cr +
+          v_params._m * v_params._a * (v_params._h - v_params._hrcr) / (v_params._cr * (v_params._a + v_params._b))) *
+         (v_states._vdot + v_states._wz * v_states._u);
+
+    Z3 = (v_params._kror * v_states._phi + v_params._bror * v_states._wx) / v_params._cr;
+
+    // evaluate vertical forces for the rear
+    loads[2] = (Z1 - Z2 - Z3 + Z4) > 0. ? (Z1 - Z2 - Z3 + Z4) : 0.;  // lr
+    loads[3] = (Z1 + Z2 + Z3 + Z4) > 0. ? (Z1 + Z2 + Z3 + Z4) : 0.;  // rr
+}
+
+void d18::computeTireLoads(std::vector<double>& loads,
+                           const VehicleState& v_states,
+                           const VehicleParam& v_params,
+                           const TMeasyNrParam& t_params) {
     double huf = t_params._r0;
     double hur = t_params._r0;
 
@@ -398,6 +534,137 @@ void d18::computeTireRHS(TMeasyState& t_states,
     // now finally get the resultant force
     t_states._fx = weightx * fxstr + (1. - weightx) * fxdyn;
     t_states._fy = weighty * fystr + (1. - weighty) * fydyn;
+}
+
+void d18::computeTireRHS(TMeasyNrState& t_states,
+                         const TMeasyNrParam& t_params,
+                         const VehicleParam& v_params,
+                         double steering) {
+    double delta = 0;
+    if (v_params._nonLinearSteer) {
+        // Extract steer map
+        std::vector<MapEntry> steer_map = v_params._steerMap;
+        delta = getMapY(steer_map, steering);
+    } else {
+        delta = steering * v_params._maxSteer;
+    }
+
+    // Get the whichTire based variables out of the way
+    double fz = t_states._fz;    // vertical force
+    double vsy = t_states._vsy;  // y slip velocity
+    double vsx = t_states._vsx;  // x slip velocity
+
+    // If the wheel is off contact, set all states to 0 and return
+    if (fz <= 0) {
+        t_states._omega = 0;
+        t_states._xt = 0;
+        t_states._rStat = t_params._r0;
+        t_states._fx = 0;
+        t_states._fy = 0;
+        t_states._My = 0;
+        return;
+    }
+
+    double r_eff;
+    double rdynco;
+    if (fz <= t_params._fzRdynco) {
+        rdynco = InterpL(fz, t_params._rdyncoPn, t_params._rdyncoP2n, t_params._pn);
+        r_eff = rdynco * t_params._r0 + (1. - rdynco) * t_states._rStat;
+    } else {
+        rdynco = t_params._rdyncoCrit;
+        r_eff = rdynco * t_params._r0 + (1. - rdynco) * t_states._rStat;
+    }
+
+    // with this r_eff, we can finalize the x slip velocity
+    vsx = vsx - (t_states._omega * r_eff);
+
+    // get the transport velocity - 0.01 here is to prevent singularity
+    double vta = r_eff * std::abs(t_states._omega) + 0.01;
+
+    // evaluate the slips
+    double sx = -vsx / vta;
+    double alpha;
+    // only front wheel steering
+    alpha = std::atan2(vsy, vta) - delta;
+    double sy = -std::tan(alpha);
+
+    // limit fz
+    if (fz > t_params._pnmax) {
+        fz = t_params._pnmax;
+    }
+
+    // calculate all curve parameters through interpolation
+    double dfx0 = InterpQ(fz, t_params._dfx0Pn, t_params._dfx0P2n, t_params._pn);
+    double dfy0 = InterpQ(fz, t_params._dfy0Pn, t_params._dfy0P2n, t_params._pn);
+
+    double fxm = InterpQ(fz, t_params._fxmPn, t_params._fxmP2n, t_params._pn);
+    double fym = InterpQ(fz, t_params._fymPn, t_params._fymP2n, t_params._pn);
+
+    double fxs = InterpQ(fz, t_params._fxsPn, t_params._fxsP2n, t_params._pn);
+    double fys = InterpQ(fz, t_params._fysPn, t_params._fysP2n, t_params._pn);
+
+    double sxm = InterpL(fz, t_params._sxmPn, t_params._sxmP2n, t_params._pn);
+    double sym = InterpL(fz, t_params._symPn, t_params._symP2n, t_params._pn);
+
+    double sxs = InterpL(fz, t_params._sxsPn, t_params._sxsP2n, t_params._pn);
+    double sys = InterpL(fz, t_params._sysPn, t_params._sysP2n, t_params._pn);
+
+    // Compute the combined column force (used for low speed stability)
+    double Fx0 = 0;
+    double Fy0 = 0;
+    computeCombinedColumbForce(Fx0, Fy0, t_params._mu, t_states, t_params);
+
+    // Compute the coefficient to "blend" the columb force with the slip force
+    double frblend = sineStep(std::abs(vsx), t_params._frblend_begin, 1., t_params._frblend_end, 0.);
+
+    // Now standard TMeasy tire forces
+    // For now, not using any normalization of the slips - similar to Chrono implementation
+    double sc = std::hypot(sx, sy);
+    double salpha = 0;
+    double calpha = 0;
+    if (sc > 0) {
+        calpha = sx / sc;
+        salpha = sy / sc;
+    } else {
+        calpha = std::sqrt(2.) / 2.;
+        salpha = std::sqrt(2.) / 2.;
+    }
+
+    // resultant curve parameters in both directions
+    double df0 = std::hypot(dfx0 * calpha, dfy0 * salpha);
+    double fm = std::hypot(fxm * calpha, fym * salpha);
+    double sm = std::hypot(sxm * calpha, sym * salpha);
+    double fs = std::hypot(fxs * calpha, fys * salpha);
+    double ss = std::hypot(sxs * calpha, sys * salpha);
+
+    double f, fos;
+    tmxy_combined(f, fos, sc, df0, sm, fm, ss, fs);
+
+    // static or "structural" force
+    double Fx, Fy;
+    if (sc > 0.) {
+        Fx = f * sx / sc;
+        Fy = f * sy / sc;
+    } else {
+        Fx = 0.;
+        Fy = 0.;
+    }
+
+    // Now that we have both the columb force and the slip force, we can combine them with the sine blend to prevent
+    // force jumping
+
+    Fx = (1.0 - frblend) * Fx0 + frblend * Fx;
+    Fy = (1.0 - frblend) * Fy0 + frblend * Fy;
+
+    // rolling resistance with smoothing -> Below we don't add any smoothing
+    double vx_min = 0.;
+    double vx_max = 0.;
+
+    t_states._My = -sineStep(vta, vx_min, 0., vx_max, 1.) * t_params._rr * fz * t_states._rStat * sgn(t_states._omega);
+
+    // Set the tire forces
+    t_states._fx = Fx;
+    t_states._fy = Fy;
 }
 
 void d18::computePowertrainRHS(VehicleState& v_states,
@@ -636,65 +903,6 @@ void d18::computeVehRHS(VehicleState& v_states,
     // sketchy load transfer technique
 }
 
-// setting Tire parameters using a JSON file
-void d18::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
-    // Open the file
-    FILE* fp = fopen(fileName, "r");
-
-    char readBuffer[32768];
-    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
-
-    // parse the stream into DOM tree
-    rapidjson::Document d;
-    d.ParseStream(is);
-    fclose(fp);
-
-    if (d.HasParseError()) {
-        std::cout << "Error with rapidjson:" << std::endl << d.GetParseError() << std::endl;
-    }
-
-    // pray to what ever you believe in and hope that the json file has all
-    // these
-    t_params._jw = d["jw"].GetDouble();
-    t_params._rr = d["rr"].GetDouble();
-    t_params._r0 = d["r0"].GetDouble();
-    t_params._pn = d["pn"].GetDouble();
-    t_params._pnmax = d["pnmax"].GetDouble();
-    t_params._cx = d["cx"].GetDouble();
-    t_params._cy = d["cy"].GetDouble();
-    t_params._kt = d["kt"].GetDouble();
-    t_params._dx = d["dx"].GetDouble();
-    t_params._dy = d["dy"].GetDouble();
-    t_params._rdyncoPn = d["rdyncoPn"].GetDouble();
-    t_params._rdyncoP2n = d["rdyncoP2n"].GetDouble();
-    t_params._fzRdynco = d["fzRdynco"].GetDouble();
-    t_params._rdyncoCrit = d["rdyncoCrit"].GetDouble();
-
-    t_params._dfx0Pn = d["dfx0Pn"].GetDouble();
-    t_params._dfx0P2n = d["dfx0P2n"].GetDouble();
-    t_params._fxmPn = d["fxmPn"].GetDouble();
-    t_params._fxmP2n = d["fxmP2n"].GetDouble();
-    t_params._fxsPn = d["fxsPn"].GetDouble();
-    t_params._fxsP2n = d["fxsP2n"].GetDouble();
-    t_params._sxmPn = d["sxmPn"].GetDouble();
-    t_params._sxmP2n = d["sxmP2n"].GetDouble();
-    t_params._sxsPn = d["sxsPn"].GetDouble();
-    t_params._sxsP2n = d["sxsP2n"].GetDouble();
-
-    t_params._dfy0Pn = d["dfy0Pn"].GetDouble();
-    t_params._dfy0P2n = d["dfy0P2n"].GetDouble();
-    t_params._fymPn = d["fymPn"].GetDouble();
-    t_params._fymP2n = d["fymP2n"].GetDouble();
-    t_params._fysPn = d["fysPn"].GetDouble();
-    t_params._fysP2n = d["fysP2n"].GetDouble();
-    t_params._symPn = d["symPn"].GetDouble();
-    t_params._symP2n = d["symP2n"].GetDouble();
-    t_params._sysPn = d["sysPn"].GetDouble();
-    t_params._sysP2n = d["sysP2n"].GetDouble();
-
-    t_params._step = d["step"].GetDouble();
-}
-
 // ---------------------------------------------------------
 // Setting the tire and vehicle parameters from the JSON file
 // ---------------------------------------------------------
@@ -834,4 +1042,396 @@ void d18::setVehParamsJSON(VehicleParam& v_params, const char* fileName) {
         v_params._driveType = d["4wd"].GetBool();
         v_params._whichWheels = d["rearWheels"].GetBool();  // 1 for rear wheels 0 for front wheels
     }
+}
+
+// setting Tire parameters using a JSON file
+void d18::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
+    // Open the file
+    FILE* fp = fopen(fileName, "r");
+
+    char readBuffer[32768];
+    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+
+    // parse the stream into DOM tree
+    rapidjson::Document d;
+    d.ParseStream(is);
+    fclose(fp);
+
+    if (d.HasParseError()) {
+        std::cout << "Error with rapidjson:" << std::endl << d.GetParseError() << std::endl;
+    }
+
+    // pray to what ever you believe in and hope that the json file has all
+    // these
+    t_params._jw = d["jw"].GetDouble();
+    t_params._rr = d["rr"].GetDouble();
+    t_params._r0 = d["r0"].GetDouble();
+    t_params._pn = d["pn"].GetDouble();
+    t_params._pnmax = d["pnmax"].GetDouble();
+    t_params._cx = d["cx"].GetDouble();
+    t_params._cy = d["cy"].GetDouble();
+    t_params._kt = d["kt"].GetDouble();
+    t_params._dx = d["dx"].GetDouble();
+    t_params._dy = d["dy"].GetDouble();
+    t_params._rdyncoPn = d["rdyncoPn"].GetDouble();
+    t_params._rdyncoP2n = d["rdyncoP2n"].GetDouble();
+    t_params._fzRdynco = d["fzRdynco"].GetDouble();
+    t_params._rdyncoCrit = d["rdyncoCrit"].GetDouble();
+
+    t_params._dfx0Pn = d["dfx0Pn"].GetDouble();
+    t_params._dfx0P2n = d["dfx0P2n"].GetDouble();
+    t_params._fxmPn = d["fxmPn"].GetDouble();
+    t_params._fxmP2n = d["fxmP2n"].GetDouble();
+    t_params._fxsPn = d["fxsPn"].GetDouble();
+    t_params._fxsP2n = d["fxsP2n"].GetDouble();
+    t_params._sxmPn = d["sxmPn"].GetDouble();
+    t_params._sxmP2n = d["sxmP2n"].GetDouble();
+    t_params._sxsPn = d["sxsPn"].GetDouble();
+    t_params._sxsP2n = d["sxsP2n"].GetDouble();
+
+    t_params._dfy0Pn = d["dfy0Pn"].GetDouble();
+    t_params._dfy0P2n = d["dfy0P2n"].GetDouble();
+    t_params._fymPn = d["fymPn"].GetDouble();
+    t_params._fymP2n = d["fymP2n"].GetDouble();
+    t_params._fysPn = d["fysPn"].GetDouble();
+    t_params._fysP2n = d["fysP2n"].GetDouble();
+    t_params._symPn = d["symPn"].GetDouble();
+    t_params._symP2n = d["symP2n"].GetDouble();
+    t_params._sysPn = d["sysPn"].GetDouble();
+    t_params._sysP2n = d["sysP2n"].GetDouble();
+
+    t_params._step = d["step"].GetDouble();
+}
+
+// setting Tire parameters using a JSON file for a TMeasyNr
+void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
+    // Open the file
+    FILE* fp = fopen(fileName, "r");
+
+    char readBuffer[32768];
+    rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
+
+    // parse the stream into DOM tree
+    rapidjson::Document d;
+    d.ParseStream(is);
+    fclose(fp);
+
+    if (d.HasParseError()) {
+        std::cout << "Error with rapidjson:" << std::endl << d.GetParseError() << std::endl;
+    }
+
+    // First check if the user wants to specify high-level tire parameters or low level
+    // Check if there is a member called "highLevelParams", if it does not exist, then we assume the user specifies low
+    // level parameters
+    if (d.HasMember("highLevelParams")) {
+        if (d["highLevelParams"].GetBool()) {
+            // Set basic desing parameters
+            t_params._jw = d["jw"].GetDouble();
+            t_params._rr = d["rr"].GetDouble();
+            t_params._mu = d["mu"].GetDouble();
+            t_params._r0 = d["r0"].GetDouble();
+            t_params._rdyncoPn = d["rdyncoPn"].GetDouble();
+            t_params._rdyncoP2n = d["rdyncoP2n"].GetDouble();
+            t_params._fzRdynco = d["fzRdynco"].GetDouble();
+            t_params._rdyncoCrit = d["rdyncoCrit"].GetDouble();
+
+            // Some very specific parameters that the user might not want to define, set to default otherwise
+            if (d.HasMember("vCoulomb")) {
+                t_params._vcoulomb = d["vCoulomb"].GetDouble();
+            } else {
+                t_params._vcoulomb = 1.0;
+            }
+            if (d.HasMember("frblendBegin")) {
+                t_params._frblend_begin = d["frblendBegin"].GetDouble();
+            } else {
+                t_params._frblend_begin = 1.0;
+            }
+            if (d.HasMember("frblendEnd")) {
+                t_params._frblend_end = d["frblendEnd"].GetDouble();
+            } else {
+                t_params._frblend_end = 3.0;
+            }
+
+            // Get the high level parameters from the JSON file
+            double width = d["width"].GetDouble();
+            double rimRadius = d["rimRadius"].GetDouble();
+            double p_li = 1.0;   // Inflation pressure at load index [Pa]
+            double p_use = 1.0;  // Inflation pressure at use time [Pa]
+            // Tire can either be specified with load index or bearing capacity
+            if (d.HasMember("loadIndex")) {
+                // Information about tire inflation pressure might be present if the user wants to use the inflation
+                if (d.HasMember("inflationPressureDesign")) {
+                    p_li = d["inflationPressureDesign"].GetDouble();
+                } else {
+                    p_li = 0.0;
+                }
+                if (d.HasMember("inflationPressureUse")) {
+                    p_use = d["inflationPressureUse"].GetDouble();
+                } else {
+                    p_use = 0.0;
+                }
+                if (p_use > 0.0 && p_li > 0.0) {
+                    ////pressure_info_found = true;
+                } else {
+                    p_li = p_use = 1.0;
+                }
+
+                unsigned int li = d["Load Index"].GetUint();
+                std::string vehicle_type = d["VehicleType"].GetString();
+                if (vehicle_type.compare("Truck") == 0) {
+                    GuessTruck80Par(li, width, (t_params._r0 - rimRadius) / width, 2 * rimRadius, p_li, p_use,
+                                    t_params);
+                } else {
+                    GuessPassCar70Par(li, width, (t_params._r0 - rimRadius) / width, 2 * rimRadius, p_li, p_use,
+                                      t_params);
+                }
+            } else {  // if it does not have load index, it has to have maximum bearing capacity
+                      // Information about tire inflation pressure might be present if the user wants to use the
+                      // inflation
+                if (d.HasMember("inflationPressureDesign")) {
+                    p_li = d["inflationPressureDesign"].GetDouble();
+                } else {
+                    p_li = 0.0;
+                }
+                if (d.HasMember("inflationPressureUse")) {
+                    p_use = d["inflationPressureUse"].GetDouble();
+                } else {
+                    p_use = 0.0;
+                }
+                if (p_use > 0.0 && p_li > 0.0) {
+                    ////pressure_info_found = true;
+                } else {
+                    p_li = p_use = 1.0;
+                }
+                double bearing_capacity = d["maximumBearingCapacity"].GetDouble();
+                std::string vehicle_type = d["vehicleType"].GetString();
+                if (vehicle_type.compare("Truck") == 0) {
+                    GuessTruck80Par(bearing_capacity, width, (t_params._r0 - rimRadius) / width, 2 * rimRadius, p_li,
+                                    p_use, t_params);
+                } else {
+                    GuessPassCar70Par(bearing_capacity, width, (t_params._r0 - rimRadius) / width, 2 * rimRadius, p_li,
+                                      p_use, t_params);
+                }
+            }
+
+        } else {  // If high level params is false, then user should have provided the low level params
+            t_params._jw = d["jw"].GetDouble();
+            t_params._rr = d["rr"].GetDouble();
+            t_params._r0 = d["r0"].GetDouble();
+            t_params._pn = d["pn"].GetDouble();
+            t_params._pnmax = d["pnmax"].GetDouble();
+            t_params._kt = d["kt"].GetDouble();
+            t_params._rdyncoPn = d["rdyncoPn"].GetDouble();
+            t_params._rdyncoP2n = d["rdyncoP2n"].GetDouble();
+            t_params._fzRdynco = d["fzRdynco"].GetDouble();
+            t_params._rdyncoCrit = d["rdyncoCrit"].GetDouble();
+
+            t_params._dfx0Pn = d["dfx0Pn"].GetDouble();
+            t_params._dfx0P2n = d["dfx0P2n"].GetDouble();
+            t_params._fxmPn = d["fxmPn"].GetDouble();
+            t_params._fxmP2n = d["fxmP2n"].GetDouble();
+            t_params._fxsPn = d["fxsPn"].GetDouble();
+            t_params._fxsP2n = d["fxsP2n"].GetDouble();
+            t_params._sxmPn = d["sxmPn"].GetDouble();
+            t_params._sxmP2n = d["sxmP2n"].GetDouble();
+            t_params._sxsPn = d["sxsPn"].GetDouble();
+            t_params._sxsP2n = d["sxsP2n"].GetDouble();
+
+            t_params._dfy0Pn = d["dfy0Pn"].GetDouble();
+            t_params._dfy0P2n = d["dfy0P2n"].GetDouble();
+            t_params._fymPn = d["fymPn"].GetDouble();
+            t_params._fymP2n = d["fymP2n"].GetDouble();
+            t_params._fysPn = d["fysPn"].GetDouble();
+            t_params._fysP2n = d["fysP2n"].GetDouble();
+            t_params._symPn = d["symPn"].GetDouble();
+            t_params._symP2n = d["symP2n"].GetDouble();
+            t_params._sysPn = d["sysPn"].GetDouble();
+            t_params._sysP2n = d["sysP2n"].GetDouble();
+        }
+
+    } else {
+        t_params._jw = d["jw"].GetDouble();
+        t_params._rr = d["rr"].GetDouble();
+        t_params._r0 = d["r0"].GetDouble();
+        t_params._pn = d["pn"].GetDouble();
+        t_params._pnmax = d["pnmax"].GetDouble();
+        t_params._kt = d["kt"].GetDouble();
+        t_params._rdyncoPn = d["rdyncoPn"].GetDouble();
+        t_params._rdyncoP2n = d["rdyncoP2n"].GetDouble();
+        t_params._fzRdynco = d["fzRdynco"].GetDouble();
+        t_params._rdyncoCrit = d["rdyncoCrit"].GetDouble();
+
+        t_params._dfx0Pn = d["dfx0Pn"].GetDouble();
+        t_params._dfx0P2n = d["dfx0P2n"].GetDouble();
+        t_params._fxmPn = d["fxmPn"].GetDouble();
+        t_params._fxmP2n = d["fxmP2n"].GetDouble();
+        t_params._fxsPn = d["fxsPn"].GetDouble();
+        t_params._fxsP2n = d["fxsP2n"].GetDouble();
+        t_params._sxmPn = d["sxmPn"].GetDouble();
+        t_params._sxmP2n = d["sxmP2n"].GetDouble();
+        t_params._sxsPn = d["sxsPn"].GetDouble();
+        t_params._sxsP2n = d["sxsP2n"].GetDouble();
+
+        t_params._dfy0Pn = d["dfy0Pn"].GetDouble();
+        t_params._dfy0P2n = d["dfy0P2n"].GetDouble();
+        t_params._fymPn = d["fymPn"].GetDouble();
+        t_params._fymP2n = d["fymP2n"].GetDouble();
+        t_params._fysPn = d["fysPn"].GetDouble();
+        t_params._fysP2n = d["fysP2n"].GetDouble();
+        t_params._symPn = d["symPn"].GetDouble();
+        t_params._symP2n = d["symP2n"].GetDouble();
+        t_params._sysPn = d["sysPn"].GetDouble();
+        t_params._sysP2n = d["sysP2n"].GetDouble();
+    }
+}
+
+// Utility functions that guess the tire parameters for a TMeasy tire based on standard tire specifications that user
+// can get from a spec sheet These functions are directly copy pasted from Chrono with minor modifications
+
+// Function to compute the max tire load from the load index specified by the user
+double d18::GetTireMaxLoad(unsigned int li) {
+    double Weight_per_Tire[] = {
+        45,    46.5,  47.5,   48.7,   50,     51.5,   53,     54.5,   56,     58,     60,     61.5,   63,     65,
+        67,    69,    71,     73,     75,     77.5,   80.0,   82.5,   85.0,   87.5,   90.0,   92.5,   95.0,   97.5,
+        100.0, 103,   106,    109,    112,    115,    118,    121,    125,    128,    132,    136,    140,    145,
+        150,   155,   160,    165,    170,    175,    180,    185,    190,    195,    200,    206,    212,    218,
+        224,   230,   236,    243,    250,    257,    265,    272,    280,    290,    300,    307,    315,    325,
+        335,   345,   355,    365,    375,    387,    400,    412,    425,    437,    450,    462,    475,    487,
+        500,   515,   530,    545,    560,    580,    600,    615,    630,    650,    670,    690,    710,    730,
+        750,   775,   800,    825,    850,    875,    900,    925,    950,    975,    1000,   1030,   1060,   1090,
+        1120,  1150,  1180,   1215,   1250,   1285,   1320,   1360,   1400,   1450,   1500,   1550,   1600,   1650,
+        1700,  1750,  1800,   1850,   1900,   1950,   2000,   2060,   2120,   2180,   2240,   2300,   2360,   2430,
+        2500,  2575,  2650,   2725,   2800,   2900,   3000,   3075,   3150,   3250,   3350,   3450,   3550,   3650,
+        3750,  3875,  4000,   4125,   4250,   4375,   4500,   4625,   4750,   4875,   5000,   5150,   5300,   5450,
+        5600,  5850,  6000,   6150,   6300,   6500,   6700,   6900,   7100,   7300,   7500,   7750,   8000,   8250,
+        8500,  8750,  9000,   9250,   9500,   9750,   10000,  10300,  10600,  10900,  11200,  11500,  11800,  12150,
+        12500, 12850, 13200,  13600,  14000,  14500,  15000,  15550,  16000,  16500,  17000,  17500,  18000,  18500,
+        19000, 19500, 20000,  20600,  21200,  21800,  22400,  23000,  23600,  24300,  25000,  25750,  26500,  27250,
+        28000, 29000, 30000,  30750,  31500,  32500,  33500,  34500,  35500,  36500,  37500,  38750,  40000,  41250,
+        42500, 43750, 45000,  46250,  47500,  48750,  50000,  51500,  53000,  54500,  56000,  58000,  60000,  61500,
+        63000, 65000, 67000,  69000,  71000,  73000,  75000,  77500,  80000,  82500,  85000,  87500,  90000,  92500,
+        95000, 97500, 100000, 103000, 106000, 109000, 112000, 115000, 118000, 121000, 125000, 128500, 132000, 136000};
+
+    unsigned int nw = sizeof(Weight_per_Tire) / sizeof(double);
+    const double g = 9.81;
+    double fmax;
+    if (li < nw) {
+        fmax = Weight_per_Tire[li] * g;
+    } else {
+        fmax = Weight_per_Tire[nw - 1] * g;
+    }
+    return fmax;
+}
+
+// Guessing tire parameters for a truck tire
+void d18::GuessTruck80Par(unsigned int li,          // tire load index
+                          double tireWidth,         // [m]
+                          double ratio,             // [] = use 0.75 meaning 75%
+                          double rimDia,            // rim diameter [m]
+                          double pinfl_li,          // inflation pressure at load index
+                          double pinfl_use,         // inflation pressure in this configuration
+                          TMeasyNrParam& t_params)  // damping ratio
+{
+    double tireLoad = GetTireMaxLoad(li);
+    GuessTruck80Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
+}
+void d18::GuessTruck80Par(double tireLoad,   // tire load index
+                          double tireWidth,  // [m]
+                          double ratio,      // [] = use 0.75 meaning 75%
+                          double rimDia,     // rim diameter [m]
+                          double pinfl_li,   // inflation pressure at load index
+                          double pinfl_use,  // inflation pressure in this configuration
+                          TMeasyNrParam& t_params) {
+    // damping ratio{
+    double secth = tireWidth * ratio;  // tire section height
+    double defl_max = 0.16 * secth;    // deflection at tire payload
+
+    t_params._pn = 0.5 * tireLoad * pow(pinfl_use / pinfl_li, 0.8);
+    t_params._pnmax = 3.5 * t_params._pn;
+
+    double CZ = tireLoad / defl_max;
+
+    t_params._kt = CZ;  // Set the tire vertical stiffness
+
+    t_params._rim_radius = 0.5 * rimDia;
+
+    t_params._width = tireWidth;
+
+    // Normalized Parameters gained from data set containing original data from Pacejka book
+    t_params._dfx0Pn = 17.7764 * t_params._pn;
+    t_params._dfx0P2n = 14.5301 * 2.0 * t_params._pn;
+    t_params._fxmPn = 0.89965 * t_params._pn;
+    t_params._fxmP2n = 0.77751 * 2.0 * t_params._pn;
+    t_params._fxsPn = 0.46183 * t_params._pn;
+    t_params._fxsP2n = 0.42349 * 2.0 * t_params._pn;
+    t_params._sxmPn = 0.10811;
+    t_params._sxmP2n = 0.12389;
+    t_params._sxsPn = 0.66667;
+    t_params._sxsP2n = 0.66667;
+    t_params._dfy0Pn = 7.4013 * t_params._pn;
+    t_params._dfy0P2n = 6.8505 * 2.0 * t_params._pn;
+    t_params._fymPn = 0.75876 * t_params._pn;
+    t_params._fymP2n = 0.72628 * 2.0 * t_params._pn;
+    t_params._fysPn = 0.68276 * t_params._pn;
+    t_params._fysP2n = 0.65319 * 2.0 * t_params._pn;
+    t_params._symPn = 0.33167;
+    t_params._symP2n = 0.33216;
+    t_params._sysPn = 1.0296;
+    t_params._sysP2n = 1.0296;
+}
+
+// Guessing tire parameters for a passenger car
+void d18::GuessPassCar70Par(unsigned int li,          // tire load index
+                            double tireWidth,         // [m]
+                            double ratio,             // [] = use 0.75 meaning 75%
+                            double rimDia,            // rim diameter [m]
+                            double pinfl_li,          // inflation pressure at load index
+                            double pinfl_use,         // inflation pressure in this configuration
+                            TMeasyNrParam& t_params)  // damping ratio
+{
+    double tireLoad = GetTireMaxLoad(li);
+    GuessPassCar70Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
+}
+void d18::GuessPassCar70Par(double tireLoad,            // tire load index
+                            double tireWidth,           // [m]
+                            double ratio,               // [] = use 0.75 meaning 75%
+                            double rimDia,              // rim diameter [m]
+                            double pinfl_li,            // inflation pressure at load index
+                            double pinfl_use,           // inflation pressure in this configuration
+                            TMeasyNrParam& t_params) {  // damping ratio
+    double secth = tireWidth * ratio;                   // tire section height
+    double defl_max = 0.16 * secth;                     // deflection at tire payload
+
+    t_params._pn = 0.5 * tireLoad * pow(pinfl_use / pinfl_li, 0.8);
+    t_params._pnmax = 3.5 * t_params._pn;
+
+    double CZ = tireLoad / defl_max;
+
+    t_params._kt = CZ;  // Set the tire vertical stiffness
+
+    t_params._rim_radius = 0.5 * rimDia;
+
+    t_params._width = tireWidth;
+
+    // Normalized Parameters gained from data set containing original data from Pacejka book
+    t_params._dfx0Pn = 18.3741 * t_params._pn;
+    t_params._dfx0P2n = 19.4669 * 2.0 * t_params._pn;
+    t_params._fxmPn = 1.1292 * t_params._pn;
+    t_params._fxmP2n = 1.0896 * 2.0 * t_params._pn;
+    t_params._fxsPn = 0.80149 * t_params._pn;
+    t_params._fxsP2n = 0.76917 * 2.0 * t_params._pn;
+    t_params._sxmPn = 0.13913;
+    t_params._sxmP2n = 0.13913;
+    t_params._sxsPn = 0.66667;
+    t_params._sxsP2n = 0.66667;
+    t_params._dfy0Pn = 15.9826 * t_params._pn;
+    t_params._dfy0P2n = 12.8509 * 2.0 * t_params._pn;
+    t_params._fymPn = 1.0009 * t_params._pn;
+    t_params._fymP2n = 0.91367 * 2.0 * t_params._pn;
+    t_params._fysPn = 0.8336 * t_params._pn;
+    t_params._fysP2n = 0.77336 * 2.0 * t_params._pn;
+    t_params._symPn = 0.14852;
+    t_params._symP2n = 0.18504;
+    t_params._sysPn = 0.96524;
+    t_params._sysP2n = 1.0714;
 }
