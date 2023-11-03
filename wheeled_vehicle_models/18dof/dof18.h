@@ -323,8 +323,9 @@ struct TMeasyNrParam {
           _sysP2n(0.91309),
           _vcoulomb(1.0),
           _frblend_begin(1.),
-          _frblend_end(3.) {}
-
+          _frblend_end(3.),
+          _bearingCapacity(10000),
+          _li(90) {}
     // copy constructor
     TMeasyNrParam(const TMeasyNrParam& other)
         : _jw(other._jw),
@@ -362,7 +363,9 @@ struct TMeasyNrParam {
           _sysP2n(other._sysP2n),
           _vcoulomb(other._vcoulomb),
           _frblend_begin(other._frblend_begin),
-          _frblend_end(other._frblend_end) {}
+          _frblend_end(other._frblend_end),
+          _bearingCapacity(other._bearingCapacity),
+          _li(other._li) {}
 
     double _jw;          // wheel inertia
     double _rr;          // Rolling Resistance
@@ -392,6 +395,8 @@ struct TMeasyNrParam {
     double _vcoulomb;          // Velocity below which we care about static friction
     double _frblend_begin;     // Beginning of friction blending
     double _frblend_end;       // End of friction blending
+    double _bearingCapacity;   // High level tire parameters that define all other parameters that the user can set
+    double _li;                // Load index
 };
 
 struct TMeasyNrState {
@@ -786,12 +791,7 @@ void tireInit(TMeasyNrParam& t_params);
 void tmxy_combined(double& f, double& fos, double s, double df0, double sm, double fm, double ss, double fs);
 
 // Force function required by the TMeasy tire with no relaxation
-void computeCombinedColumbForce(double& fx,
-                                double& fy,
-                                double mu,
-                                const TMeasyNrState& t_states,
-                                const TMeasyNrParam& t_params);
-
+void computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 // setting tire parameters using a JSON file
 void setTireParamsJSON(TMeasyParam& t_params, const char* fileName);
 // setting tire parameters using a JSON file for the TMeasy NR tire
@@ -824,6 +824,16 @@ void computePowertrainRHS(VehicleState& v_states,
                           const VehicleParam& v_params,
                           const TMeasyParam& t_params,
                           const DriverInput& controls);
+
+void computePowertrainRHS(VehicleState& v_states,
+                          TMeasyNrState& tirelf_st,
+                          TMeasyNrState& tirerf_st,
+                          TMeasyNrState& tirelr_st,
+                          TMeasyNrState& tirerr_st,
+                          const VehicleParam& v_params,
+                          const TMeasyNrParam& t_params,
+                          const DriverInput& controls);
+
 void computeVehRHS(VehicleState& v_states,
                    const VehicleParam& v_params,
                    const std::vector<double>& fx,

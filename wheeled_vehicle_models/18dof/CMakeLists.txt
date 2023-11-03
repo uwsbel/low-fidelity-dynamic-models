@@ -84,12 +84,14 @@ endif()
 # HMMWV demos
 set(HMMWV_PROGRAMS
     demo_hmmwv_hi
+    demo_hmmwvNr_hi
     demo_hmmwv_hi_step
     demo_hmmwv_hi_stepWithJac
 )
 # Sedan demos
 set(SEDAN_PROGRAMS
     demo_sedan_hi
+    demo_sedanNr_hi
 )
 
 # Add sundials demos if required

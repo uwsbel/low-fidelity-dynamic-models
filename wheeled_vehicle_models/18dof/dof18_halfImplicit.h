@@ -15,7 +15,8 @@
 // =============================================================================
 // Define the solver class
 // =============================================================================
-
+// enum to decide what type of tire we have
+enum class TireType { TMeasy, TMeasyNr };
 class d18SolverHalfImplicit {
   public:
     d18SolverHalfImplicit();
@@ -26,9 +27,14 @@ class d18SolverHalfImplicit {
     void Construct(const std::string& veh_params_file,
                    const std::string& tire_params_file,
                    const std::string& driver_file);
+    void Construct(const std::string& vehicle_params_file,
+                   const std::string& tire_params_file,
+                   const std::string& driver_inputs_file,
+                   TireType type);
 
     // Constructor for when a controller is used and we don't have a driver file
     void Construct(const std::string& vehicle_params_file, const std::string& tire_params_file);
+    void Construct(const std::string& vehicle_params_file, const std::string& tire_params_file, TireType type);
 
     // Set the solver time step
     void SetTimeStep(double step) { m_step = step; }
@@ -55,6 +61,11 @@ class d18SolverHalfImplicit {
                     d18::TMeasyState& tire_states_RF,
                     d18::TMeasyState& tire_states_LR,
                     d18::TMeasyState& tire_states_RR);
+    void Initialize(d18::VehicleState& vehicle_states,
+                    d18::TMeasyNrState& tire_states_LF,
+                    d18::TMeasyNrState& tire_states_RF,
+                    d18::TMeasyNrState& tire_states_LR,
+                    d18::TMeasyNrState& tire_states_RR);
 
     double IntegrateStep(double t, double throttle, double steering, double braking);
 
@@ -64,14 +75,24 @@ class d18SolverHalfImplicit {
 
     void WriteToFile();
 
+    // Tire type getter
+    TireType GetTireType() const { return m_tire_type; }
+
     // Vehicle states and tire states
     d18::VehicleState m_veh_state;
-    d18::TMeasyState m_tirelf_state;
-    d18::TMeasyState m_tirerf_state;
-    d18::TMeasyState m_tirelr_state;
-    d18::TMeasyState m_tirerr_state;
-    d18::VehicleParam m_veh_param;  // vehicle parameters
-    d18::TMeasyParam m_tire_param;  // Tire parameters
+    d18::TMeasyState m_tireTMlf_state;
+    d18::TMeasyState m_tireTMrf_state;
+    d18::TMeasyState m_tireTMlr_state;
+    d18::TMeasyState m_tireTMrr_state;
+    d18::VehicleParam m_veh_param;    // vehicle parameters
+    d18::TMeasyParam m_tireTM_param;  // Tire parameters
+
+    // Tire states for the TM easy tire without relaxation
+    d18::TMeasyNrState m_tireTMNrlf_state;
+    d18::TMeasyNrState m_tireTMNrrf_state;
+    d18::TMeasyNrState m_tireTMNrlr_state;
+    d18::TMeasyNrState m_tireTMNrrr_state;
+    d18::TMeasyNrParam m_tireTMNr_param;  // Tire parameters
 
   private:
     void Integrate();
@@ -85,6 +106,8 @@ class d18SolverHalfImplicit {
     // For finite differencing for applications in MPC to perturb either controls or y
     void PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot);
 
+    // variable to store the tire type
+    TireType m_tire_type;
     CSV_writer m_csv;           // CSV writer object
     double m_tend;              // final integration time
     double m_step;              // integration time step
@@ -93,6 +116,8 @@ class d18SolverHalfImplicit {
     double m_dtout;             // time interval between data output
     std::string m_output_file;  // output file path
     DriverData m_driver_data;   // driver inputs
+    int m_num_controls;         // Number of control states for jacobian
+    int m_num_states;           // Number of states for jacobian
 
     // Jacobian matrix incase user needs finite differencing
     std::vector<std::vector<double>> m_jacobian_state;
@@ -130,12 +155,27 @@ void packY(const d18::VehicleState& v_states,
            const d18::TMeasyState& tirerr_st,
            bool has_TC,
            std::vector<double>& y);
+void packY(const d18::VehicleState& v_states,
+           const d18::TMeasyNrState& tirelf_st,
+           const d18::TMeasyNrState& tirerf_st,
+           const d18::TMeasyNrState& tirelr_st,
+           const d18::TMeasyNrState& tirerr_st,
+           bool has_TC,
+           std::vector<double>& y);
 
 void packYDOT(const d18::VehicleState& v_states,
               const d18::TMeasyState& tirelf_st,
               const d18::TMeasyState& tirerf_st,
               const d18::TMeasyState& tirelr_st,
               const d18::TMeasyState& tirerr_st,
+              bool has_TC,
+              std::vector<double>& ydot);
+
+void packYDOT(const d18::VehicleState& v_states,
+              const d18::TMeasyNrState& tirelf_st,
+              const d18::TMeasyNrState& tirerf_st,
+              const d18::TMeasyNrState& tirelr_st,
+              const d18::TMeasyNrState& tirerr_st,
               bool has_TC,
               std::vector<double>& ydot);
 
@@ -146,6 +186,14 @@ void unpackY(const std::vector<double>& y,
              d18::TMeasyState& tirerf_st,
              d18::TMeasyState& tirelr_st,
              d18::TMeasyState& tirerr_st);
+
+void unpackY(const std::vector<double>& y,
+             bool has_TC,
+             d18::VehicleState& v_states,
+             d18::TMeasyNrState& tirelf_st,
+             d18::TMeasyNrState& tirerf_st,
+             d18::TMeasyNrState& tirelr_st,
+             d18::TMeasyNrState& tirerr_st);
 
 #endif
 

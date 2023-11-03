@@ -27,11 +27,42 @@ d18SolverHalfImplicit::~d18SolverHalfImplicit() {}
 void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
                                       const std::string& tire_params_file,
                                       const std::string& driver_inputs_file) {
+    // If there is no tire type specified, then use TMeasy
+    m_tire_type = TireType::TMeasy;
     // Load vehicle and tire parameters
     setVehParamsJSON(m_veh_param, vehicle_params_file.c_str());
-    setTireParamsJSON(m_tire_param, tire_params_file.c_str());
+    setTireParamsJSON(m_tireTM_param, tire_params_file.c_str());
     // Initialize tire parameters that depend on other parameters
-    tireInit(m_tire_param);
+    tireInit(m_tireTM_param);
+
+    // Load driver inputs
+    LoadDriverData(m_driver_data, driver_inputs_file);
+
+    // Set the final integration time
+    m_tend = m_driver_data.back().m_time;
+}
+/// @brief Construct the the solver using path to vehicle parameters, tire parameters, and driver inputs
+/// @param vehicle_params_file Path to the vehicle parameter json file
+/// @param tire_params_file Path to the tire parameter json file
+/// @param driver_inputs_file Path to the driver inputs text file
+/// @param type Tire type to use - TMeasy or TMeasyNR
+void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
+                                      const std::string& tire_params_file,
+                                      const std::string& driver_inputs_file,
+                                      TireType type) {
+    // If there is no tire type specified
+    m_tire_type = type;
+    // Load vehicle and tire parameters
+    setVehParamsJSON(m_veh_param, vehicle_params_file.c_str());
+    if (m_tire_type == TireType::TMeasy) {
+        setTireParamsJSON(m_tireTM_param, tire_params_file.c_str());
+        // Initialize tire parameters that depend on other parameters
+        tireInit(m_tireTM_param);
+    } else {
+        setTireParamsJSON(m_tireTMNr_param, tire_params_file.c_str());
+        // Initialize tire parameters that depend on other parameters
+        tireInit(m_tireTMNr_param);
+    }
 
     // Load driver inputs
     LoadDriverData(m_driver_data, driver_inputs_file);
@@ -42,11 +73,30 @@ void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
 
 // Overload for situations when a controller is used and we don't have a driver data file
 void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file, const std::string& tire_params_file) {
+    m_tire_type = TireType::TMeasy;
     // Load vehicle and tire parameters
     setVehParamsJSON(m_veh_param, vehicle_params_file.c_str());
-    setTireParamsJSON(m_tire_param, tire_params_file.c_str());
+    setTireParamsJSON(m_tireTM_param, tire_params_file.c_str());
     // Initialize tire parameters that depend on other parameters
-    tireInit(m_tire_param);
+    tireInit(m_tireTM_param);
+}
+
+void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
+                                      const std::string& tire_params_file,
+                                      TireType type) {
+    // If there is no tire type specified
+    m_tire_type = type;
+    // Load vehicle and tire parameters
+    setVehParamsJSON(m_veh_param, vehicle_params_file.c_str());
+    if (m_tire_type == TireType::TMeasy) {
+        setTireParamsJSON(m_tireTM_param, tire_params_file.c_str());
+        // Initialize tire parameters that depend on other parameters
+        tireInit(m_tireTM_param);
+    } else {
+        setTireParamsJSON(m_tireTMNr_param, tire_params_file.c_str());
+        // Initialize tire parameters that depend on other parameters
+        tireInit(m_tireTMNr_param);
+    }
 }
 // ======================================================================================================================
 
@@ -63,18 +113,46 @@ void d18SolverHalfImplicit::Initialize(d18::VehicleState& vehicle_states,
                                        d18::TMeasyState& tire_states_LR,
                                        d18::TMeasyState& tire_states_RR) {
     m_veh_state = vehicle_states;
-    m_tirelf_state = tire_states_LF;
-    m_tirerf_state = tire_states_RF;
-    m_tirelr_state = tire_states_LR;
-    m_tirerr_state = tire_states_RR;
+    m_tireTMlf_state = tire_states_LF;
+    m_tireTMrf_state = tire_states_RF;
+    m_tireTMlr_state = tire_states_LR;
+    m_tireTMrr_state = tire_states_RR;
 
     // Size the jacobian matrices - size relies on the torque converter bool
+    m_num_controls = 2;
     if (m_veh_param._tcbool) {
-        m_jacobian_state.resize(21, std::vector<double>(21, 0));
-        m_jacobian_controls.resize(21, std::vector<double>(2, 0));
+        m_num_states = 21;
+        m_jacobian_state.resize(m_num_states, std::vector<double>(m_num_states, 0));
+        m_jacobian_controls.resize(m_num_states, std::vector<double>(m_num_controls, 0));
     } else {
-        m_jacobian_state.resize(20, std::vector<double>(20, 0));
-        m_jacobian_controls.resize(20, std::vector<double>(2, 0));
+        m_num_states = 20;
+        m_jacobian_state.resize(m_num_states, std::vector<double>(m_num_states, 0));
+        m_jacobian_controls.resize(m_num_states, std::vector<double>(m_num_controls, 0));
+    }
+}
+
+// TMeasy without relaxation does not have tire states and so the jacobian size reduces by 8
+void d18SolverHalfImplicit::Initialize(d18::VehicleState& vehicle_states,
+                                       d18::TMeasyNrState& tire_states_LF,
+                                       d18::TMeasyNrState& tire_states_RF,
+                                       d18::TMeasyNrState& tire_states_LR,
+                                       d18::TMeasyNrState& tire_states_RR) {
+    m_veh_state = vehicle_states;
+    m_tireTMNrlf_state = tire_states_LF;
+    m_tireTMNrrf_state = tire_states_RF;
+    m_tireTMNrlr_state = tire_states_LR;
+    m_tireTMNrrr_state = tire_states_RR;
+
+    // Size the jacobian matrices - size relies on the torque converter bool
+    m_num_controls = 2;
+    if (m_veh_param._tcbool) {
+        m_num_states = 13;
+        m_jacobian_state.resize(m_num_states, std::vector<double>(m_num_states, 0));
+        m_jacobian_controls.resize(m_num_states, std::vector<double>(m_num_controls, 0));
+    } else {
+        m_num_states = 12;
+        m_jacobian_state.resize(m_num_states, std::vector<double>(m_num_states, 0));
+        m_jacobian_controls.resize(m_num_states, std::vector<double>(m_num_controls, 0));
     }
 }
 
@@ -118,23 +196,35 @@ void d18SolverHalfImplicit::Integrate() {
         // Integrate according to half implicit method for second order states
         // Integrate according to explicit method for first order states
 
-        // First the tire states
-        // LF
-        m_tirelf_state._xe += m_tirelf_state._xedot * m_step;
-        m_tirelf_state._ye += m_tirelf_state._yedot * m_step;
-        m_tirelf_state._omega += m_tirelf_state._dOmega * m_step;
-        // RF
-        m_tirerf_state._xe += m_tirerf_state._xedot * m_step;
-        m_tirerf_state._ye += m_tirerf_state._yedot * m_step;
-        m_tirerf_state._omega += m_tirerf_state._dOmega * m_step;
-        // LR
-        m_tirelr_state._xe += m_tirelr_state._xedot * m_step;
-        m_tirelr_state._ye += m_tirelr_state._yedot * m_step;
-        m_tirelr_state._omega += m_tirelr_state._dOmega * m_step;
-        // RR
-        m_tirerr_state._xe += m_tirerr_state._xedot * m_step;
-        m_tirerr_state._ye += m_tirerr_state._yedot * m_step;
-        m_tirerr_state._omega += m_tirerr_state._dOmega * m_step;
+        if (m_tire_type == TireType::TMeasy) {  // Only TM easy has xe and ye states
+            // First the tire states
+            // LF
+            m_tireTMlf_state._xe += m_tireTMlf_state._xedot * m_step;
+            m_tireTMlf_state._ye += m_tireTMlf_state._yedot * m_step;
+            m_tireTMlf_state._omega += m_tireTMlf_state._dOmega * m_step;
+            // RF
+            m_tireTMrf_state._xe += m_tireTMrf_state._xedot * m_step;
+            m_tireTMrf_state._ye += m_tireTMrf_state._yedot * m_step;
+            m_tireTMrf_state._omega += m_tireTMrf_state._dOmega * m_step;
+            // LR
+            m_tireTMlr_state._xe += m_tireTMlr_state._xedot * m_step;
+            m_tireTMlr_state._ye += m_tireTMlr_state._yedot * m_step;
+            m_tireTMlr_state._omega += m_tireTMlr_state._dOmega * m_step;
+            // RR
+            m_tireTMrr_state._xe += m_tireTMrr_state._xedot * m_step;
+            m_tireTMrr_state._ye += m_tireTMrr_state._yedot * m_step;
+            m_tireTMrr_state._omega += m_tireTMrr_state._dOmega * m_step;
+        } else {  // Other tires have only omega states
+            // First the tire states
+            // LF
+            m_tireTMNrlf_state._omega += m_tireTMNrlf_state._dOmega * m_step;
+            // RF
+            m_tireTMNrrf_state._omega += m_tireTMNrrf_state._dOmega * m_step;
+            // LR
+            m_tireTMNrlr_state._omega += m_tireTMNrlr_state._dOmega * m_step;
+            // RR
+            m_tireTMNrrr_state._omega += m_tireTMNrrr_state._dOmega * m_step;
+        }
 
         // Now the vehicle states
         if (m_veh_param._tcbool) {
@@ -193,23 +283,35 @@ double d18SolverHalfImplicit::IntegrateStep(double t, double throttle, double st
     // Integrate according to half implicit method for second order states
     // Integrate according to explicit method for first order states
 
-    // First the tire states
-    // LF
-    m_tirelf_state._xe += m_tirelf_state._xedot * m_step;
-    m_tirelf_state._ye += m_tirelf_state._yedot * m_step;
-    m_tirelf_state._omega += m_tirelf_state._dOmega * m_step;
-    // RF
-    m_tirerf_state._xe += m_tirerf_state._xedot * m_step;
-    m_tirerf_state._ye += m_tirerf_state._yedot * m_step;
-    m_tirerf_state._omega += m_tirerf_state._dOmega * m_step;
-    // LR
-    m_tirelr_state._xe += m_tirelr_state._xedot * m_step;
-    m_tirelr_state._ye += m_tirelr_state._yedot * m_step;
-    m_tirelr_state._omega += m_tirelr_state._dOmega * m_step;
-    // RR
-    m_tirerr_state._xe += m_tirerr_state._xedot * m_step;
-    m_tirerr_state._ye += m_tirerr_state._yedot * m_step;
-    m_tirerr_state._omega += m_tirerr_state._dOmega * m_step;
+    if (m_tire_type == TireType::TMeasy) {  // Only TM easy has xe and ye states
+        // First the tire states
+        // LF
+        m_tireTMlf_state._xe += m_tireTMlf_state._xedot * m_step;
+        m_tireTMlf_state._ye += m_tireTMlf_state._yedot * m_step;
+        m_tireTMlf_state._omega += m_tireTMlf_state._dOmega * m_step;
+        // RF
+        m_tireTMrf_state._xe += m_tireTMrf_state._xedot * m_step;
+        m_tireTMrf_state._ye += m_tireTMrf_state._yedot * m_step;
+        m_tireTMrf_state._omega += m_tireTMrf_state._dOmega * m_step;
+        // LR
+        m_tireTMlr_state._xe += m_tireTMlr_state._xedot * m_step;
+        m_tireTMlr_state._ye += m_tireTMlr_state._yedot * m_step;
+        m_tireTMlr_state._omega += m_tireTMlr_state._dOmega * m_step;
+        // RR
+        m_tireTMrr_state._xe += m_tireTMrr_state._xedot * m_step;
+        m_tireTMrr_state._ye += m_tireTMrr_state._yedot * m_step;
+        m_tireTMrr_state._omega += m_tireTMrr_state._dOmega * m_step;
+    } else {  // Other tires have only omega states
+        // First the tire states
+        // LF
+        m_tireTMNrlf_state._omega += m_tireTMNrlf_state._dOmega * m_step;
+        // RF
+        m_tireTMNrrf_state._omega += m_tireTMNrrf_state._dOmega * m_step;
+        // LR
+        m_tireTMNrlr_state._omega += m_tireTMNrlr_state._dOmega * m_step;
+        // RR
+        m_tireTMNrrr_state._omega += m_tireTMNrrr_state._dOmega * m_step;
+    }
 
     // Now the vehicle states
     if (m_veh_param._tcbool) {
@@ -243,7 +345,7 @@ double d18SolverHalfImplicit::IntegrateStep(double t, double throttle, double st
 }
 // ======================================================================================================================
 /// @brief Function call to integrate by just a single time step with jacobian computation. The order of the states in
-// the jacobian matrix is as follows:
+// the jacobian matrix if the TMeasy tire is used are is as follows:
 //  0: tirelf_st._xe;
 //  1: tirelf_st._ye;
 //  2: tirerf_st._xe;
@@ -265,6 +367,20 @@ double d18SolverHalfImplicit::IntegrateStep(double t, double throttle, double st
 //  18: v_states._wz;
 //  19: v_states._phi;
 //  20: v_states._wx;
+// If the TMeasyNR tire is used then the order of the states in the jacobian matrix are as follows:
+//  0: tirelf_st._omega;
+//  1: tirerf_st._omega;
+//  2: tirelr_st._omega;
+//  3: tirerr_st._omega;
+//  4: v_states._crankOmega; (only if torque converter is used)
+//  5: v_states._x;
+//  6: v_states._y;
+//  7: v_states._u;
+//  8: v_states._v;
+//  9: v_states._psi;
+//  10: v_states._wz;
+//  11: v_states._phi;
+//  12: v_states._wx;
 /// @param t current time
 /// @param throttle throttle input
 /// @param steering steering input
@@ -286,15 +402,16 @@ double d18SolverHalfImplicit::IntegrateStepWithJacobian(double t,
 
     // If the jacobian switch is on, then compute the jacobian
     if (jacOn) {
-        std::vector<double> y(20, 0);
-        std::vector<double> ydot(20, 0);
-        if (m_veh_param._tcbool) {
-            y.resize(21);
-            ydot.resize(21);
-        }
-
+        std::vector<double> y(m_num_states, 0);
+        std::vector<double> ydot(m_num_states, 0);
         // package all the current states
-        packY(m_veh_state, m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_param._tcbool, y);
+        if (m_tire_type == TireType::TMeasy) {
+            packY(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
+                  m_veh_param._tcbool, y);
+        } else {
+            packY(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
+                  m_veh_param._tcbool, y);
+        }
 
         // ============================
         // Computing the state jacobian
@@ -376,24 +493,35 @@ double d18SolverHalfImplicit::IntegrateStepWithJacobian(double t,
     // Integrate according to half implicit method for second order states
     // Integrate according to explicit method for first order states
 
-    // First the tire states
-    // LF
-    m_tirelf_state._xe += m_tirelf_state._xedot * m_step;
-    m_tirelf_state._ye += m_tirelf_state._yedot * m_step;
-    m_tirelf_state._omega += m_tirelf_state._dOmega * m_step;
-    // RF
-    m_tirerf_state._xe += m_tirerf_state._xedot * m_step;
-    m_tirerf_state._ye += m_tirerf_state._yedot * m_step;
-    m_tirerf_state._omega += m_tirerf_state._dOmega * m_step;
-    // LR
-    m_tirelr_state._xe += m_tirelr_state._xedot * m_step;
-    m_tirelr_state._ye += m_tirelr_state._yedot * m_step;
-    m_tirelr_state._omega += m_tirelr_state._dOmega * m_step;
-    // RR
-    m_tirerr_state._xe += m_tirerr_state._xedot * m_step;
-    m_tirerr_state._ye += m_tirerr_state._yedot * m_step;
-    m_tirerr_state._omega += m_tirerr_state._dOmega * m_step;
-
+    if (m_tire_type == TireType::TMeasy) {  // Only TM easy has xe and ye states
+        // First the tire states
+        // LF
+        m_tireTMlf_state._xe += m_tireTMlf_state._xedot * m_step;
+        m_tireTMlf_state._ye += m_tireTMlf_state._yedot * m_step;
+        m_tireTMlf_state._omega += m_tireTMlf_state._dOmega * m_step;
+        // RF
+        m_tireTMrf_state._xe += m_tireTMrf_state._xedot * m_step;
+        m_tireTMrf_state._ye += m_tireTMrf_state._yedot * m_step;
+        m_tireTMrf_state._omega += m_tireTMrf_state._dOmega * m_step;
+        // LR
+        m_tireTMlr_state._xe += m_tireTMlr_state._xedot * m_step;
+        m_tireTMlr_state._ye += m_tireTMlr_state._yedot * m_step;
+        m_tireTMlr_state._omega += m_tireTMlr_state._dOmega * m_step;
+        // RR
+        m_tireTMrr_state._xe += m_tireTMrr_state._xedot * m_step;
+        m_tireTMrr_state._ye += m_tireTMrr_state._yedot * m_step;
+        m_tireTMrr_state._omega += m_tireTMrr_state._dOmega * m_step;
+    } else {  // Other tires have only omega states
+        // First the tire states
+        // LF
+        m_tireTMNrlf_state._omega += m_tireTMNrlf_state._dOmega * m_step;
+        // RF
+        m_tireTMNrrf_state._omega += m_tireTMNrrf_state._dOmega * m_step;
+        // LR
+        m_tireTMNrlr_state._omega += m_tireTMNrlr_state._dOmega * m_step;
+        // RR
+        m_tireTMNrrr_state._omega += m_tireTMNrrr_state._dOmega * m_step;
+    }
     // Now the vehicle states
     if (m_veh_param._tcbool) {
         m_veh_state._crankOmega += m_veh_state._dOmega_crank * m_step;
@@ -435,45 +563,91 @@ void d18SolverHalfImplicit::rhsFun(double t) {
 
     // Calculate tire vertical loads
     std::vector<double> loads(4, 0);
-    computeTireLoads(loads, m_veh_state, m_veh_param, m_tire_param);
+    if (m_tire_type == TireType::TMeasy) {
+        computeTireLoads(loads, m_veh_state, m_veh_param, m_tireTM_param);
 
-    // Transform from vehicle frame to the tire frame
-    vehToTireTransform(m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_state, loads, m_veh_param,
-                       controls.m_steering);
+        // Transform from vehicle frame to the tire frame
+        vehToTireTransform(m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state, m_veh_state, loads,
+                           m_veh_param, controls.m_steering);
 
-    // Tire velocities using TMEasy tire
-    computeTireRHS(m_tirelf_state, m_tire_param, m_veh_param, controls.m_steering);
-    computeTireRHS(m_tirerf_state, m_tire_param, m_veh_param, controls.m_steering);
-    computeTireRHS(m_tirelr_state, m_tire_param, m_veh_param, 0);  // No rear steering
-    computeTireRHS(m_tirerr_state, m_tire_param, m_veh_param, 0);  // No rear steering
+        // Tire velocities using TMEasy tire
+        computeTireRHS(m_tireTMlf_state, m_tireTM_param, m_veh_param, controls.m_steering);
+        computeTireRHS(m_tireTMrf_state, m_tireTM_param, m_veh_param, controls.m_steering);
+        computeTireRHS(m_tireTMlr_state, m_tireTM_param, m_veh_param, 0);  // No rear steering
+        computeTireRHS(m_tireTMrr_state, m_tireTM_param, m_veh_param, 0);  // No rear steering
 
-    // Powertrain dynamics
-    computePowertrainRHS(m_veh_state, m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_param,
-                         m_tire_param, controls);
+        // Powertrain dynamics
+        computePowertrainRHS(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
+                             m_veh_param, m_tireTM_param, controls);
 //////// DEBUG
 #ifdef DEBUG
-    M_DEBUG_LF_TIRE_FX = m_tirelf_state._fx;
-    M_DEBUG_RF_TIRE_FX = m_tirerf_state._fx;
-    M_DEBUG_LR_TIRE_FX = m_tirelr_state._fx;
-    M_DEBUG_RR_TIRE_FX = m_tirerr_state._fx;
+        M_DEBUG_LF_TIRE_FX = m_tireTMlf_state._fx;
+        M_DEBUG_RF_TIRE_FX = m_tireTMrf_state._fx;
+        M_DEBUG_LR_TIRE_FX = m_tireTMlr_state._fx;
+        M_DEBUG_RR_TIRE_FX = m_tireTMrr_state._fx;
 
-    M_DEBUG_LF_TIRE_FY = m_tirelf_state._fy;
-    M_DEBUG_RF_TIRE_FY = m_tirerf_state._fy;
-    M_DEBUG_LR_TIRE_FY = m_tirelr_state._fy;
-    M_DEBUG_RR_TIRE_FY = m_tirerr_state._fy;
+        M_DEBUG_LF_TIRE_FY = m_tireTMlf_state._fy;
+        M_DEBUG_RF_TIRE_FY = m_tireTMrf_state._fy;
+        M_DEBUG_LR_TIRE_FY = m_tireTMlr_state._fy;
+        M_DEBUG_RR_TIRE_FY = m_tireTMrr_state._fy;
 
-    M_DEBUG_LF_TIRE_FZ = m_tirelf_state._fz;
-    M_DEBUG_RF_TIRE_FZ = m_tirerf_state._fz;
-    M_DEBUG_LR_TIRE_FZ = m_tirelr_state._fz;
-    M_DEBUG_RR_TIRE_FZ = m_tirerr_state._fz;
+        M_DEBUG_LF_TIRE_FZ = m_tireTMlf_state._fz;
+        M_DEBUG_RF_TIRE_FZ = m_tireTMrf_state._fz;
+        M_DEBUG_LR_TIRE_FZ = m_tireTMlr_state._fz;
+        M_DEBUG_RR_TIRE_FZ = m_tireTMrr_state._fz;
 #endif
 
-    // Vehicle dynamics
-    tireToVehTransform(m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_state, m_veh_param,
-                       controls.m_steering);
-    std::vector<double> fx = {m_tirelf_state._fx, m_tirerf_state._fx, m_tirelr_state._fx, m_tirerr_state._fx};
-    std::vector<double> fy = {m_tirelf_state._fy, m_tirerf_state._fy, m_tirelr_state._fy, m_tirerr_state._fy};
-    computeVehRHS(m_veh_state, m_veh_param, fx, fy);
+        // Vehicle dynamics
+        tireToVehTransform(m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state, m_veh_state,
+                           m_veh_param, controls.m_steering);
+        std::vector<double> fx = {m_tireTMlf_state._fx, m_tireTMrf_state._fx, m_tireTMlr_state._fx,
+                                  m_tireTMrr_state._fx};
+        std::vector<double> fy = {m_tireTMlf_state._fy, m_tireTMrf_state._fy, m_tireTMlr_state._fy,
+                                  m_tireTMrr_state._fy};
+        computeVehRHS(m_veh_state, m_veh_param, fx, fy);
+    } else {  // For the other tire
+        computeTireLoads(loads, m_veh_state, m_veh_param, m_tireTMNr_param);
+
+        // Transform from vehicle frame to the tire frame
+        vehToTireTransform(m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state, m_veh_state,
+                           loads, m_veh_param, controls.m_steering);
+
+        // Tire velocities using TMEasy tire
+        computeTireRHS(m_tireTMNrlf_state, m_tireTMNr_param, m_veh_param, controls.m_steering);
+        computeTireRHS(m_tireTMNrrf_state, m_tireTMNr_param, m_veh_param, controls.m_steering);
+        computeTireRHS(m_tireTMNrlr_state, m_tireTMNr_param, m_veh_param, 0);  // No rear steering
+        computeTireRHS(m_tireTMNrrr_state, m_tireTMNr_param, m_veh_param, 0);  // No rear steering
+
+        // Powertrain dynamics
+        computePowertrainRHS(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state,
+                             m_tireTMNrrr_state, m_veh_param, m_tireTMNr_param, controls);
+//////// DEBUG
+#ifdef DEBUG
+        M_DEBUG_LF_TIRE_FX = m_tireTMNrlf_state._fx;
+        M_DEBUG_RF_TIRE_FX = m_tireTMNrrf_state._fx;
+        M_DEBUG_LR_TIRE_FX = m_tireTMNrlr_state._fx;
+        M_DEBUG_RR_TIRE_FX = m_tireTMNrrr_state._fx;
+
+        M_DEBUG_LF_TIRE_FY = m_tireTMNrlf_state._fy;
+        M_DEBUG_RF_TIRE_FY = m_tireTMNrrf_state._fy;
+        M_DEBUG_LR_TIRE_FY = m_tireTMNrlr_state._fy;
+        M_DEBUG_RR_TIRE_FY = m_tireTMNrrr_state._fy;
+
+        M_DEBUG_LF_TIRE_FZ = m_tireTMNrlf_state._fz;
+        M_DEBUG_RF_TIRE_FZ = m_tireTMNrrf_state._fz;
+        M_DEBUG_LR_TIRE_FZ = m_tireTMNrlr_state._fz;
+        M_DEBUG_RR_TIRE_FZ = m_tireTMNrrr_state._fz;
+#endif
+
+        // Vehicle dynamics
+        tireToVehTransform(m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state, m_veh_state,
+                           m_veh_param, controls.m_steering);
+        std::vector<double> fx = {m_tireTMNrlf_state._fx, m_tireTMNrrf_state._fx, m_tireTMNrlr_state._fx,
+                                  m_tireTMNrrr_state._fx};
+        std::vector<double> fy = {m_tireTMNrlf_state._fy, m_tireTMNrrf_state._fy, m_tireTMNrlr_state._fy,
+                                  m_tireTMNrrr_state._fy};
+        computeVehRHS(m_veh_state, m_veh_param, fx, fy);
+    }
 }
 
 // ======================================================================================================================
@@ -481,28 +655,57 @@ void d18SolverHalfImplicit::rhsFun(double t) {
 void d18SolverHalfImplicit::rhsFun(double t, DriverInput& controls) {
     // Calculate tire vertical loads
     std::vector<double> loads(4, 0);
-    computeTireLoads(loads, m_veh_state, m_veh_param, m_tire_param);
+    if (m_tire_type == TireType::TMeasy) {
+        computeTireLoads(loads, m_veh_state, m_veh_param, m_tireTM_param);
 
-    // Transform from vehicle frame to the tire frame
-    vehToTireTransform(m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_state, loads, m_veh_param,
-                       controls.m_steering);
+        // Transform from vehicle frame to the tire frame
+        vehToTireTransform(m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state, m_veh_state, loads,
+                           m_veh_param, controls.m_steering);
 
-    // Tire velocities using TMEasy tire
-    computeTireRHS(m_tirelf_state, m_tire_param, m_veh_param, controls.m_steering);
-    computeTireRHS(m_tirerf_state, m_tire_param, m_veh_param, controls.m_steering);
-    computeTireRHS(m_tirelr_state, m_tire_param, m_veh_param, 0);  // No rear steering
-    computeTireRHS(m_tirerr_state, m_tire_param, m_veh_param, 0);  // No rear steering
+        // Tire velocities using TMEasy tire
+        computeTireRHS(m_tireTMlf_state, m_tireTM_param, m_veh_param, controls.m_steering);
+        computeTireRHS(m_tireTMrf_state, m_tireTM_param, m_veh_param, controls.m_steering);
+        computeTireRHS(m_tireTMlr_state, m_tireTM_param, m_veh_param, 0);  // No rear steering
+        computeTireRHS(m_tireTMrr_state, m_tireTM_param, m_veh_param, 0);  // No rear steering
 
-    // Powertrain dynamics
-    computePowertrainRHS(m_veh_state, m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_param,
-                         m_tire_param, controls);
+        // Powertrain dynamics
+        computePowertrainRHS(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
+                             m_veh_param, m_tireTM_param, controls);
 
-    // Vehicle dynamics
-    tireToVehTransform(m_tirelf_state, m_tirerf_state, m_tirelr_state, m_tirerr_state, m_veh_state, m_veh_param,
-                       controls.m_steering);
-    std::vector<double> fx = {m_tirelf_state._fx, m_tirerf_state._fx, m_tirelr_state._fx, m_tirerr_state._fx};
-    std::vector<double> fy = {m_tirelf_state._fy, m_tirerf_state._fy, m_tirelr_state._fy, m_tirerr_state._fy};
-    computeVehRHS(m_veh_state, m_veh_param, fx, fy);
+        // Vehicle dynamics
+        tireToVehTransform(m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state, m_veh_state,
+                           m_veh_param, controls.m_steering);
+        std::vector<double> fx = {m_tireTMlf_state._fx, m_tireTMrf_state._fx, m_tireTMlr_state._fx,
+                                  m_tireTMrr_state._fx};
+        std::vector<double> fy = {m_tireTMlf_state._fy, m_tireTMrf_state._fy, m_tireTMlr_state._fy,
+                                  m_tireTMrr_state._fy};
+        computeVehRHS(m_veh_state, m_veh_param, fx, fy);
+    } else {  // For the other tire
+        computeTireLoads(loads, m_veh_state, m_veh_param, m_tireTMNr_param);
+
+        // Transform from vehicle frame to the tire frame
+        vehToTireTransform(m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state, m_veh_state,
+                           loads, m_veh_param, controls.m_steering);
+
+        // Tire velocities using TMEasy tire
+        computeTireRHS(m_tireTMNrlf_state, m_tireTMNr_param, m_veh_param, controls.m_steering);
+        computeTireRHS(m_tireTMNrrf_state, m_tireTMNr_param, m_veh_param, controls.m_steering);
+        computeTireRHS(m_tireTMNrlr_state, m_tireTMNr_param, m_veh_param, 0);  // No rear steering
+        computeTireRHS(m_tireTMNrrr_state, m_tireTMNr_param, m_veh_param, 0);  // No rear steering
+
+        // Powertrain dynamics
+        computePowertrainRHS(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state,
+                             m_tireTMNrrr_state, m_veh_param, m_tireTMNr_param, controls);
+
+        // Vehicle dynamics
+        tireToVehTransform(m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state, m_veh_state,
+                           m_veh_param, controls.m_steering);
+        std::vector<double> fx = {m_tireTMNrlf_state._fx, m_tireTMNrrf_state._fx, m_tireTMNrlr_state._fx,
+                                  m_tireTMNrrr_state._fx};
+        std::vector<double> fy = {m_tireTMNrlf_state._fy, m_tireTMNrrf_state._fy, m_tireTMNrlr_state._fy,
+                                  m_tireTMNrrr_state._fy};
+        computeVehRHS(m_veh_state, m_veh_param, fx, fy);
+    }
 }
 
 // ======================================================================================================================
@@ -512,36 +715,70 @@ void d18SolverHalfImplicit::rhsFun(double t, DriverInput& controls) {
 void d18SolverHalfImplicit::PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot) {
     // Extract the vehicle and tire states vector state
     VehicleState veh_st;
-    TMeasyState tirelf_st;
-    TMeasyState tirerf_st;
-    TMeasyState tirelr_st;
-    TMeasyState tirerr_st;
-    unpackY(y, m_veh_param._tcbool, veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st);
+    if (m_tire_type == TireType::TMeasy) {
+        TMeasyState tirelf_st;
+        TMeasyState tirerf_st;
+        TMeasyState tirelr_st;
+        TMeasyState tirerr_st;
+        unpackY(y, m_veh_param._tcbool, veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st);
 
-    // Calculate tire vertical loads
-    std::vector<double> loads(4, 0);
-    computeTireLoads(loads, veh_st, m_veh_param, m_tire_param);
+        // Calculate tire vertical loads
+        std::vector<double> loads(4, 0);
+        computeTireLoads(loads, veh_st, m_veh_param, m_tireTM_param);
 
-    // Transform from the vehicle frame to the tire frame
-    vehToTireTransform(tirelf_st, tirerf_st, tirelr_st, tirerr_st, veh_st, loads, m_veh_param, controls.m_steering);
+        // Transform from the vehicle frame to the tire frame
+        vehToTireTransform(tirelf_st, tirerf_st, tirelr_st, tirerr_st, veh_st, loads, m_veh_param, controls.m_steering);
 
-    // Tire dynamics
-    computeTireRHS(tirelf_st, m_tire_param, m_veh_param, controls.m_steering);
-    computeTireRHS(tirerf_st, m_tire_param, m_veh_param, controls.m_steering);
-    computeTireRHS(tirelr_st, m_tire_param, m_veh_param, 0);
-    computeTireRHS(tirerr_st, m_tire_param, m_veh_param, 0);
+        // Tire dynamics
+        computeTireRHS(tirelf_st, m_tireTM_param, m_veh_param, controls.m_steering);
+        computeTireRHS(tirerf_st, m_tireTM_param, m_veh_param, controls.m_steering);
+        computeTireRHS(tirelr_st, m_tireTM_param, m_veh_param, 0);
+        computeTireRHS(tirerr_st, m_tireTM_param, m_veh_param, 0);
 
-    // Powertrain dynamics
-    computePowertrainRHS(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, m_veh_param, m_tire_param, controls);
+        // Powertrain dynamics
+        computePowertrainRHS(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, m_veh_param, m_tireTM_param, controls);
 
-    // Vehicle dynamics
-    tireToVehTransform(tirelf_st, tirerf_st, tirelr_st, tirerr_st, veh_st, m_veh_param, controls.m_steering);
-    std::vector<double> fx = {tirelf_st._fx, tirerf_st._fx, tirelr_st._fx, tirerr_st._fx};
-    std::vector<double> fy = {tirelf_st._fy, tirerf_st._fy, tirelr_st._fy, tirerr_st._fy};
-    computeVehRHS(veh_st, m_veh_param, fx, fy);
+        // Vehicle dynamics
+        tireToVehTransform(tirelf_st, tirerf_st, tirelr_st, tirerr_st, veh_st, m_veh_param, controls.m_steering);
+        std::vector<double> fx = {tirelf_st._fx, tirerf_st._fx, tirelr_st._fx, tirerr_st._fx};
+        std::vector<double> fy = {tirelf_st._fy, tirerf_st._fy, tirelr_st._fy, tirerr_st._fy};
+        computeVehRHS(veh_st, m_veh_param, fx, fy);
 
-    // Pack the ydot and send it
-    packYDOT(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, m_veh_param._tcbool, ydot);
+        // Pack the ydot and send it
+        packYDOT(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, m_veh_param._tcbool, ydot);
+    } else {
+        TMeasyNrState tirelf_st;
+        TMeasyNrState tirerf_st;
+        TMeasyNrState tirelr_st;
+        TMeasyNrState tirerr_st;
+        unpackY(y, m_veh_param._tcbool, veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st);
+
+        // Calculate tire vertical loads
+        std::vector<double> loads(4, 0);
+        computeTireLoads(loads, veh_st, m_veh_param, m_tireTMNr_param);
+
+        // Transform from the vehicle frame to the tire frame
+        vehToTireTransform(tirelf_st, tirerf_st, tirelr_st, tirerr_st, veh_st, loads, m_veh_param, controls.m_steering);
+
+        // Tire dynamics
+        computeTireRHS(tirelf_st, m_tireTMNr_param, m_veh_param, controls.m_steering);
+        computeTireRHS(tirerf_st, m_tireTMNr_param, m_veh_param, controls.m_steering);
+        computeTireRHS(tirelr_st, m_tireTMNr_param, m_veh_param, 0);
+        computeTireRHS(tirerr_st, m_tireTMNr_param, m_veh_param, 0);
+
+        // Powertrain dynamics
+        computePowertrainRHS(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, m_veh_param, m_tireTMNr_param,
+                             controls);
+
+        // Vehicle dynamics
+        tireToVehTransform(tirelf_st, tirerf_st, tirelr_st, tirerr_st, veh_st, m_veh_param, controls.m_steering);
+        std::vector<double> fx = {tirelf_st._fx, tirerf_st._fx, tirelr_st._fx, tirerr_st._fx};
+        std::vector<double> fy = {tirelf_st._fy, tirerf_st._fy, tirelr_st._fy, tirerr_st._fy};
+        computeVehRHS(veh_st, m_veh_param, fx, fy);
+
+        // Pack the ydot and send it
+        packYDOT(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, m_veh_param._tcbool, ydot);
+    }
 }
 
 void d18SolverHalfImplicit::Write(double t) {
@@ -628,10 +865,17 @@ void d18SolverHalfImplicit::Write(double t) {
     m_csv << m_veh_state._psi;
     m_csv << m_veh_state._wx;
     m_csv << m_veh_state._wz;
-    m_csv << m_tirelf_state._omega;
-    m_csv << m_tirerf_state._omega;
-    m_csv << m_tirelr_state._omega;
-    m_csv << m_tirerr_state._omega;
+    if (m_tire_type == TireType::TMeasy) {
+        m_csv << m_tireTMlf_state._omega;
+        m_csv << m_tireTMrf_state._omega;
+        m_csv << m_tireTMlr_state._omega;
+        m_csv << m_tireTMrr_state._omega;
+    } else {
+        m_csv << m_tireTMNrlf_state._omega;
+        m_csv << m_tireTMNrrf_state._omega;
+        m_csv << m_tireTMNrlr_state._omega;
+        m_csv << m_tireTMNrrr_state._omega;
+    }
     m_csv << m_veh_state._tor / 4.;
     m_csv << m_veh_state._current_gr + 1;
     m_csv << m_veh_state._crankOmega;
@@ -711,6 +955,38 @@ void packY(const d18::VehicleState& v_states,
     y[index++] = v_states._wx;   // roll rate
 }
 
+void packY(const d18::VehicleState& v_states,
+           const d18::TMeasyNrState& tirelf_st,
+           const d18::TMeasyNrState& tirerf_st,
+           const d18::TMeasyNrState& tirelr_st,
+           const d18::TMeasyNrState& tirerr_st,
+           bool has_TC,
+           std::vector<double>& y) {
+    int index = 0;
+
+    // Wheel angular velocities (lf, rf, lr and rr)
+    y[index++] = tirelf_st._omega;
+    y[index++] = tirerf_st._omega;
+    y[index++] = tirelr_st._omega;
+    y[index++] = tirerr_st._omega;
+
+    // Crank angular velocity - This is a state only when a torque converter is
+    // used
+    if (has_TC) {
+        y[index++] = v_states._crankOmega;
+    }
+
+    // Vehicle states
+    y[index++] = v_states._x;    // X position
+    y[index++] = v_states._y;    // Y position
+    y[index++] = v_states._u;    // longitudinal velocity
+    y[index++] = v_states._v;    // lateral velocity
+    y[index++] = v_states._psi;  // yaw angle
+    y[index++] = v_states._wz;   // yaw rate
+    y[index++] = v_states._phi;  // roll angle
+    y[index++] = v_states._wx;   // roll rate
+}
+
 void packYDOT(const d18::VehicleState& v_states,
               const d18::TMeasyState& tirelf_st,
               const d18::TMeasyState& tirerf_st,
@@ -748,6 +1024,34 @@ void packYDOT(const d18::VehicleState& v_states,
     ydot[index++] = v_states._wxdot;
 }
 
+void packYDOT(const d18::VehicleState& v_states,
+              const d18::TMeasyNrState& tirelf_st,
+              const d18::TMeasyNrState& tirerf_st,
+              const d18::TMeasyNrState& tirelr_st,
+              const d18::TMeasyNrState& tirerr_st,
+              bool has_TC,
+              std::vector<double>& ydot) {
+    int index = 0;
+
+    ydot[index++] = tirelf_st._dOmega;
+    ydot[index++] = tirerf_st._dOmega;
+    ydot[index++] = tirelr_st._dOmega;
+    ydot[index++] = tirerr_st._dOmega;
+
+    if (has_TC) {
+        ydot[index++] = v_states._dOmega_crank;
+    }
+
+    ydot[index++] = v_states._dx;
+    ydot[index++] = v_states._dy;
+    ydot[index++] = v_states._udot;
+    ydot[index++] = v_states._vdot;
+    ydot[index++] = v_states._wz;
+    ydot[index++] = v_states._wzdot;
+    ydot[index++] = v_states._wx;
+    ydot[index++] = v_states._wxdot;
+}
+
 void unpackY(const std::vector<double>& y,
              bool has_TC,
              d18::VehicleState& v_states,
@@ -765,6 +1069,38 @@ void unpackY(const std::vector<double>& y,
     tirelr_st._ye = y[index++];
     tirerr_st._xe = y[index++];
     tirerr_st._ye = y[index++];
+
+    // Wheel angular velocities
+    tirelf_st._omega = y[index++];
+    tirerf_st._omega = y[index++];
+    tirelr_st._omega = y[index++];
+    tirerr_st._omega = y[index++];
+
+    // Crank angular velocity - This is a state only when a torque converter is
+    // used
+    if (has_TC) {
+        v_states._crankOmega = y[index++];
+    }
+
+    // Vehicle states
+    v_states._x = y[index++];    // X position
+    v_states._y = y[index++];    // Y position
+    v_states._u = y[index++];    // longitudinal velocity
+    v_states._v = y[index++];    // lateral velocity
+    v_states._psi = y[index++];  // yaw angle
+    v_states._wz = y[index++];   // yaw rate
+    v_states._phi = y[index++];  // roll angle
+    v_states._wx = y[index++];   // roll rate
+}
+
+void unpackY(const std::vector<double>& y,
+             bool has_TC,
+             d18::VehicleState& v_states,
+             d18::TMeasyNrState& tirelf_st,
+             d18::TMeasyNrState& tirerf_st,
+             d18::TMeasyNrState& tirelr_st,
+             d18::TMeasyNrState& tirerr_st) {
+    int index = 0;
 
     // Wheel angular velocities
     tirelf_st._omega = y[index++];

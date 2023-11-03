@@ -290,14 +290,16 @@ void d18::tmxy_combined(double& f, double& fos, double s, double df0, double sm,
 void d18::computeCombinedColumbForce(double& fx,
                                      double& fy,
                                      double mu,
-                                     const TMeasyNrState& t_states,
-                                     const TMeasyNrParam& t_params) {
-    fx = tanh(-2.0 * t_states._vsx / t_params._vcoulomb) * t_states._fz * mu;
-    fy = tanh(-2.0 * t_states._vsy / t_params._vcoulomb) * t_states._fz * mu;
+                                     double vsx,
+                                     double vsy,
+                                     double fz,
+                                     double vcoulomb) {
+    fx = tanh(-2.0 * vsx / vcoulomb) * fz * mu;
+    fy = tanh(-2.0 * vsy / vcoulomb) * fz * mu;
 
     // Nromalize F to the circle
-    if (std::hypot(fx, fy) > t_states._fz * mu) {
-        double f = t_states._fz * mu / std::hypot(fx, fy);
+    if (std::hypot(fx, fy) > fz * mu) {
+        double f = fz * mu / std::hypot(fx, fy);
         fx *= f;
         fy *= f;
     }
@@ -564,7 +566,11 @@ void d18::computeTireRHS(TMeasyNrState& t_states,
         t_states._My = 0;
         return;
     }
+    // get our tire deflections so that we can get the loaded radius
+    t_states._xt = fz / t_params._kt;
+    t_states._rStat = t_params._r0 - t_states._xt;
 
+    // double r_eff = (2 * t_params._r0 + t_states._rStat) / 3.;
     double r_eff;
     double rdynco;
     if (fz <= t_params._fzRdynco) {
@@ -580,6 +586,11 @@ void d18::computeTireRHS(TMeasyNrState& t_states,
 
     // get the transport velocity - 0.01 here is to prevent singularity
     double vta = r_eff * std::abs(t_states._omega) + 0.01;
+
+    // Compute the combined column force (used for low speed stability)
+    double Fx0 = 0;
+    double Fy0 = 0;
+    computeCombinedColumbForce(Fx0, Fy0, t_params._mu, vsx, vsy, fz, t_params._vcoulomb);
 
     // evaluate the slips
     double sx = -vsx / vta;
@@ -609,14 +620,8 @@ void d18::computeTireRHS(TMeasyNrState& t_states,
     double sxs = InterpL(fz, t_params._sxsPn, t_params._sxsP2n, t_params._pn);
     double sys = InterpL(fz, t_params._sysPn, t_params._sysP2n, t_params._pn);
 
-    // Compute the combined column force (used for low speed stability)
-    double Fx0 = 0;
-    double Fy0 = 0;
-    computeCombinedColumbForce(Fx0, Fy0, t_params._mu, t_states, t_params);
-
     // Compute the coefficient to "blend" the columb force with the slip force
-    double frblend = sineStep(std::abs(vsx), t_params._frblend_begin, 1., t_params._frblend_end, 0.);
-
+    double frblend = sineStep(std::abs(t_states._vsx), t_params._frblend_begin, 0., t_params._frblend_end, 1.);
     // Now standard TMeasy tire forces
     // For now, not using any normalization of the slips - similar to Chrono implementation
     double sc = std::hypot(sx, sy);
@@ -632,10 +637,10 @@ void d18::computeTireRHS(TMeasyNrState& t_states,
 
     // resultant curve parameters in both directions
     double df0 = std::hypot(dfx0 * calpha, dfy0 * salpha);
-    double fm = std::hypot(fxm * calpha, fym * salpha);
-    double sm = std::hypot(sxm * calpha, sym * salpha);
-    double fs = std::hypot(fxs * calpha, fys * salpha);
-    double ss = std::hypot(sxs * calpha, sys * salpha);
+    double fm = t_params._mu * std::hypot(fxm * calpha, fym * salpha);
+    double sm = t_params._mu * std::hypot(sxm * calpha, sym * salpha);
+    double fs = t_params._mu * std::hypot(fxs * calpha, fys * salpha);
+    double ss = t_params._mu * std::hypot(sxs * calpha, sys * salpha);
 
     double f, fos;
     tmxy_combined(f, fos, sc, df0, sm, fm, ss, fs);
@@ -660,7 +665,7 @@ void d18::computeTireRHS(TMeasyNrState& t_states,
     double vx_min = 0.;
     double vx_max = 0.;
 
-    t_states._My = -sineStep(vta, vx_min, 0., vx_max, 1.) * t_params._rr * fz * t_states._rStat * sgn(t_states._omega);
+    t_states._My = -t_params._rr * fz * t_states._rStat * tanh(t_states._omega);
 
     // Set the tire forces
     t_states._fx = Fx;
@@ -674,6 +679,178 @@ void d18::computePowertrainRHS(VehicleState& v_states,
                                TMeasyState& tirerr_st,
                                const VehicleParam& v_params,
                                const TMeasyParam& t_params,
+                               const DriverInput& controls) {
+    // some variables needed outside
+    double torque_t = 0;
+    double max_bias = 2;
+
+    // If we have a torque converter
+    if (v_params._tcbool) {
+        // set reverse flow to false at each timestep
+        bool tc_reverse_flow = false;
+        // Split the angular velocities all the way uptill the gear box. All
+        // from previous time step
+        double omega_t = 0.25 * (tirelf_st._omega + tirerf_st._omega + tirelr_st._omega + tirerr_st._omega);
+
+        // get the angular velocity at the torque converter wheel side
+        // Note, the gear includes the differential gear as well
+        double omega_out = omega_t / (v_params._gearRatios[v_states._current_gr]);
+
+        // Get the omega input to the torque from the engine from the previous
+        // time step
+        double omega_in = v_states._crankOmega;
+
+        double sr, cf, tr;
+        if ((omega_out < 1e-9) || (omega_in < 1e-9)) {  // if we are at the start things can get unstable
+            sr = 0;
+            // Get capacity factor from capacity lookup table
+            cf = getMapY(v_params._CFmap, sr);
+
+            // Get torque ratio from Torque ratio lookup table
+            tr = getMapY(v_params._TRmap, sr);
+        } else {
+            // speed ratio for torque converter
+            sr = omega_out / omega_in;
+
+            // Check reverse flow
+            if (sr > 1.) {
+                sr = 1. - (sr - 1.);
+                tc_reverse_flow = true;
+            }
+
+            if (sr < 0) {
+                sr = 0;
+            }
+
+            // get capacity factor from lookup table
+            cf = getMapY(v_params._CFmap, sr);
+
+            // Get torque ratio from Torque ratio lookup table
+            tr = getMapY(v_params._TRmap, sr);
+        }
+        // torque applied to the crank shaft
+        double torque_in = -std::pow((omega_in / cf), 2);
+
+        // if its reverse flow, this should act as a brake
+        if (tc_reverse_flow) {
+            torque_in = -torque_in;
+        }
+
+        // torque applied to the shaft from torque converter on the wheel side
+        double torque_out;
+        if (tc_reverse_flow) {
+            torque_out = -torque_in;
+        } else {
+            torque_out = -tr * torque_in;
+        }
+
+        // Now torque after the transimission
+        torque_t = torque_out / v_params._gearRatios[v_states._current_gr];
+        if (std::abs((v_states._u - 0) < 1e-9) && (torque_t < 0)) {
+            torque_t = 0;
+        }
+
+        //////// Integrate Crank shaft
+        v_states._dOmega_crank = (1. / v_params._crankInertia) *
+                                 (driveTorque(v_params, controls.m_throttle, v_states._crankOmega) + torque_in);
+
+        ////// Gear shift for the next time step -> Here we have to check the
+        /// RPM of
+        /// the shaft from the T.C
+        if (omega_out > v_params._shiftMap[v_states._current_gr]._y) {
+            // check if we have enough gears to upshift
+            if (v_states._current_gr < v_params._gearRatios.size() - 1) {
+                v_states._current_gr++;
+            }
+        }
+        // downshift
+        else if (omega_out < v_params._shiftMap[v_states._current_gr]._x) {
+            // check if we can down shift
+            if (v_states._current_gr > 0) {
+                v_states._current_gr--;
+            }
+        }
+    } else {  // If there is no torque converter, then the crank shaft does not
+              // have a state so we directly updated the crankOmega to be used
+        v_states._crankOmega = 0.25 * (tirelf_st._omega + tirerf_st._omega + tirelr_st._omega + tirerr_st._omega) /
+                               v_params._gearRatios[v_states._current_gr];
+
+        // The torque after tranny will then just become as there is no torque
+        // converter
+        torque_t = driveTorque(v_params, controls.m_throttle, v_states._crankOmega) /
+                   v_params._gearRatios[v_states._current_gr];
+
+        if (std::abs((v_states._u - 0) < 1e-9) && (torque_t < 0)) {
+            torque_t = 0;
+        }
+
+        ///// Upshift gear for next time step -> Here the crank shaft is
+        /// directly
+        /// connected to the gear box
+        if (v_states._crankOmega > v_params._shiftMap[v_states._current_gr]._y) {
+            // check if we have enough gears to upshift
+            if (v_states._current_gr < v_params._gearRatios.size() - 1) {
+                v_states._current_gr++;
+            }
+        }
+        // downshift
+        else if (v_states._crankOmega < v_params._shiftMap[v_states._current_gr]._x) {
+            // check if we can down shift
+            if (v_states._current_gr > 0) {
+                v_states._current_gr--;
+            }
+        }
+    }
+
+    //////// Amount of torque transmitted to the wheels
+
+    // torque split between the  front and rear (always half)
+    double torque_front = 0;
+    double torque_rear = 0;
+    if (v_params._driveType) {  // If we have a 4WD vehicle split torque equally
+        torque_front = torque_t * 0.5;
+        torque_rear = torque_t * 0.5;
+    } else {
+        if (v_params._whichWheels) {
+            torque_front = 0;
+            torque_rear = torque_t;
+        } else {
+            torque_front = torque_t;
+            torque_rear = 0;
+        }
+    }
+
+    // first the front wheels
+    differentialSplit(torque_front, max_bias, tirelf_st._omega, tirerf_st._omega, tirelf_st._engTor, tirerf_st._engTor);
+    // then rear wheels
+    differentialSplit(torque_rear, max_bias, tirelr_st._omega, tirerr_st._omega, tirelr_st._engTor, tirerr_st._engTor);
+
+    // now use this force for our omegas
+    // Get dOmega for each tire
+    tirelf_st._dOmega = (1 / t_params._jw) * (tirelf_st._engTor + tirelf_st._My -
+                                              sgn(tirelf_st._omega) * brakeTorque(v_params, controls.m_braking) -
+                                              tirelf_st._fx * tirelf_st._rStat);
+
+    tirerf_st._dOmega = (1 / t_params._jw) * (tirerf_st._engTor + tirerf_st._My -
+                                              sgn(tirerf_st._omega) * brakeTorque(v_params, controls.m_braking) -
+                                              tirerf_st._fx * tirerf_st._rStat);
+
+    tirelr_st._dOmega = (1 / t_params._jw) * (tirelr_st._engTor + tirelr_st._My -
+                                              sgn(tirelr_st._omega) * brakeTorque(v_params, controls.m_braking) -
+                                              tirelr_st._fx * tirelr_st._rStat);
+
+    tirerr_st._dOmega = (1 / t_params._jw) * (tirerr_st._engTor + tirerr_st._My -
+                                              sgn(tirerr_st._omega) * brakeTorque(v_params, controls.m_braking) -
+                                              tirerr_st._fx * tirerr_st._rStat);
+}
+
+void d18::computePowertrainRHS(VehicleState& v_states,
+                               TMeasyNrState& tirelf_st,
+                               TMeasyNrState& tirerf_st,
+                               TMeasyNrState& tirelr_st,
+                               TMeasyNrState& tirerr_st,
+                               const VehicleParam& v_params,
+                               const TMeasyNrParam& t_params,
                                const DriverInput& controls) {
     // some variables needed outside
     double torque_t = 0;
@@ -1176,7 +1353,8 @@ void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
                     p_li = p_use = 1.0;
                 }
 
-                unsigned int li = d["Load Index"].GetUint();
+                unsigned int li = d["loadIndex"].GetUint();
+                t_params._li = li;  // Just setting this although its not used anywhere for now
                 std::string vehicle_type = d["VehicleType"].GetString();
                 if (vehicle_type.compare("Truck") == 0) {
                     GuessTruck80Par(li, width, (t_params._r0 - rimRadius) / width, 2 * rimRadius, p_li, p_use,
@@ -1204,6 +1382,8 @@ void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
                     p_li = p_use = 1.0;
                 }
                 double bearing_capacity = d["maximumBearingCapacity"].GetDouble();
+                t_params._bearingCapacity =
+                    bearing_capacity;  // Just setting this although its not used anywhere for now
                 std::string vehicle_type = d["vehicleType"].GetString();
                 if (vehicle_type.compare("Truck") == 0) {
                     GuessTruck80Par(bearing_capacity, width, (t_params._r0 - rimRadius) / width, 2 * rimRadius, p_li,
