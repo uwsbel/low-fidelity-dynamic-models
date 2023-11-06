@@ -15,6 +15,7 @@
 %template(vector_double) std::vector <double>;
 %template(DriverData) std::vector<DriverInput>;
 %template(matrix_double) std::vector <std::vector<double>>;
+%template(vector_mapEntry) std::vector <MapEntry>;
 %template(PathData) std::vector<PathPoint>;
 
 // matrix_double to a list of lists -> This can then easily be converted into a numpy array

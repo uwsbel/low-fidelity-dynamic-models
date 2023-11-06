@@ -14,5 +14,5 @@
     "width": 0.245,
     "rimRadius": 0.2286,
     "loadIndex": 97,
-    "VehicleType": "Passenger"
+    "vehicleType": "Passenger"
 }
