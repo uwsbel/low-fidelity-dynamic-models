@@ -325,7 +325,9 @@ struct TMeasyNrParam {
           _frblend_begin(1.),
           _frblend_end(3.),
           _bearingCapacity(10000),
-          _li(90) {}
+          _li(90),
+          _p_li(1.),
+          _p_use(1.) {}
     // copy constructor
     TMeasyNrParam(const TMeasyNrParam& other)
         : _jw(other._jw),
@@ -365,7 +367,9 @@ struct TMeasyNrParam {
           _frblend_begin(other._frblend_begin),
           _frblend_end(other._frblend_end),
           _bearingCapacity(other._bearingCapacity),
-          _li(other._li) {}
+          _li(other._li),
+          _p_li(other._p_li),
+          _p_use(other._p_use) {}
 
     double _jw;          // wheel inertia
     double _rr;          // Rolling Resistance
@@ -397,6 +401,8 @@ struct TMeasyNrParam {
     double _frblend_end;       // End of friction blending
     double _bearingCapacity;   // High level tire parameters that define all other parameters that the user can set
     double _li;                // Load index
+    double _p_li;              // Pressure at load index
+    double _p_use;             // Pressure at which the tire is used
 };
 
 struct TMeasyNrState {

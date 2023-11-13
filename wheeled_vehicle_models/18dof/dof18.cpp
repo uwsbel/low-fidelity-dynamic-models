@@ -1355,6 +1355,8 @@ void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
 
                 unsigned int li = d["loadIndex"].GetUint();
                 t_params._li = li;  // Just setting this although its not used anywhere for now
+                t_params._p_li = p_li;
+                t_params._p_use = p_use;
                 std::string vehicle_type = d["VehicleType"].GetString();
                 if (vehicle_type.compare("Truck") == 0) {
                     GuessTruck80Par(li, width, (t_params._r0 - rimRadius) / width, 2 * rimRadius, p_li, p_use,
@@ -1381,6 +1383,8 @@ void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
                 } else {
                     p_li = p_use = 1.0;
                 }
+                t_params._p_li = p_li;
+                t_params._p_use = p_use;
                 double bearing_capacity = d["maximumBearingCapacity"].GetDouble();
                 t_params._bearingCapacity =
                     bearing_capacity;  // Just setting this so that it can be used to set externally while calibrating
