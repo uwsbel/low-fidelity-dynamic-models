@@ -1075,9 +1075,6 @@ void d18::computeVehRHS(VehicleState& v_states,
     v_states._dx = (v_states._u * std::cos(v_states._psi) - v_states._v * std::sin(v_states._psi));
 
     v_states._dy = (v_states._u * std::sin(v_states._psi) + v_states._v * std::cos(v_states._psi));
-
-    // update the vertical forces
-    // sketchy load transfer technique
 }
 
 // ---------------------------------------------------------
