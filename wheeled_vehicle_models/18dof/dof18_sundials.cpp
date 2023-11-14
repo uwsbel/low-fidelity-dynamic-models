@@ -126,6 +126,7 @@ void d18SolverSundials::Construct(const std::string& vehicle_params_file,
                                   const std::string& driver_inputs_file) {
     // By default always TMEasy tire model is called
     m_tire_type = TireType::TMeasy;
+    m_data.m_tire_type = TireType::TMeasy;  // Need to set this as well since we need it inside RHS
     // Load vehicle parameters
     setVehParamsJSON(m_data.m_veh_param, vehicle_params_file.c_str());
     setTireParamsJSON(m_data.m_tireTM_param, tire_params_file.c_str());
@@ -149,6 +150,7 @@ void d18SolverSundials::Construct(const std::string& vehicle_params_file,
                                   TireType tire_type) {
     // By default always TMEasy tire model is called
     m_tire_type = tire_type;
+    m_data.m_tire_type = tire_type;  // Need to set this as well since we need it inside RHS
     m_has_TC = m_data.m_veh_param._tcbool;
     m_offset = m_has_TC ? 1 : 0;
     if (m_tire_type == TireType::TMeasy) {

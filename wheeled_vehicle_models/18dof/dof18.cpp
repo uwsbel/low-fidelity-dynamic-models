@@ -1357,7 +1357,7 @@ void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
                 t_params._li = li;  // Just setting this although its not used anywhere for now
                 t_params._p_li = p_li;
                 t_params._p_use = p_use;
-                std::string vehicle_type = d["VehicleType"].GetString();
+                std::string vehicle_type = d["vehicleType"].GetString();
                 if (vehicle_type.compare("Truck") == 0) {
                     GuessTruck80Par(li, width, (t_params._r0 - rimRadius) / width, 2 * rimRadius, p_li, p_use,
                                     t_params);
