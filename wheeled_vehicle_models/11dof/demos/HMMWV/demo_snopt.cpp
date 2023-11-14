@@ -6,7 +6,7 @@
 using namespace d11;
 
 int param_flags = ParamFlag::ENGINE_MAP;
-d18SolverSundials solver;
+d11SolverSundials solver;
 
 int num_evals = 0;
 int num_evals_func = 0;
@@ -91,7 +91,7 @@ int main(int argc, char** argv) {
     VehicleState veh_st;
     TMeasyState tiref_st;
     TMeasyState tirer_st;
-    
+
     solver.Initialize(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st);
 
     int num_params = solver.GetNumParameters();

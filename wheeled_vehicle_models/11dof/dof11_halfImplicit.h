@@ -51,7 +51,7 @@ class d11SolverHalfImplicit {
 
     // Initialize function in case user wants non-zero intializations
     void Initialize(d11::VehicleState& vehicle_states,
-                    d11::TMeasyState& tire_states_L,
+                    d11::TMeasyState& tire_states_F,
                     d11::TMeasyState& tire_states_R);
 
     double IntegrateStep(double t, double throttle, double steering, double braking);
@@ -89,6 +89,8 @@ class d11SolverHalfImplicit {
     double m_dtout;             // time interval between data output
     std::string m_output_file;  // output file path
     DriverData m_driver_data;   // driver inputs
+    int m_num_controls;         // Number of control states for jacobian
+    int m_num_states;           // Number of states for jacobian
 
     // Jacobian matrix incase user needs finite differencing
     std::vector<std::vector<double>> m_jacobian_state;
@@ -100,20 +102,14 @@ class d11SolverHalfImplicit {
 
     ////////// DEBUG
 #ifdef DEBUG
-    double M_DEBUG_LF_TIRE_FX;
-    double M_DEBUG_RF_TIRE_FX;
-    double M_DEBUG_LR_TIRE_FX;
-    double M_DEBUG_RR_TIRE_FX;
+    double M_DEBUG_F_TIRE_FX;
+    double M_DEBUG_R_TIRE_FX;
 
-    double M_DEBUG_LF_TIRE_FY;
-    double M_DEBUG_RF_TIRE_FY;
-    double M_DEBUG_LR_TIRE_FY;
-    double M_DEBUG_RR_TIRE_FY;
+    double M_DEBUG_F_TIRE_FY;
+    double M_DEBUG_R_TIRE_FY;
 
-    double M_DEBUG_LF_TIRE_FZ;
-    double M_DEBUG_RF_TIRE_FZ;
-    double M_DEBUG_LR_TIRE_FZ;
-    double M_DEBUG_RR_TIRE_FZ;
+    double M_DEBUG_F_TIRE_FZ;
+    double M_DEBUG_R_TIRE_FZ;
 #endif
 };
 
@@ -135,8 +131,7 @@ void unpackY(const std::vector<double>& y,
              bool has_TC,
              d11::VehicleState& v_states,
              d11::TMeasyState& tiref_st,
-             d11::TMeasyState& tirer_st
-             );
+             d11::TMeasyState& tirer_st);
 
 #endif
 

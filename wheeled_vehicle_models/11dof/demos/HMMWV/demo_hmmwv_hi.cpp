@@ -2,7 +2,7 @@
 #include <algorithm>
 #include <iterator>
 
-#include "dof11_sundials.h"
+#include "dof11_halfImplicit.h"
 
 using namespace d11;
 
@@ -15,24 +15,21 @@ int main(int argc, char** argv) {
     std::string tireParamsJSON = (char*)"../data/json/HMMWV/tmeasy.json";
 
     // Construct the solver
-    d18SolverSundials solver;
+    d11SolverHalfImplicit solver;
     solver.Construct(vehParamsJSON, tireParamsJSON, driver_file);
 
-    // Set optional inputs
-    solver.SetTolerances(1e-5, 1e-3);
-    solver.SetMaxStep(1e-2);
+    // Set time step
+    solver.SetTimeStep(1e-3);
 
     // Initialize solver (set initial conditions)
     VehicleState veh_st;
     TMeasyState tiref_st;
     TMeasyState tirer_st;
-   
+
     solver.Initialize(veh_st, tiref_st, tirer_st);
 
     // Enable output
-    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv18Sundials.csv");
-    solver.SetVerbose(false);
-
+    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv18Hi.csv", 100);
     // Solve without quadratures (no reference path required)
-    solver.Solve(false);
+    solver.Solve();
 }

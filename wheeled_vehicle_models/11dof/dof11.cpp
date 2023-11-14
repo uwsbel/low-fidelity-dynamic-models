@@ -41,39 +41,7 @@ double d11::driveTorque(const VehicleParam& v_params, const double throttle, con
     return motor_torque;
 }
 
-// Function that calculates the torque split to each tire based on the
-// differential max bias Exactly the same as Chrono implementation
-void d11::differentialSplit(double torque,
-                            double max_bias,
-                            double speed_left,
-                            double speed_right,
-                            double& torque_left,
-                            double& torque_right) {
-    double diff = std::abs(speed_left - speed_right);
-
-    // The bias grows from 1 at diff=0.25 to max_bias at diff=0.5
-    double bias = 1;
-    if (diff > 0.5)
-        bias = max_bias;
-    else if (diff > 0.25)
-        bias = 4 * (max_bias - 1) * diff + (2 - max_bias);
-
-    // Split torque to the slow and fast wheels.
-    double alpha = bias / (1 + bias);
-    double slow = alpha * torque;
-    double fast = torque - slow;
-
-    if (std::abs(speed_left) < std::abs(speed_right)) {
-        torque_left = slow;
-        torque_right = fast;
-    } else {
-        torque_left = fast;
-        torque_right = slow;
-    }
-}
-
-
- // Loads being utilized correctly here?
+// Loads being utilized correctly here?
 void d11::vehToTireTransform(TMeasyState& tiref_st,
                              TMeasyState& tirer_st,
                              const VehicleState& v_states,
@@ -97,14 +65,12 @@ void d11::vehToTireTransform(TMeasyState& tiref_st,
 
     // right front
     tirer_st._fz = loads[1];
-    tirer_st._vsy = v_states._v + v_states._wz * v_params._a;
+    tirer_st._vsy = v_states._v - v_states._wz * v_params._b;
     tirer_st._vsx = v_states._u;
-
-    
 }
 
 void d11::tireToVehTransform(TMeasyState& tiref_st,
-                             TMeasyState& tirer_st, 
+                             TMeasyState& tirer_st,
                              const VehicleState& v_states,
                              const VehicleParam& v_params,
                              double steering) {
@@ -121,12 +87,11 @@ void d11::tireToVehTransform(TMeasyState& tiref_st,
     double _fx, _fy;
 
     // Front tires steer by delta
-    _fx = tiref_st._fx * std::cos(delta) - tiref_st._fy * std::sin(delta); 
+    _fx = tiref_st._fx * std::cos(delta) - tiref_st._fy * std::sin(delta);
     _fy = tiref_st._fx * std::sin(delta) + tiref_st._fy * std::cos(delta);
 
     tiref_st._fx = _fx;
     tiref_st._fy = _fy;
-
 
     // rear tires - No steer so no need to transform
 }
@@ -191,13 +156,8 @@ void d11::computeTireLoads(std::vector<double>& loads,
                            const VehicleState& v_states,
                            const VehicleParam& v_params,
                            const TMeasyParam& t_params) {
-
-
-
     double huf = t_params._r0;
     double hur = t_params._r0;
-
-    
 
     // Static vertical load transfer based on d"Almberts principle
     double Z1 = (v_params._m * G * v_params._b) / (2. * (v_params._a + v_params._b)) + (v_params._muf * G) / 2.;
@@ -346,7 +306,6 @@ void d11::computeTireRHS(TMeasyState& t_states,
     double vtxs = r_eff * std::abs(t_states._omega) * hsxn;
     double vtys = r_eff * std::abs(t_states._omega) * hsyn;
 
-
     // Tire velocities for the RHS
     t_states._xedot = (-vtxs * t_params._cx * t_states._xe - fos * vsx) / (vtxs * t_params._dx + fos);
     t_states._yedot = (-vtys * t_params._cy * t_states._ye - fos * (-sy * vta)) / (vtys * t_params._dy + fos);
@@ -472,8 +431,7 @@ void d11::computePowertrainRHS(VehicleState& v_states,
         }
     } else {  // If there is no torque converter, then the crank shaft does not
               // have a state so we directly updated the crankOmega to be used
-        v_states._crankOmega = 0.5 * (tiref_st._omega + tirer_st._omega)
-                                                    / v_params._gearRatios[v_states._current_gr];
+        v_states._crankOmega = 0.5 * (tiref_st._omega + tirer_st._omega) / v_params._gearRatios[v_states._current_gr];
 
         // The torque after tranny will then just become as there is no torque
         // converter
@@ -504,37 +462,31 @@ void d11::computePowertrainRHS(VehicleState& v_states,
 
     //////// Amount of torque transmitted to the wheels
 
-    // // torque split between the  front and rear (always half)
-    // double torque_front = 0;
-    // double torque_rear = 0;
-    // if (v_params._driveType) {  // If we have a 4WD vehicle split torque equally
-    //     torque_front = torque_t * 0.5;
-    //     torque_rear = torque_t * 0.5;
-    // } else {
-    //     if (v_params._whichWheels) {
-    //         torque_front = 0;
-    //         torque_rear = torque_t;
-    //     } else {
-    //         torque_front = torque_t;
-    //         torque_rear = 0;
-    //     }
-    // }
-
-    // first the front wheels
-    differentialSplit(torque_t, max_bias, tirer_st._omega, tiref_st._omega, tirer_st._engTor, tiref_st._engTor, 1);
-    
+    // torque split between the  front and rear (always half)
+    double torque_front = 0;
+    double torque_rear = 0;
+    if (v_params._driveType) {  // If we have a 4WD vehicle split torque equally
+        torque_front = torque_t * 0.5;
+        torque_rear = torque_t * 0.5;
+    } else {
+        if (v_params._whichWheels) {
+            torque_front = 0;
+            torque_rear = torque_t;
+        } else {
+            torque_front = torque_t;
+            torque_rear = 0;
+        }
+    }
 
     // now use this force for our omegas
     // Get dOmega for each tire
     tiref_st._dOmega = (1 / t_params._jw) * (tiref_st._engTor + tiref_st._My -
-                                              sgn(tiref_st._omega) * brakeTorque(v_params, controls.m_braking) -
-                                              tiref_st._fx * tiref_st._rStat);
+                                             sgn(tiref_st._omega) * brakeTorque(v_params, controls.m_braking) -
+                                             tiref_st._fx * tiref_st._rStat);
 
     tirer_st._dOmega = (1 / t_params._jw) * (tirer_st._engTor + tirer_st._My -
-                                              sgn(tirer_st._omega) * brakeTorque(v_params, controls.m_braking) -
-                                              tirer_st._fx * tirer_st._rStat);
-
-    
+                                             sgn(tirer_st._omega) * brakeTorque(v_params, controls.m_braking) -
+                                             tirer_st._fx * tirer_st._rStat);
 }
 
 void d11::computeVehRHS(VehicleState& v_states,
@@ -548,28 +500,8 @@ void d11::computeVehRHS(VehicleState& v_states,
     v_states._udot = v_states._v * v_states._wz + (fx[0] + fx[1]) / mt;
     v_states._wzdot = (v_params._a * fy[0] - v_params._b * fy[1]) / v_params._jz;
 
-    v_states._u = v_states._u + v_params._step * v_states._udot;
-    v_states._v = v_states._v + v_params._step * v_states._vdot;
-    v_states._wz = v_states._wz + v_params._step * v_states._wzdot;
-
-    v_states._x =
-        v_states._x + v_params._step * (v_states._u * std::cos(v_states._psi) - v_states._v * std::sin(v_states._psi));
-    v_states._y =
-        v_states._y + v_params._step * (v_states._u * std::sin(v_states._psi) + v_states._v * std::cos(v_states._psi));
-
-    v_states._psi = v_states._psi + v_params._step * v_states._wz;
-
-    // Static vertical load transfer based on d"Almberts principle
-    double Z1 = (v_params._m * G * v_params._b) / (2. * (v_params._a + v_params._b)) + (v_params._muf * G) / 2.;
-    double Z2 = ((v_params._m * v_params._h + v_params._muf * huf + v_params._mur * hur) *
-                 (v_states._udot - v_states._wz * v_states._v)) /
-                (2. * (v_params._a + v_params._b));
-
-    v_states._fzf = (Z1 - Z2) > 0. ? (Z1 - Z2) : 0.;
-
-    double Z3 = (v_params._m * G * v_params._a) / (2. * (v_params._a + v_params._b)) + (v_params._mur * G) / 2.;
-
-    v_states._fzr = (Z3 + Z2) > 0. ? (Z3 + Z2) : 0.;
+    v_states._dx = v_states._u * std::cos(v_states._psi) - v_states._v * std::sin(v_states._psi);
+    v_states._dy = v_states._u * std::sin(v_states._psi) + v_states._v * std::cos(v_states._psi);
 }
 
 // setting Tire parameters using a JSON file
@@ -577,7 +509,7 @@ void d11::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
-    char readBuffer[32768];
+    char readBuffer[65536];
     rapidjson::FileReadStream is(fp, readBuffer, sizeof(readBuffer));
 
     // parse the stream into DOM tree
@@ -589,40 +521,38 @@ void d11::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
         std::cout << "Error with rapidjson:" << std::endl << d.GetParseError() << std::endl;
     }
 
-    // pray to what ever you believe in and hope that the json file has all
-    // these
-    t_params._jw = d["jw"].GetDouble();
-    t_params._rr = d["rr"].GetDouble();
+    t_params._jw = d["jw"].GetDouble() * 2.;
+    t_params._rr = d["rr"].GetDouble() * 2.;
     t_params._r0 = d["r0"].GetDouble();
-    t_params._pn = d["pn"].GetDouble();
-    t_params._pnmax = d["pnmax"].GetDouble();
-    t_params._cx = d["cx"].GetDouble();
-    t_params._cy = d["cy"].GetDouble();
-    t_params._kt = d["kt"].GetDouble();
-    t_params._dx = d["dx"].GetDouble();
-    t_params._dy = d["dy"].GetDouble();
+    t_params._pn = d["pn"].GetDouble() * 2.;
+    t_params._pnmax = d["pnmax"].GetDouble() * 2.;
+    t_params._cx = d["cx"].GetDouble() * 2.;
+    t_params._cy = d["cy"].GetDouble() * 2.;
+    t_params._kt = d["kt"].GetDouble() * 2.;
+    t_params._dx = d["dx"].GetDouble() * 2.;
+    t_params._dy = d["dy"].GetDouble() * 2.;
     t_params._rdyncoPn = d["rdyncoPn"].GetDouble();
     t_params._rdyncoP2n = d["rdyncoP2n"].GetDouble();
-    t_params._fzRdynco = d["fzRdynco"].GetDouble();
-    t_params._rdyncoCrit = d["rdyncoCrit"].GetDouble();
+    t_params._fzRdynco = d["fzRdynco"].GetDouble() * 2.;
+    t_params._rdyncoCrit = d["rdyncoCrit"].GetDouble() * 2.;
 
-    t_params._dfx0Pn = d["dfx0Pn"].GetDouble();
-    t_params._dfx0P2n = d["dfx0P2n"].GetDouble();
-    t_params._fxmPn = d["fxmPn"].GetDouble();
-    t_params._fxmP2n = d["fxmP2n"].GetDouble();
-    t_params._fxsPn = d["fxsPn"].GetDouble();
-    t_params._fxsP2n = d["fxsP2n"].GetDouble();
+    t_params._dfx0Pn = d["dfx0Pn"].GetDouble() * 2.;
+    t_params._dfx0P2n = d["dfx0P2n"].GetDouble() * 2.;
+    t_params._fxmPn = d["fxmPn"].GetDouble() * 2.;
+    t_params._fxmP2n = d["fxmP2n"].GetDouble() * 2.;
+    t_params._fxsPn = d["fxsPn"].GetDouble() * 2.;
+    t_params._fxsP2n = d["fxsP2n"].GetDouble() * 2.;
     t_params._sxmPn = d["sxmPn"].GetDouble();
     t_params._sxmP2n = d["sxmP2n"].GetDouble();
     t_params._sxsPn = d["sxsPn"].GetDouble();
     t_params._sxsP2n = d["sxsP2n"].GetDouble();
 
-    t_params._dfy0Pn = d["dfy0Pn"].GetDouble();
-    t_params._dfy0P2n = d["dfy0P2n"].GetDouble();
-    t_params._fymPn = d["fymPn"].GetDouble();
-    t_params._fymP2n = d["fymP2n"].GetDouble();
-    t_params._fysPn = d["fysPn"].GetDouble();
-    t_params._fysP2n = d["fysP2n"].GetDouble();
+    t_params._dfy0Pn = d["dfy0Pn"].GetDouble() * 2.;
+    t_params._dfy0P2n = d["dfy0P2n"].GetDouble() * 2.;
+    t_params._fymPn = d["fymPn"].GetDouble() * 2.;
+    t_params._fymP2n = d["fymP2n"].GetDouble() * 2.;
+    t_params._fysPn = d["fysPn"].GetDouble() * 2.;
+    t_params._fysP2n = d["fysP2n"].GetDouble() * 2.;
     t_params._symPn = d["symPn"].GetDouble();
     t_params._symP2n = d["symP2n"].GetDouble();
     t_params._sysPn = d["sysPn"].GetDouble();
@@ -711,9 +641,6 @@ void d11::setVehParamsJSON(VehicleParam& v_params, const char* fileName) {
     v_params._tcbool = d["tcBool"].GetBool();
 
     v_params._maxBrakeTorque = d["maxBrakeTorque"].GetDouble();
-    // v_params._maxSpeed = d["maxSpeed"].GetDouble();
-    v_params._c1 = d["c1"].GetDouble();
-    v_params._c0 = d["c0"].GetDouble();
     v_params._step = d["step"].GetDouble();
 
     v_params._throttleMod = d["throttleMod"].GetBool();

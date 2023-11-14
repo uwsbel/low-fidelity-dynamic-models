@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
                                   100, 100, 100, 100, 100, 100, 100, 100, 100, 100};
 
     // Construct the solver
-    d18SolverSundials solver;
+    d11SolverSundials solver;
     solver.Construct(vehParamsJSON, tireParamsJSON, driver_file);
 
     // Set optional inputs

@@ -294,25 +294,15 @@ struct VehicleParam {
           _h(0.713),
           _m(2097.85),
           _jz(4519.),
-          _jx(1289.),
-          _jxz(3.265),
-          _cf(1.82),
-          _cr(1.82),
           _muf(127.866),
           _mur(129.98),
-          _hrcf(0.379),
-          _hrcr(0.327),
-          _krof(31000),
-          _kror(31000),
-          _brof(3300),
-          _bror(3300),
           _nonLinearSteer(false),
           _maxSteer(0.6525249),
           _crankInertia(1.1),
           _tcbool(false),
+          _upshift_RPS(10000.),
+          _downshift_RPS(0.),
           _maxBrakeTorque(4000.),
-          _c1(0.),
-          _c0(0.),
           _step(1e-2),
           _throttleMod(0),
           _driveType(0),
@@ -324,27 +314,15 @@ struct VehicleParam {
                  double h,
                  double m,
                  double Jz,
-                 double Jx,
-                 double Jxz,
-                 double cf,
-                 double cr,
                  double muf,
                  double mur,
-                 double hrcf,
-                 double hrcr,
-                 double krof,
-                 double kror,
-                 double brof,
-                 double bror,
                  bool steer_bool,
                  double maxSteer,
                  double crank_inertia,
                  bool tc_bool,
-                 double maxTorque,
+                 double upshift_RPS,
+                 double downshift_RPS,
                  double brakeTorque,
-                 double maxSpeed,
-                 double c1,
-                 double c0,
                  double step,
                  bool throttle_mod,
                  bool driveType,
@@ -354,25 +332,15 @@ struct VehicleParam {
           _h(h),
           _m(m),
           _jz(Jz),
-          _jx(Jx),
-          _jxz(Jxz),
-          _cf(cf),
-          _cr(cr),
           _muf(muf),
           _mur(mur),
-          _hrcf(hrcf),
-          _hrcr(hrcr),
-          _krof(krof),
-          _kror(kror),
-          _brof(bror),
-          _bror(bror),
           _nonLinearSteer(steer_bool),
           _maxSteer(maxSteer),
           _crankInertia(crank_inertia),
           _tcbool(tc_bool),
+          _upshift_RPS(upshift_RPS),
+          _downshift_RPS(downshift_RPS),
           _maxBrakeTorque(brakeTorque),
-          _c1(c1),
-          _c0(c0),
           _step(step),
           _throttleMod(throttle_mod),
           _driveType(driveType),
@@ -385,25 +353,15 @@ struct VehicleParam {
           _h(other._h),
           _m(other._m),
           _jz(other._jz),
-          _jx(other._jx),
-          _jxz(other._jxz),
-          _cf(other._cf),
-          _cr(other._cr),
           _muf(other._muf),
           _mur(other._mur),
-          _hrcf(other._hrcf),
-          _hrcr(other._hrcr),
-          _krof(other._krof),
-          _kror(other._kror),
-          _brof(other._brof),
-          _bror(other._bror),
           _nonLinearSteer(other._nonLinearSteer),
           _maxSteer(other._maxSteer),
           _crankInertia(other._crankInertia),
           _tcbool(other._tcbool),
+          _upshift_RPS(other._upshift_RPS),
+          _downshift_RPS(other._downshift_RPS),
           _maxBrakeTorque(other._maxBrakeTorque),
-          _c1(other._c1),
-          _c0(other._c0),
           _step(other._step),
           _throttleMod(other._throttleMod),
           _driveType(other._driveType),
@@ -416,17 +374,11 @@ struct VehicleParam {
           _TRmap(other._TRmap),
           _shiftMap(other._shiftMap) {}
 
-    double _a, _b;        // distance c.g. - front axle & distance c.g. - rear axle (m)
-    double _h;            // height of c.g
-    double _m;            // total vehicle mass (kg)
-    double _jz;           // yaw moment inertia (kg.m^2)
-    double _jx;           // roll inertia
-    double _jxz;          // XZ inertia
-    double _cf, _cr;      // front and rear track width
-    double _muf, _mur;    // front and rear unsprung mass
-    double _hrcf, _hrcr;  // front and rear roll centre height below C.g
-    double _krof, _kror, _brof,
-        _bror;  // front and rear roll stiffness and damping
+    double _a, _b;      // distance c.g. - front axle & distance c.g. - rear axle (m)
+    double _h;          // height of c.g
+    double _m;          // total vehicle mass (kg)
+    double _jz;         // yaw moment inertia (kg.m^2)
+    double _muf, _mur;  // front and rear unsprung mass
 
     // Bool that checks if the steering is non linea ---> Need to depricate
     // this, can always define a steer map 1 -> Steering is non linear, requires
@@ -441,6 +393,8 @@ struct VehicleParam {
 
     // crank shaft inertia
     double _crankInertia;
+    double _upshift_RPS;
+    double _downshift_RPS;
     // some gear parameters
     std::vector<double> _gearRatios;  // gear ratio
 
@@ -449,8 +403,6 @@ struct VehicleParam {
 
     // double _maxTorque; // Max torque
     double _maxBrakeTorque;  // max brake torque
-    // double _maxSpeed; // Max speed
-    double _c1, _c0;  // motor resistance - mainly needed for rc car
 
     double _step;  // vehicle integration time step
 
@@ -495,14 +447,12 @@ struct VehicleState {
           _v(0.),
           _psi(0.),
           _wz(0.),
-          _phi(0.),
-          _wx(0.),
           _udot(0.),
           _vdot(0.),
-          _wxdot(0.),
           _wzdot(0.),
           _tor(0.),
           _crankOmega(0.),
+          _dOmega_crank(0.),
           _current_gr(0) {}
 
     // copy constructor
@@ -515,11 +465,8 @@ struct VehicleState {
           _v(other._v),
           _psi(other._psi),
           _wz(other._wz),
-          _phi(other._phi),
-          _wx(other._wx),
           _udot(other._udot),
           _vdot(other._vdot),
-          _wxdot(other._wxdot),
           _wzdot(other._wzdot),
           _tor(other._tor),
           _crankOmega(other._crankOmega),
@@ -532,11 +479,10 @@ struct VehicleState {
     double _dx, _dy;   // This is basically u and v but transformed to global coordinates
     double _u, _v;     // x and y velocity
     double _psi, _wz;  // yaw angle and yaw rate
-    double _phi, _wx;  // roll angle and roll rate
 
     // acceleration 'states'
     double _udot, _vdot;
-    double _wxdot, _wzdot;
+    double _wzdot;
 
     // crank torque (used to transmit torque to tires) and crank angular
     // velocity state
@@ -563,18 +509,18 @@ void differentialSplit(double torque,
 // setting vehicle parameters using a JSON file
 void setVehParamsJSON(VehicleParam& v_params, const char* fileName);
 
-void  vehToTireTransform(TMeasyState& tiref_st,
-                             TMeasyState& tirer_st,
-                             const VehicleState& v_states,
-                             const std::vector<double>& loads,
-                             const VehicleParam& v_params,
-                             double steering);
+void vehToTireTransform(TMeasyState& tiref_st,
+                        TMeasyState& tirer_st,
+                        const VehicleState& v_states,
+                        const std::vector<double>& loads,
+                        const VehicleParam& v_params,
+                        double steering);
 
 void tireToVehTransform(TMeasyState& tiref_st,
-                             TMeasyState& tirer_st, 
-                             const VehicleState& v_states,
-                             const VehicleParam& v_params,
-                             double steering);
+                        TMeasyState& tirer_st,
+                        const VehicleState& v_states,
+                        const VehicleParam& v_params,
+                        double steering);
 
 // ------------------------------ Tire functions
 
@@ -596,16 +542,16 @@ void computeTireLoads(std::vector<double>& loads,
                       const TMeasyParam& t_params);
 void computeTireRHS(TMeasyState& t_states, const TMeasyParam& t_params, const VehicleParam& v_params, double steering);
 void computePowertrainRHS(VehicleState& v_states,
-                               TMeasyState& tiref_st,
-                               TMeasyState& tirer_st,
-                               const VehicleParam& v_params,
-                               const TMeasyParam& t_params,
-                               const DriverInput& controls) ;
+                          TMeasyState& tiref_st,
+                          TMeasyState& tirer_st,
+                          const VehicleParam& v_params,
+                          const TMeasyParam& t_params,
+                          const DriverInput& controls);
 void computeVehRHS(VehicleState& v_states,
                    const VehicleParam& v_params,
                    const std::vector<double>& fx,
                    const std::vector<double>& fy);
 
-}  
+}  // namespace d11
 
 #endif

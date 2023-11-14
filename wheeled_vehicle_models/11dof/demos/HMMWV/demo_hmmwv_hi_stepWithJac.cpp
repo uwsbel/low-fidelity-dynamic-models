@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
     std::string tireParamsJSON = (char*)"../data/json/HMMWV/tmeasy.json";
 
     // Construct the solver
-    d18SolverHalfImplicit solver;
+    d11SolverHalfImplicit solver;
     solver.Construct(vehParamsJSON, tireParamsJSON, driver_file);
 
     // Set time step
@@ -36,7 +36,7 @@ int main(int argc, char** argv) {
     VehicleState veh_st;
     TMeasyState tiref_st;
     TMeasyState tirer_st;
-    
+
     solver.Initialize(veh_st, tiref_st, tirer_st);
 
     // Enable output

@@ -58,8 +58,8 @@ endif()
 
 
 set(MODEL_FILES
-    dof18.h
-    dof18.cpp
+    dof11.h
+    dof11.cpp
 )
 
 set(UTILS_FILES
@@ -69,8 +69,8 @@ set(UTILS_FILES
 
 # Use half implicit solver by default
 set(SOLVER_FILES
-  dof18_halfImplicit.h
-  dof18_halfImplicit.cpp
+  dof11_halfImplicit.h
+  dof11_halfImplicit.cpp
 )
 # Add sundials solver if required
 if(USE_SUNDIALS)
@@ -89,7 +89,7 @@ set(HMMWV_PROGRAMS
 )
 # Sedan demos
 set(SEDAN_PROGRAMS
-    demo_sedan_hi
+
 )
 
 # Add sundials demos if required
@@ -99,7 +99,7 @@ if(USE_SUNDIALS)
       demo_hmmwv_sundials
   )
   set(SEDAN_PROGRAMS ${SEDAN_PROGRAMS}
-      demo_sedan_sundials
+      
   )
 endif()
 
