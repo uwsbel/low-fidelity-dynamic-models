@@ -6,7 +6,8 @@
 #include <stdlib.h>
 
 #include "utils.h"
-
+// enum to decide what type of tire we have
+enum class TireType { TMeasy, TMeasyNr };
 namespace d18 {
 
 // TMeasy parameter structure

@@ -15,8 +15,6 @@
 // =============================================================================
 // Define the solver class
 // =============================================================================
-// enum to decide what type of tire we have
-enum class TireType { TMeasy, TMeasyNr };
 class d18SolverHalfImplicit {
   public:
     d18SolverHalfImplicit();

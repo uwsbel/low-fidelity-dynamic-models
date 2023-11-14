@@ -53,7 +53,12 @@ class UserData {
     UserData() : m_current_gr(0), m_param_flags(0), m_vx_idx(0), m_vy_idx(0) {}
     UserData(int param_flags,
              const d18::VehicleParam& veh_param,
-             const d18::TMeasyParam& tire,
+             const d18::TMeasyParam& tire_TM,
+             const DriverData& driver_data,
+             const PathData& ref_path = PathData());
+    UserData(int param_flags,
+             const d18::VehicleParam& veh_param,
+             const d18::TMeasyNrParam& tire_TMNr,
              const DriverData& driver_data,
              const PathData& ref_path = PathData());
 
@@ -61,13 +66,15 @@ class UserData {
     std::vector<realtype>& GetParamScales() { return m_param_scales; }
 
     const d18::VehicleParam& GetVehicleParam();
-    const d18::TMeasyParam& GetTireParam();
+    const d18::TMeasyParam& GetTireTMParam();
+    const d18::TMeasyNrParam& GetTireTMNrParam();
     const DriverData& GetDriverData() const { return m_driver_data; }
     const PathData& GetReferencePath() const { return m_ref_path; }
     bool HasReferencePath() const { return !m_ref_path.empty(); }
 
     void SetCurrentGear(int gear) { m_current_gr = gear; }
     int GetCurrentGear() const { return m_current_gr; }
+    TireType GetTireType() const { return m_tire_type; }
 
     // Indices of vehicle position in state vectors
     int m_vx_idx;
@@ -77,12 +84,15 @@ class UserData {
     bool IsFlagSet(ParamFlag::Enum val) const { return (m_param_flags & static_cast<int>(val)) != 0; }
 
     d18::VehicleParam m_veh_param;
-    d18::TMeasyParam m_tire_param;
+    d18::TMeasyParam m_tireTM_param;
+    d18::TMeasyNrParam m_tireTMNr_param;
     DriverData m_driver_data;
     PathData m_ref_path;
 
     // Current transmission gear
     int m_current_gr;
+    // Tire type - changes how we pack and unpack the state vectors
+    TireType m_tire_type;
 
     // Sensitivity parameters
     int m_param_flags;
@@ -110,6 +120,10 @@ class d18SolverSundials {
     void Construct(const std::string& vehicle_params_file,
                    const std::string& tire_params_file,
                    const std::string& driver_inputs_file);
+    void Construct(const std::string& vehicle_params_file,
+                   const std::string& tire_params_file,
+                   const std::string& driver_inputs_file,
+                   TireType type);
     void SetTolerances(double rtol, double atol);
     void SetMaxStep(double hmax);
     void SetSensitivityParameters(int param_flags, const std::vector<double>& params);
@@ -126,9 +140,16 @@ class d18SolverSundials {
                    d18::TMeasyState& tire_states_RF,
                    d18::TMeasyState& tire_states_LR,
                    d18::TMeasyState& tire_states_RR);
+    int Initialize(d18::VehicleState& vehicle_states,
+                   d18::TMeasyNrState& tire_states_LF,
+                   d18::TMeasyNrState& tire_states_RF,
+                   d18::TMeasyNrState& tire_states_LR,
+                   d18::TMeasyNrState& tire_states_RR);
 
     int GetNumStates() const { return m_neq; }
     int GetNumParameters() const { return m_ns; }
+    // Tire type getter
+    TireType GetTireType() const { return m_tire_type; }
 
     bool Solve(bool fsa);
     Objective Evaluate_FSA(bool gradient);
@@ -165,6 +186,7 @@ class d18SolverSundials {
     bool m_verbose;             // verbose output?
     bool m_output;              // generate output file?
     std::string m_output_file;  // output file name
+    TireType m_tire_type;       // Tire type - changes how we pack and unpack the state vectors
 };
 
 // =============================================================================
@@ -179,11 +201,27 @@ void packY(const d18::VehicleState& v_states,
            bool has_TC,
            N_Vector& y);
 
+void packY(const d18::VehicleState& v_states,
+           const d18::TMeasyNrState& tirelf_st,
+           const d18::TMeasyNrState& tirerf_st,
+           const d18::TMeasyNrState& tirelr_st,
+           const d18::TMeasyNrState& tirerr_st,
+           bool has_TC,
+           N_Vector& y);
+
 void packYDOT(const d18::VehicleState& v_states,
               const d18::TMeasyState& tirelf_st,
               const d18::TMeasyState& tirerf_st,
               const d18::TMeasyState& tirelr_st,
               const d18::TMeasyState& tirerr_st,
+              bool has_TC,
+              N_Vector& ydot);
+
+void packYDOT(const d18::VehicleState& v_states,
+              const d18::TMeasyNrState& tirelf_st,
+              const d18::TMeasyNrState& tirerf_st,
+              const d18::TMeasyNrState& tirelr_st,
+              const d18::TMeasyNrState& tirerr_st,
               bool has_TC,
               N_Vector& ydot);
 
@@ -194,6 +232,14 @@ void unpackY(const N_Vector& y,
              d18::TMeasyState& tirerf_st,
              d18::TMeasyState& tirelr_st,
              d18::TMeasyState& tirerr_st);
+
+void unpackY(const N_Vector& y,
+             bool has_TC,
+             d18::VehicleState& v_states,
+             d18::TMeasyNrState& tirelf_st,
+             d18::TMeasyNrState& tirerf_st,
+             d18::TMeasyNrState& tirelr_st,
+             d18::TMeasyNrState& tirerr_st);
 
 void calcF();
 void calcFtL();
