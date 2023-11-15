@@ -37,10 +37,8 @@ int main(int argc, char** argv) {
 
     // Initialize solver (set initial conditions)
     VehicleState veh_st;
-    TMeasyState tirelf_st;
-    TMeasyState tirerf_st;
-    TMeasyState tirelr_st;
-    TMeasyState tirerr_st;
+    TMeasyState tiref_st;
+    TMeasyState tirer_st;
     solver.Initialize(veh_st, tiref_st, tirer_st);
 
     // Enable output

@@ -89,7 +89,7 @@ class UserData {
     std::vector<realtype> m_params;
     std::vector<realtype> m_param_scales;
 
-    friend class d18SolverSundials;
+    friend class d11SolverSundials;
 };
 
 // =============================================================================
@@ -102,10 +102,10 @@ struct Objective {
 
 #endif
 
-class d18SolverSundials {
+class d11SolverSundials {
   public:
-    d18SolverSundials();
-    ~d18SolverSundials();
+    d11SolverSundials();
+    ~d11SolverSundials();
 
     void Construct(const std::string& vehicle_params_file,
                    const std::string& tire_params_file,
@@ -121,9 +121,7 @@ class d18SolverSundials {
 
     void SetOutput(const std::string& output_file);
 
-    int Initialize(d11::VehicleState& vehicle_states,
-                   d11::TMeasyState& tire_states_F,
-                   d11::TMeasyState& tire_states_R);
+    int Initialize(d11::VehicleState& vehicle_states, d11::TMeasyState& tire_states_F, d11::TMeasyState& tire_states_R);
 
     int GetNumStates() const { return m_neq; }
     int GetNumParameters() const { return m_ns; }
@@ -185,7 +183,7 @@ void unpackY(const N_Vector& y,
              bool has_TC,
              d11::VehicleState& v_states,
              d11::TMeasyState& tiref_st,
-             d11::TMeasyState& tirer_st,);
+             d11::TMeasyState& tirer_st);
 
 void calcF();
 void calcFtL();

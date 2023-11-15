@@ -42,8 +42,8 @@ UserData::UserData(int param_flags,
     }
 
     int offset = veh_param._tcbool ? 1 : 0;
-    m_vx_idx = 12 + offset;
-    m_vy_idx = 13 + offset;
+    m_vx_idx = 6 + offset;
+    m_vy_idx = 7 + offset;
 }
 
 const d11::VehicleParam& UserData::GetVehicleParam() {
@@ -91,8 +91,8 @@ void d11SolverSundials::Construct(const std::string& vehicle_params_file,
 
     m_has_TC = m_data.m_veh_param._tcbool;
     m_offset = m_has_TC ? 1 : 0;
-    m_data.m_vx_idx = 12 + m_offset;
-    m_data.m_vy_idx = 13 + m_offset;
+    m_data.m_vx_idx = 6 + m_offset;
+    m_data.m_vy_idx = 7 + m_offset;
 
     // Load driver inputs
     LoadDriverData(m_data.m_driver_data, driver_inputs_file);
@@ -200,7 +200,7 @@ int d11SolverSundials::Initialize(d11::VehicleState& vehicle_states,
     // -------------------------------------------------------------------------
 
     // Load initial conditions
-    m_neq = m_data.m_veh_param._tcbool ? 21 : 20;
+    m_neq = m_data.m_veh_param._tcbool ? 13 : 12;
     m_y0 = N_VNew_Serial(m_neq, m_sunctx);
     packY(vehicle_states, tire_states_F, tire_states_R, m_has_TC, m_y0);
 
@@ -498,13 +498,13 @@ bool d11SolverSundials::Integrate(bool fsa) {
 
 void d11SolverSundials::Write(CSV_writer& csv, realtype t, N_Vector y, N_Vector* yS) {
     csv << t;
-    csv << Ith(y, 12 + m_offset) << Ith(y, 13 + m_offset) << Ith(y, 14 + m_offset) << Ith(y, 15 + m_offset)
-        << Ith(y, 16 + m_offset) << Ith(y, 17 + m_offset);
+    csv << Ith(y, 6 + m_offset) << Ith(y, 7 + m_offset) << Ith(y, 8 + m_offset) << Ith(y, 9 + m_offset)
+        << Ith(y, 10 + m_offset) << Ith(y, 11 + m_offset);
     ////csv << Ith(y, 14 + m_offset) << Ith(y, 15 + m_offset);
     ////csv << Ith(y, 8);
     if (yS) {
         for (int is = 0; is < m_ns; is++)
-            csv << Ith(yS[is], 12 + m_offset) << Ith(yS[is], 13 + m_offset);
+            csv << Ith(yS[is], 6 + m_offset) << Ith(yS[is], 7 + m_offset);
     }
     csv << std::endl;
 }
@@ -524,7 +524,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
     VehicleState veh_st;
     TMeasyState tiref_st;
     TMeasyState tirer_st;
-    
+
     unpackY(y, veh_param._tcbool, veh_st, tiref_st, tirer_st);
 
     // Keep track of the current gear
@@ -534,7 +534,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
     auto controls = GetDriverInput(t, udata->GetDriverData());
 
     // Calculate tire vertical loads
-    std::vector<double> loads(4, 0);
+    std::vector<double> loads(2, 0);
     computeTireLoads(loads, veh_st, veh_param, tire_param);
 
     // Transform from the vehicle frame to the tire frame
@@ -542,14 +542,14 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
 
     // Tire dynamics
     computeTireRHS(tiref_st, tire_param, veh_param, controls.m_steering);
-    
+
     computeTireRHS(tirer_st, tire_param, veh_param, 0);
 
     // Powertrain dynamics
-    computePowertrainRHS(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, veh_param, tire_param, controls);
+    computePowertrainRHS(veh_st, tiref_st, tirer_st, veh_param, tire_param, controls);
 
     // Vehicle dynamics
-    tireToVehTransform(tiref_st, tirer_st,  veh_st, veh_param, controls.m_steering);
+    tireToVehTransform(tiref_st, tirer_st, veh_st, veh_param, controls.m_steering);
     std::vector<double> fx = {tiref_st._fx, tirer_st._fx};
     std::vector<double> fy = {tiref_st._fy, tirer_st._fy};
     computeVehRHS(veh_st, veh_param, fx, fy);
@@ -559,10 +559,6 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
 
     // Keeping track of the current gear
     udata->SetCurrentGear(veh_st._current_gr);
-
-    ////for (int i = 0; i < NV_LENGTH_S(ydot); i++)
-    ////  std::cout << Ith(ydot, i) << "  ";
-    ////std::cout << std::endl;
 
     return 0;
 }
@@ -620,7 +616,7 @@ int rhsQuadSens(int Ns,
 
 void packY(const d11::VehicleState& v_states,
            const d11::TMeasyState& tiref_st,
-           const d11::TMeasyState& tirer_st, 
+           const d11::TMeasyState& tirer_st,
            bool has_TC,
            N_Vector& y) {
     int index = 0;
@@ -630,7 +626,6 @@ void packY(const d11::VehicleState& v_states,
     Ith(y, index++) = tiref_st._ye;
     Ith(y, index++) = tirer_st._xe;
     Ith(y, index++) = tirer_st._ye;
-    
 
     // Wheel angular velocities (lf, rf, lr and rr)
     Ith(y, index++) = tiref_st._omega;
@@ -649,8 +644,6 @@ void packY(const d11::VehicleState& v_states,
     Ith(y, index++) = v_states._v;    // lateral velocity
     Ith(y, index++) = v_states._psi;  // yaw angle
     Ith(y, index++) = v_states._wz;   // yaw rate
-    Ith(y, index++) = v_states._phi;  // roll angle
-    Ith(y, index++) = v_states._wx;   // roll rate
 }
 
 void packYDOT(const d11::VehicleState& v_states,
@@ -664,7 +657,6 @@ void packYDOT(const d11::VehicleState& v_states,
     Ith(ydot, index++) = tiref_st._yedot;
     Ith(ydot, index++) = tirer_st._xedot;
     Ith(ydot, index++) = tirer_st._yedot;
-   
 
     Ith(ydot, index++) = tiref_st._dOmega;
     Ith(ydot, index++) = tirer_st._dOmega;
@@ -679,8 +671,6 @@ void packYDOT(const d11::VehicleState& v_states,
     Ith(ydot, index++) = v_states._vdot;
     Ith(ydot, index++) = v_states._wz;
     Ith(ydot, index++) = v_states._wzdot;
-    Ith(ydot, index++) = v_states._wx;
-    Ith(ydot, index++) = v_states._wxdot;
 }
 
 void unpackY(const N_Vector& y,
@@ -695,12 +685,10 @@ void unpackY(const N_Vector& y,
     tiref_st._ye = Ith(y, index++);
     tirer_st._xe = Ith(y, index++);
     tirer_st._ye = Ith(y, index++);
-    
 
     // Wheel angular velocities
     tiref_st._omega = Ith(y, index++);
     tirer_st._omega = Ith(y, index++);
-
 
     // Crank angular velocity - This is a state only when a torque converter is
     // used
@@ -715,8 +703,6 @@ void unpackY(const N_Vector& y,
     v_states._v = Ith(y, index++);    // lateral velocity
     v_states._psi = Ith(y, index++);  // yaw angle
     v_states._wz = Ith(y, index++);   // yaw rate
-    v_states._phi = Ith(y, index++);  // roll angle
-    v_states._wx = Ith(y, index++);   // roll rate
 }
 
 // =============================================================================
