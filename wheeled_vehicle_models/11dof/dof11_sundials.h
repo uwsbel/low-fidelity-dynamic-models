@@ -57,17 +57,26 @@ class UserData {
              const DriverData& driver_data,
              const PathData& ref_path = PathData());
 
+    UserData(int param_flags,
+             const d11::VehicleParam& veh_param,
+             const d11::TMeasyNrParam& tire,
+             const DriverData& driver_data,
+             const PathData& ref_path = PathData());
+
     std::vector<realtype>& GetParams() { return m_params; }
     std::vector<realtype>& GetParamScales() { return m_param_scales; }
 
     const d11::VehicleParam& GetVehicleParam();
-    const d11::TMeasyParam& GetTireParam();
+    const d11::TMeasyParam& GetTireTMParam();
+    const d11::TMeasyNrParam& GetTireTMNrParam();
+
     const DriverData& GetDriverData() const { return m_driver_data; }
     const PathData& GetReferencePath() const { return m_ref_path; }
     bool HasReferencePath() const { return !m_ref_path.empty(); }
 
     void SetCurrentGear(int gear) { m_current_gr = gear; }
     int GetCurrentGear() const { return m_current_gr; }
+    TireType GetTireType() const { return m_tire_type; }
 
     // Indices of vehicle position in state vectors
     int m_vx_idx;
@@ -77,12 +86,15 @@ class UserData {
     bool IsFlagSet(ParamFlag::Enum val) const { return (m_param_flags & static_cast<int>(val)) != 0; }
 
     d11::VehicleParam m_veh_param;
-    d11::TMeasyParam m_tire_param;
+    d11::TMeasyParam m_tireTM_param;
+    d11::TMeasyNrParam m_tireTMNr_param;
     DriverData m_driver_data;
     PathData m_ref_path;
 
     // Current transmission gear
     int m_current_gr;
+    // Tire type - changes how we pack and unpack the state vectors
+    TireType m_tire_type;
 
     // Sensitivity parameters
     int m_param_flags;
@@ -110,6 +122,10 @@ class d11SolverSundials {
     void Construct(const std::string& vehicle_params_file,
                    const std::string& tire_params_file,
                    const std::string& driver_inputs_file);
+    void Construct(const std::string& vehicle_params_file,
+                   const std::string& tire_params_file,
+                   const std::string& driver_inputs_file,
+                   TireType tire_type);
     void SetTolerances(double rtol, double atol);
     void SetMaxStep(double hmax);
     void SetSensitivityParameters(int param_flags, const std::vector<double>& params);
@@ -122,6 +138,9 @@ class d11SolverSundials {
     void SetOutput(const std::string& output_file);
 
     int Initialize(d11::VehicleState& vehicle_states, d11::TMeasyState& tire_states_F, d11::TMeasyState& tire_states_R);
+    int Initialize(d11::VehicleState& vehicle_states,
+                   d11::TMeasyNrState& tire_states_F,
+                   d11::TMeasyNrState& tire_states_R);
 
     int GetNumStates() const { return m_neq; }
     int GetNumParameters() const { return m_ns; }
@@ -161,6 +180,7 @@ class d11SolverSundials {
     bool m_verbose;             // verbose output?
     bool m_output;              // generate output file?
     std::string m_output_file;  // output file name
+    TireType m_tire_type;       // tire type
 };
 
 // =============================================================================
@@ -172,6 +192,11 @@ void packY(const d11::VehicleState& v_states,
            const d11::TMeasyState& tirer_st,
            bool has_TC,
            N_Vector& y);
+void packY(const d11::VehicleState& v_states,
+           const d11::TMeasyNrState& tiref_st,
+           const d11::TMeasyNrState& tirer_st,
+           bool has_TC,
+           N_Vector& y);
 
 void packYDOT(const d11::VehicleState& v_states,
               const d11::TMeasyState& tiref_st,
@@ -179,11 +204,21 @@ void packYDOT(const d11::VehicleState& v_states,
               bool has_TC,
               N_Vector& ydot);
 
+void packYDOT(const d11::VehicleState& v_states,
+              const d11::TMeasyNrState& tiref_st,
+              const d11::TMeasyNrState& tirer_st,
+              bool has_TC,
+              N_Vector& ydot);
 void unpackY(const N_Vector& y,
              bool has_TC,
              d11::VehicleState& v_states,
              d11::TMeasyState& tiref_st,
              d11::TMeasyState& tirer_st);
+void unpackY(const N_Vector& y,
+             bool has_TC,
+             d11::VehicleState& v_states,
+             d11::TMeasyNrState& tiref_st,
+             d11::TMeasyNrState& tirer_st);
 
 void calcF();
 void calcFtL();

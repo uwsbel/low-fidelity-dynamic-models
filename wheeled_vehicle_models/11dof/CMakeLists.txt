@@ -100,7 +100,7 @@ if(USE_SUNDIALS)
       demo_hmmwv_sundials
   )
   set(SEDAN_PROGRAMS ${SEDAN_PROGRAMS}
-      
+      demo_sedanNr_sundials
   )
 endif()
 
