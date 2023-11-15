@@ -26,9 +26,14 @@ class d11SolverHalfImplicit {
     void Construct(const std::string& veh_params_file,
                    const std::string& tire_params_file,
                    const std::string& driver_file);
+    void Construct(const std::string& veh_params_file,
+                   const std::string& tire_params_file,
+                   const std::string& driver_file,
+                   TireType type);
 
     // Constructor for when a controller is used and we don't have a driver file
     void Construct(const std::string& vehicle_params_file, const std::string& tire_params_file);
+    void Construct(const std::string& vehicle_params_file, const std::string& tire_params_file, TireType type);
 
     // Set the solver time step
     void SetTimeStep(double step) { m_step = step; }
@@ -53,6 +58,9 @@ class d11SolverHalfImplicit {
     void Initialize(d11::VehicleState& vehicle_states,
                     d11::TMeasyState& tire_states_F,
                     d11::TMeasyState& tire_states_R);
+    void Initialize(d11::VehicleState& vehicle_states,
+                    d11::TMeasyNrState& tire_states_F,
+                    d11::TMeasyNrState& tire_states_R);
 
     double IntegrateStep(double t, double throttle, double steering, double braking);
 
@@ -64,10 +72,15 @@ class d11SolverHalfImplicit {
 
     // Vehicle states and tire states
     d11::VehicleState m_veh_state;
-    d11::TMeasyState m_tiref_state;
-    d11::TMeasyState m_tirer_state;
-    d11::VehicleParam m_veh_param;  // vehicle parameters
-    d11::TMeasyParam m_tire_param;  // Tire parameters
+    d11::TMeasyState m_tireTMf_state;
+    d11::TMeasyState m_tireTMr_state;
+    d11::VehicleParam m_veh_param;    // vehicle parameters
+    d11::TMeasyParam m_tireTM_param;  // Tire parameters
+
+    // TMeasyNr tire states
+    d11::TMeasyNrState m_tireTMNrf_state;
+    d11::TMeasyNrState m_tireTMNrr_state;
+    d11::TMeasyNrParam m_tireTMNr_param;
 
   private:
     void Integrate();
@@ -81,6 +94,7 @@ class d11SolverHalfImplicit {
     // For finite differencing for applications in MPC to perturb either controls or y
     void PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot);
 
+    TireType m_tire_type;       // Tire type
     CSV_writer m_csv;           // CSV writer object
     double m_tend;              // final integration time
     double m_step;              // integration time step
@@ -121,9 +135,21 @@ void packY(const d11::VehicleState& v_states,
            bool has_TC,
            std::vector<double>& y);
 
+void packY(const d11::VehicleState& v_states,
+           const d11::TMeasyNrState& tiref_st,
+           const d11::TMeasyNrState& tirer_st,
+           bool has_TC,
+           std::vector<double>& y);
+
 void packYDOT(const d11::VehicleState& v_states,
               const d11::TMeasyState& tiref_st,
               const d11::TMeasyState& tirer_st,
+              bool has_TC,
+              std::vector<double>& ydot);
+
+void packYDOT(const d11::VehicleState& v_states,
+              const d11::TMeasyNrState& tiref_st,
+              const d11::TMeasyNrState& tirer_st,
               bool has_TC,
               std::vector<double>& ydot);
 
@@ -132,6 +158,12 @@ void unpackY(const std::vector<double>& y,
              d11::VehicleState& v_states,
              d11::TMeasyState& tiref_st,
              d11::TMeasyState& tirer_st);
+
+void unpackY(const std::vector<double>& y,
+             bool has_TC,
+             d11::VehicleState& v_states,
+             d11::TMeasyNrState& tiref_st,
+             d11::TMeasyNrState& tirer_st);
 
 #endif
 
