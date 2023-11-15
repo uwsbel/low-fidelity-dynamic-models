@@ -820,9 +820,6 @@ void computeTireRHS(TMeasyNrState& t_states,
                     const VehicleParam& v_params,
                     double steering);
 
-// Additional tire functions to compute model required parameters from general parameters
-double GetTireMaxLoad(unsigned int li);
-
 void computePowertrainRHS(VehicleState& v_states,
                           TMeasyState& tirelf_st,
                           TMeasyState& tirerf_st,
@@ -846,6 +843,8 @@ void computeVehRHS(VehicleState& v_states,
                    const std::vector<double>& fx,
                    const std::vector<double>& fy);
 
+// Additional tire functions to compute model required parameters from general parameters
+double GetTireMaxLoad(unsigned int li);
 // Functions to guess tire parameters from general tire specs
 void GuessTruck80Par(unsigned int li,
                      double tireWidth,
