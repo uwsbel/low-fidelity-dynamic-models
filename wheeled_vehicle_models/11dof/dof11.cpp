@@ -172,6 +172,49 @@ void d11::computeTireLoads(std::vector<double>& loads,
     loads[1] = (Z3 + Z2) > 0. ? (Z3 + Z2) : 0.;
 }
 
+// split bool decides if its 2wd or 1wd
+// whichWheels decides if its rear wheel drive (True) or front wheel drive
+void d11::differentialSplit(double torque,
+                            double max_bias,
+                            double speed_rear,
+                            double speed_front,
+                            double& torque_rear,
+                            double& torque_front,
+                            bool split,
+                            bool whichWheels) {
+    double diff = std::abs(speed_rear - speed_front);
+
+    if (split) {
+        // The bias grows from 1 at diff=0.25 to max_bias at diff=0.5
+        double bias = 1;
+        if (diff > 0.5)
+            bias = max_bias;
+        else if (diff > 0.25)
+            bias = 4 * (max_bias - 1) * diff + (2 - max_bias);
+
+        // Split torque to the slow and fast wheels.
+        double alpha = bias / (1 + bias);
+        double slow = alpha * torque;
+        double fast = torque - slow;
+
+        if (std::abs(speed_rear) < std::abs(speed_front)) {
+            torque_rear = slow;
+            torque_front = fast;
+        } else {
+            torque_rear = fast;
+            torque_front = slow;
+        }
+    } else {
+        if (whichWheels) {  // whichWheels = 1 is rear wheel driven
+            torque_rear = torque;
+            torque_front = 0;
+        } else {
+            torque_rear = 0;
+            torque_front = torque;
+        }
+    }
+}
+
 void d11::computeTireRHS(TMeasyState& t_states,
                          const TMeasyParam& t_params,
                          const VehicleParam& v_params,
@@ -300,11 +343,11 @@ void d11::computeTireRHS(TMeasyState& t_states,
     t_states._My = -sineStep(vta, vx_min, 0., vx_max, 1.) * t_params._rr * fz * t_states._rStat * sgn(t_states._omega);
 
     // some normalised slip velocities
-    // double vtxs = r_eff * std::abs(t_states._omega) * hsxn + 0.01;
-    // double vtys = r_eff * std::abs(t_states._omega) * hsyn + 0.01;
+    double vtxs = r_eff * std::abs(t_states._omega) * hsxn + 0.01;
+    double vtys = r_eff * std::abs(t_states._omega) * hsyn + 0.01;
 
-    double vtxs = r_eff * std::abs(t_states._omega) * hsxn;
-    double vtys = r_eff * std::abs(t_states._omega) * hsyn;
+    // double vtxs = r_eff * std::abs(t_states._omega) * hsxn;
+    // double vtys = r_eff * std::abs(t_states._omega) * hsyn;
 
     // Tire velocities for the RHS
     t_states._xedot = (-vtxs * t_params._cx * t_states._xe - fos * vsx) / (vtxs * t_params._dx + fos);
@@ -462,21 +505,8 @@ void d11::computePowertrainRHS(VehicleState& v_states,
 
     //////// Amount of torque transmitted to the wheels
 
-    // torque split between the  front and rear (always half)
-    double torque_front = 0;
-    double torque_rear = 0;
-    if (v_params._driveType) {  // If we have a 4WD vehicle split torque equally
-        torque_front = torque_t * 0.5;
-        torque_rear = torque_t * 0.5;
-    } else {
-        if (v_params._whichWheels) {
-            torque_front = 0;
-            torque_rear = torque_t;
-        } else {
-            torque_front = torque_t;
-            torque_rear = 0;
-        }
-    }
+    differentialSplit(torque_t, max_bias, tirer_st._omega, tiref_st._omega, tirer_st._engTor, tiref_st._engTor,
+                      v_params._driveType, v_params._whichWheels);
 
     // now use this force for our omegas
     // Get dOmega for each tire

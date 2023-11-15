@@ -174,8 +174,6 @@
         ]
     ],
     "maxBrakeTorque": 4000,
-    "c1": 0,
-    "c0": 0,
     "step": 0.001,
     "throttleMod": false
 }

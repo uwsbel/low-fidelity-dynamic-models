@@ -40,7 +40,7 @@ int main(int argc, char** argv) {
     solver.Initialize(veh_st, tiref_st, tirer_st);
 
     // Enable output
-    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv18HiStep.csv", 100);
+    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv11HiStep.csv", 100);
 
     double timeStep = solver.GetStep();
     double endTime = solver.GetEndT();

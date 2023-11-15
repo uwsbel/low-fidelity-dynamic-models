@@ -305,7 +305,7 @@ struct VehicleParam {
           _maxBrakeTorque(4000.),
           _step(1e-2),
           _throttleMod(0),
-          _driveType(0),
+          _driveType(1),
           _whichWheels(1) {}
 
     // constructor
@@ -501,10 +501,12 @@ inline double brakeTorque(const VehicleParam& v_params, const double brake) {
 }
 void differentialSplit(double torque,
                        double max_bias,
-                       double speed_left,
-                       double speed_right,
-                       double& torque_left,
-                       double& torque_right);
+                       double speed_rear,
+                       double speed_front,
+                       double& torque_rear,
+                       double& torque_front,
+                       bool split,
+                       bool whichWheels);
 
 // setting vehicle parameters using a JSON file
 void setVehParamsJSON(VehicleParam& v_params, const char* fileName);

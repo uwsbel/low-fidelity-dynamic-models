@@ -29,7 +29,7 @@ int main(int argc, char** argv) {
     solver.Initialize(veh_st, tiref_st, tirer_st);
 
     // Enable output
-    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv18Hi.csv", 100);
+    solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv11Hi.csv", 100);
     // Solve without quadratures (no reference path required)
     solver.Solve();
 }

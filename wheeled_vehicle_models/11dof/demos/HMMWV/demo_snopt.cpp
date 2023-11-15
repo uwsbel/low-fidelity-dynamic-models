@@ -98,8 +98,8 @@ int main(int argc, char** argv) {
 
     // Initialize SNOPT
     snoptProblemA optimizer;
-    optimizer.initialize("d18dof_snopt.out", 1);  // print file, summary on
-    optimizer.setProbName("d18dof");
+    optimizer.initialize("d11dof_snopt.out", 1);  // print file, summary on
+    optimizer.setProbName("d11dof");
     optimizer.setIntParameter("Derivative option", 1);
 
     std::vector<int> iGfun(num_params, 0);
