@@ -694,6 +694,8 @@ struct VehicleState {
         : _x(0.),
           _y(0.),
           _z(0.),
+          _dx(0.),
+          _dy(0.),
           _u(0.),
           _v(0.),
           _w(0.),
@@ -714,10 +716,13 @@ struct VehicleState {
           _dpsi(0.),
           _tor(0.),
           _crankOmega(0.),
+          _dOmega_crank(0.),
           _current_gr(0) {}
     VehicleState(const VehicleState& other)
         : _x(other._x),
           _y(other._y),
+          _dx(other._dx),
+          _dy(other._dy),
           _z(other._z),
           _u(other._u),
           _v(other._v),
@@ -739,9 +744,11 @@ struct VehicleState {
           _dpsi(other._dpsi),
           _tor(other._tor),
           _crankOmega(other._crankOmega),
+          _dOmega_crank(other._dOmega_crank),
           _current_gr(other._current_gr) {}
     // States
-    double _x, _y, _z;   // Global x, y and z posiiton
+    double _x, _y, _z;  // Global x, y and z posiiton
+    double _dx, _dy;
     double _u, _v, _w;   // Chassis velocities in G-RF
     double _psi, _wz;    // Yaw angle and yaw rate
     double _phi, _wx;    // roll angle and roll rate
@@ -755,6 +762,7 @@ struct VehicleState {
     // Powertrain states
     double _tor;
     double _crankOmega;
+    double _dOmega_crank;
     int _current_gr;
 };
 
@@ -873,10 +881,6 @@ void tireToVehTransform(const VehicleState& v_states,
                         TMeasyState& tirerf_st,
                         TMeasyState& tirelr_st,
                         TMeasyState& tirerr_st,
-                        const SuspensionState& suslf_st,
-                        const SuspensionState& susrf_st,
-                        const SuspensionState& suslr_st,
-                        const SuspensionState& susrr_st,
                         const VehicleParam& v_params,
                         double steering);
 // Transform the forces from the tire to the struct in the inertial frame(G-RF) this then acts on the Chassis body and
@@ -902,8 +906,13 @@ void tmxy_combined(double& f, double& fos, double s, double df0, double sm, doub
 // Force function required by the TMeasy tire with no relaxation
 void computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 
-void computeTireRHS(TMeasyState& t_states, const VehicleParam& v_params, const TMeasyParam& t_params, double steering);
-void computeTireRHS(TMeasyNrState& t_states,
+void computeTireRHS(const VehicleState& v_states,
+                    TMeasyState& t_states,
+                    const VehicleParam& v_params,
+                    const TMeasyParam& t_params,
+                    double steering);
+void computeTireRHS(const VehicleState& v_states,
+                    TMeasyNrState& t_states,
                     const VehicleParam& v_params,
                     const TMeasyNrParam& t_params,
                     double steering);

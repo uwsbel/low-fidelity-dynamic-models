@@ -25,10 +25,10 @@ d24SolverHalfImplicit::~d24SolverHalfImplicit() {}
 /// @param tire_params_file Path to the tire parameter json file
 /// @param sus_params_file Path to the suspension parameter json file
 /// @param driver_inputs_file Path to the driver inputs text file
-void d24SolverHalfImplicit::Construct(const std::string& veh_params_file,
+void d24SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
                                       const std::string& tire_params_file,
                                       const std::string& sus_params_file,
-                                      const std::string& driver_file) {
+                                      const std::string& driver_inputs_file) {
     // If there is no tire type specified, then use TMeasy
     m_tire_type = TireType::TMeasy;
     // Load vehicle and tire parameters
@@ -128,9 +128,9 @@ void d24SolverHalfImplicit::Initialize(d24::VehicleState& vehicle_states,
     m_suslr_state = sus_states_LR;
     m_susrr_state = sus_states_RR;
 
-    d24::initializeTireSus(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
-                           m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_sus_param,
-                           m_tireTM_param);
+    initializeTireSus(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
+                      m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_tireTM_param,
+                      m_sus_param);
 
     // Size the jacobian matrices - size relies on the torque converter bool
     m_num_controls = 2;
@@ -163,6 +163,9 @@ void d24SolverHalfImplicit::Initialize(d24::VehicleState& vehicle_states,
     m_susrf_state = sus_states_RF;
     m_suslr_state = sus_states_LR;
     m_susrr_state = sus_states_RR;
+    initializeTireSus(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
+                      m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_tireTM_param,
+                      m_sus_param);
 
     // Size the jacobian matrices - size relies on the torque converter bool
     m_num_controls = 2;
@@ -266,9 +269,9 @@ void d24SolverHalfImplicit::Integrate() {
         m_veh_state._u += m_veh_state._udot * m_step;
         m_veh_state._v += m_veh_state._vdot * m_step;
         m_veh_state._w += m_veh_state._wdot * m_step;
-        m_veh_state._wx += m_veh_state._wx_dot * m_step;
-        m_veh_state._wy += m_veh_state._wy_dot * m_step;
-        m_veh_state._wz += m_veh_state._wz_dot * m_step;
+        m_veh_state._wx += m_veh_state._wxdot * m_step;
+        m_veh_state._wy += m_veh_state._wydot * m_step;
+        m_veh_state._wz += m_veh_state._wzdot * m_step;
 
         // We have to recompute this here so that we are doing the half implicit
         // Now to integrate the cardan angles, we first write equations for them
@@ -324,10 +327,10 @@ void d24SolverHalfImplicit::rhsFun(double t) {
                            m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param,
                            controls.m_steering);
         // Tire velocities
-        computeTireRHS(m_tireTMlf_state, m_tireTM_param, m_veh_param, controls.m_steering);
-        computeTireRHS(m_tireTMrf_state, m_tireTM_param, m_veh_param, controls.m_steering);
-        computeTireRHS(m_tireTMlr_state, m_tireTM_param, m_veh_param, 0);  // No rear steering
-        computeTireRHS(m_tireTMrr_state, m_tireTM_param, m_veh_param, 0);  // No rear steering
+        computeTireRHS(m_veh_state, m_tireTMlf_state, m_veh_param, m_tireTM_param, controls.m_steering);
+        computeTireRHS(m_veh_state, m_tireTMrf_state, m_veh_param, m_tireTM_param, controls.m_steering);
+        computeTireRHS(m_veh_state, m_tireTMlr_state, m_veh_param, m_tireTM_param, 0);  // No rear steering
+        computeTireRHS(m_veh_state, m_tireTMrr_state, m_veh_param, m_tireTM_param, 0);  // No rear steering
         // compute the tire compression velocity which is to be integrated
         computeTireCompressionVelocity(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state,
                                        m_tireTMrr_state, m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state);
@@ -356,8 +359,8 @@ void d24SolverHalfImplicit::rhsFun(double t) {
         tireToVehTransform(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
                            m_veh_param, controls.m_steering);
         // Suspension velocities
-        computeSuspensionRHS(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
-                             m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_sus_param);
+        computeSusRHS(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
+                      m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_sus_param);
 
         // Transform the forces from the tire along with suspension velocities to forces on
         // the chassis
@@ -370,4 +373,137 @@ void d24SolverHalfImplicit::rhsFun(double t) {
                           m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_tireTM_param,
                           m_sus_param);
     }
+}
+
+// ======================================================================================================================
+void d24SolverHalfImplicit::Write(double t) {
+    // If we are in initial time step, write the header
+    if (t < m_step) {
+        m_csv << "time";
+        m_csv << "x";
+        m_csv << "y";
+        m_csv << "vx";
+        m_csv << "vy";
+        m_csv << "ax";
+        m_csv << "ay";
+        m_csv << "roll";
+        m_csv << "yaw";
+        m_csv << "pitch";
+        m_csv << "roll_rate";
+        m_csv << "yaw_rate";
+        m_csv << "pitch_rate";
+        m_csv << "wlf";
+        m_csv << "wrf";
+        m_csv << "wlr";
+        m_csv << "wrr";
+        m_csv << "sp_tor";
+        m_csv << "current_gear";
+        m_csv << "engine_omega";
+#ifdef DEBUG
+        m_csv << "lf_tireForce_x";
+        m_csv << "rf_tireForce_x";
+        m_csv << "lr_tireForce_x";
+        m_csv << "rr_tireForce_x";
+        m_csv << "lf_tireForce_y";
+        m_csv << "rf_tireForce_y";
+        m_csv << "lr_tireForce_y";
+        m_csv << "rr_tireForce_y";
+        m_csv << "lf_tireForce_z";
+        m_csv << "rf_tireForce_z";
+        m_csv << "lr_tireForce_z";
+        m_csv << "rr_tireForce_z";
+#endif
+        m_csv << std::endl;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+#ifdef DEBUG
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+        m_csv << 0;
+#endif
+        m_csv << std::endl;
+        return;
+    }
+
+    m_csv << t;
+    m_csv << m_veh_state._x;
+    m_csv << m_veh_state._y;
+    m_csv << m_veh_state._u;
+    m_csv << m_veh_state._v;
+    m_csv << m_veh_state._udot;
+    m_csv << m_veh_state._vdot;
+    m_csv << m_veh_state._phi;
+    m_csv << m_veh_state._psi;
+    m_csv << m_veh_state._theta;
+    m_csv << m_veh_state._wx;
+    m_csv << m_veh_state._wz;
+    m_csv << m_veh_state._wy;
+    if (m_tire_type == TireType::TMeasy) {
+        m_csv << m_tireTMlf_state._omega;
+        m_csv << m_tireTMrf_state._omega;
+        m_csv << m_tireTMlr_state._omega;
+        m_csv << m_tireTMrr_state._omega;
+    } else {
+        m_csv << m_tireTMNrlf_state._omega;
+        m_csv << m_tireTMNrrf_state._omega;
+        m_csv << m_tireTMNrlr_state._omega;
+        m_csv << m_tireTMNrrr_state._omega;
+    }
+    m_csv << m_veh_state._tor / 4.;
+    m_csv << m_veh_state._current_gr + 1;
+    m_csv << m_veh_state._crankOmega;
+#ifdef DEBUG
+    m_csv << M_DEBUG_LF_TIRE_FX;
+    m_csv << M_DEBUG_RF_TIRE_FX;
+    m_csv << M_DEBUG_LR_TIRE_FX;
+    m_csv << M_DEBUG_RR_TIRE_FX;
+    m_csv << M_DEBUG_LF_TIRE_FY;
+    m_csv << M_DEBUG_RF_TIRE_FY;
+    m_csv << M_DEBUG_LR_TIRE_FY;
+    m_csv << M_DEBUG_RR_TIRE_FY;
+    m_csv << M_DEBUG_LF_TIRE_FZ;
+    m_csv << M_DEBUG_RF_TIRE_FZ;
+    m_csv << M_DEBUG_LR_TIRE_FZ;
+    m_csv << M_DEBUG_RR_TIRE_FZ;
+#endif
+    m_csv << std::endl;
+}
+
+// ======================================================================================================================
+
+void d24SolverHalfImplicit::WriteToFile() {
+    if (!m_output) {
+        std::cout << "No output file specified. Call SetOutput() before calling WriteToFile()" << std::endl;
+        return;
+    }
+    m_csv.write_to_file(m_output_file);
+    m_csv.clearData();
+    m_timeStepsStored = 0;
 }

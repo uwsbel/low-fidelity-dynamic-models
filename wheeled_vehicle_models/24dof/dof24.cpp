@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <vector>
 
-#include "dof18.h"
+#include "dof24.h"
 
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
@@ -70,10 +70,10 @@ void d24::initializeTireSus(const VehicleState& v_states,
     susrr_st._xs = susrr_st._xsi;
 
     // Initialize the length of the strut
-    suslf_st._lsi = v_params._h - (t_params._r0 - tirelf_st._xti);
-    susrf_st._lsi = v_params._h - (t_params._r0 - tirerf_st._xti);
-    suslr_st._lsi = v_params._h - (t_params._r0 - tirelr_st._xti);
-    susrr_st._lsi = v_params._h - (t_params._r0 - tirerr_st._xti);
+    suslf_st._lsi = v_params._h - (t_params._r0 - tirelf_st._xt);
+    susrf_st._lsi = v_params._h - (t_params._r0 - tirerf_st._xt);
+    suslr_st._lsi = v_params._h - (t_params._r0 - tirelr_st._xt);
+    susrr_st._lsi = v_params._h - (t_params._r0 - tirerr_st._xt);
 
     suslf_st._ls = suslf_st._lsi;
     susrf_st._ls = susrf_st._lsi;
@@ -99,8 +99,7 @@ void d24::vehToSusTransform(const VehicleState& v_states,
                             SuspensionState& suslr_st,
                             SuspensionState& susrr_st,
                             const VehicleParam& v_params,
-                            double steering);
-{
+                            double steering) {
     // Struct velocities transformed from the vehicle velocities
     suslf_st._us = (-v_params._cf * v_states._wz / 2.) + v_states._u;  // x direction struct velocity in G-RF
     suslf_st._vs = v_params._a * v_states._wz + v_states._v;           // y direction
@@ -113,8 +112,8 @@ void d24::vehToSusTransform(const VehicleState& v_states,
 
     // LR
     suslr_st._us = (-v_params._cr * v_states._wz / 2.) + v_states._u;  // x direction struct velocity in G-RF
-    suslf_st._vs = -v_params._b * v_states._wz + v_states._v;          // y direction
-    suslf_st._ws = (v_params._cr * v_states._wx / 2.) + v_params._b * v_states._wy + v_states._w;  // z direction
+    suslr_st._vs = -v_params._b * v_states._wz + v_states._v;          // y direction
+    suslr_st._ws = (v_params._cr * v_states._wx / 2.) + v_params._b * v_states._wy + v_states._w;  // z direction
 
     // RR
     susrr_st._us = (v_params._cr * v_states._wz / 2.) + v_states._u;  // x direction struct velocity in G-RF
@@ -172,19 +171,6 @@ void d24::vehToSusTransform(const VehicleState& v_states,
     // RR
     susrr_st._duu = susrr_st._dus - (-susrr_st._dxs * v_states._wy + susrr_st._ls * v_states._wydot);
     susrr_st._dvu = susrr_st._dvs + (-susrr_st._dxs * v_states._wx + susrr_st._ls * v_states._wxdot);
-
-    // Unsprung mass x and y velocities in G-RF
-    susrf_st._uu = susrf_st._us - susrf_st._ls * v_states._wy;
-    susrf_st._vu = susrf_st._vs + susrf_st._ls * v_states._wx;
-
-    suslf_st._uu = suslf_st._us - suslf_st._ls * v_states._wy;
-    suslf_st._vu = suslf_st._vs + suslf_st._ls * v_states._wx;
-
-    suslr_st._uu = suslr_st._us - suslr_st._ls * v_states._wy;
-    suslr_st._vu = suslr_st._vs + suslr_st._ls * v_states._wx;
-
-    susrr_st._uu = susrr_st._us - susrr_st._ls * v_states._wy;
-    susrr_st._vu = susrr_st._vs + susrr_st._ls * v_states._wx;
 }
 void d24::vehToTireTransform(const VehicleState& v_states,
                              TMeasyState& tirelf_st,
@@ -275,6 +261,7 @@ void d24::tireToVehTransform(const VehicleState& v_states,
     } else {
         delta = steering * v_params._maxSteer;
     }
+    double _fx, _fy;
     // These forces are still in the tire contact patch
     // left front
     _fx = tirelf_st._fx * std::cos(delta) - tirelf_st._fy * std::sin(delta);
@@ -474,7 +461,8 @@ void d24::computeCombinedColumbForce(double& fx,
     }
 }
 
-void d24::computeTireRHS(TMeasyState& t_states,
+void d24::computeTireRHS(const VehicleState& v_states,
+                         TMeasyState& t_states,
                          const VehicleParam& v_params,
                          const TMeasyParam& t_params,
                          double steering) {
@@ -492,7 +480,7 @@ void d24::computeTireRHS(TMeasyState& t_states,
     double fz = t_states._fz;                    // vertical force
     double vsy = t_states._vsy;                  // y slip velocity
     double vsx = t_states._vsx;                  // x slip velocity
-    t_states._rStat = (t_params._r0 - t_states._xt) / (std::cos(v_state._theta) * std::cos(v_state._phi));
+    t_states._rStat = (t_params._r0 - t_states._xt) / (std::cos(v_states._theta) * std::cos(v_states._phi));
 
     // If the wheel is off contact, set all states to 0 and return
     if (fz <= 0) {
@@ -501,6 +489,7 @@ void d24::computeTireRHS(TMeasyState& t_states,
         t_states._omega = 0;
         t_states._xt = 0;
         t_states._rStat = t_params._r0;
+        t_states._fz = 0;
         t_states._fx = 0;
         t_states._fy = 0;
         t_states._My = 0;
@@ -633,7 +622,8 @@ void d24::computeTireRHS(TMeasyState& t_states,
     t_states._fy = weighty * fystr + (1. - weighty) * fydyn;
 }
 
-void d24::computeTireRHS(TMeasyNrState& t_states,
+void d24::computeTireRHS(const VehicleState& v_states,
+                         TMeasyNrState& t_states,
                          const VehicleParam& v_params,
                          const TMeasyNrParam& t_params,
                          double steering) {
@@ -651,7 +641,7 @@ void d24::computeTireRHS(TMeasyNrState& t_states,
     double fz = t_states._fz;                    // vertical force
     double vsy = t_states._vsy;                  // y slip velocity
     double vsx = t_states._vsx;                  // x slip velocity
-    t_states._rStat = (t_params._r0 - t_states._xt) / (std::cos(v_state._theta) * std::cos(v_state._phi));
+    t_states._rStat = (t_params._r0 - t_states._xt) / (std::cos(v_states._theta) * std::cos(v_states._phi));
 
     // If the wheel is off contact, set all states to 0 and return
     if (fz <= 0) {
@@ -660,6 +650,7 @@ void d24::computeTireRHS(TMeasyNrState& t_states,
         t_states._rStat = t_params._r0;
         t_states._fx = 0;
         t_states._fy = 0;
+        t_states._fz = 0;
         t_states._My = 0;
         return;
     }
@@ -1307,7 +1298,7 @@ void d24::computeVehicleRHS(VehicleState& v_states,
 // Tire
 // ----------
 // setting Tire parameters using a JSON file
-void d18::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
+void d24::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
@@ -1361,12 +1352,10 @@ void d18::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
     t_params._symP2n = d["symP2n"].GetDouble();
     t_params._sysPn = d["sysPn"].GetDouble();
     t_params._sysP2n = d["sysP2n"].GetDouble();
-
-    t_params._step = d["step"].GetDouble();
 }
 
 // setting Tire parameters using a JSON file for a TMeasyNr
-void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
+void d24::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
@@ -1558,7 +1547,7 @@ void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
 // can get from a spec sheet These functions are directly copy pasted from Chrono with minor modifications
 
 // Function to compute the max tire load from the load index specified by the user
-double d18::GetTireMaxLoad(unsigned int li) {
+double d24::GetTireMaxLoad(unsigned int li) {
     double Weight_per_Tire[] = {
         45,    46.5,  47.5,   48.7,   50,     51.5,   53,     54.5,   56,     58,     60,     61.5,   63,     65,
         67,    69,    71,     73,     75,     77.5,   80.0,   82.5,   85.0,   87.5,   90.0,   92.5,   95.0,   97.5,
@@ -1593,7 +1582,7 @@ double d18::GetTireMaxLoad(unsigned int li) {
 }
 
 // Guessing tire parameters for a truck tire
-void d18::GuessTruck80Par(unsigned int li,          // tire load index
+void d24::GuessTruck80Par(unsigned int li,          // tire load index
                           double tireWidth,         // [m]
                           double ratio,             // [] = use 0.75 meaning 75%
                           double rimDia,            // rim diameter [m]
@@ -1604,7 +1593,7 @@ void d18::GuessTruck80Par(unsigned int li,          // tire load index
     double tireLoad = GetTireMaxLoad(li);
     GuessTruck80Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
 }
-void d18::GuessTruck80Par(double tireLoad,   // tire load index
+void d24::GuessTruck80Par(double tireLoad,   // tire load index
                           double tireWidth,  // [m]
                           double ratio,      // [] = use 0.75 meaning 75%
                           double rimDia,     // rim diameter [m]
@@ -1650,7 +1639,7 @@ void d18::GuessTruck80Par(double tireLoad,   // tire load index
 }
 
 // Guessing tire parameters for a passenger car
-void d18::GuessPassCar70Par(unsigned int li,          // tire load index
+void d24::GuessPassCar70Par(unsigned int li,          // tire load index
                             double tireWidth,         // [m]
                             double ratio,             // [] = use 0.75 meaning 75%
                             double rimDia,            // rim diameter [m]
@@ -1661,7 +1650,7 @@ void d18::GuessPassCar70Par(unsigned int li,          // tire load index
     double tireLoad = GetTireMaxLoad(li);
     GuessPassCar70Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
 }
-void d18::GuessPassCar70Par(double tireLoad,            // tire load index
+void d24::GuessPassCar70Par(double tireLoad,            // tire load index
                             double tireWidth,           // [m]
                             double ratio,               // [] = use 0.75 meaning 75%
                             double rimDia,              // rim diameter [m]
@@ -1708,7 +1697,7 @@ void d18::GuessPassCar70Par(double tireLoad,            // tire load index
 // Suspension
 // ----------
 // setting Tire parameters using a JSON file
-void d24::setSimplesusParamsJSON(SuspensionParam& sus_params, const char* fileName) {
+void d24::setSuspensionParamsJSON(SuspensionParam& sus_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
