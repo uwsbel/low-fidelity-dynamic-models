@@ -80,13 +80,13 @@ if(USE_SUNDIALS)
   )
 endif()
 
-# Build half implicit demos by default
+# Build half implicit demos by defaults
 # HMMWV demos
 set(HMMWV_PROGRAMS
     demo_hmmwv_hi
     # demo_hmmwvNr_hi
     # demo_hmmwv_hi_step
-    # demo_hmmwv_hi_stepWithJac
+    demo_hmmwv_hi_stepWithJac
 )
 # Sedan demos
 set(SEDAN_PROGRAMS
