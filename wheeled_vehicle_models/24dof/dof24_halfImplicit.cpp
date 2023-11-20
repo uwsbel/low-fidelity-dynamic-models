@@ -68,7 +68,6 @@ void d24SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
         // Initialize tire parameters that depend on other parameters
         tireInit(m_tireTMNr_param);
     }
-
     // Load driver inputs
     LoadDriverData(m_driver_data, driver_inputs_file);
 
@@ -163,8 +162,8 @@ void d24SolverHalfImplicit::Initialize(d24::VehicleState& vehicle_states,
     m_susrf_state = sus_states_RF;
     m_suslr_state = sus_states_LR;
     m_susrr_state = sus_states_RR;
-    initializeTireSus(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
-                      m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_tireTM_param,
+    initializeTireSus(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
+                      m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_tireTMNr_param,
                       m_sus_param);
 
     // Size the jacobian matrices - size relies on the torque converter bool
@@ -236,16 +235,16 @@ void d24SolverHalfImplicit::Integrate() {
             m_tireTMrr_state._omega += m_tireTMrr_state._dOmega * m_step;
         } else {
             // LF
-            m_tireTMlf_state._xt += m_tireTMlf_state._dxt * m_step;
+            m_tireTMNrlf_state._xt += m_tireTMNrlf_state._dxt * m_step;
             m_tireTMNrlf_state._omega += m_tireTMNrlf_state._dOmega * m_step;
             // RF
-            m_tireTMrf_state._xt += m_tireTMrf_state._dxt * m_step;
+            m_tireTMNrrf_state._xt += m_tireTMNrrf_state._dxt * m_step;
             m_tireTMNrrf_state._omega += m_tireTMNrrf_state._dOmega * m_step;
             // LR
-            m_tireTMlr_state._xt += m_tireTMlr_state._dxt * m_step;
+            m_tireTMNrlr_state._xt += m_tireTMNrlr_state._dxt * m_step;
             m_tireTMNrlr_state._omega += m_tireTMNrlr_state._dOmega * m_step;
             // RR
-            m_tireTMrr_state._xt += m_tireTMrr_state._dxt * m_step;
+            m_tireTMNrrr_state._xt += m_tireTMNrrr_state._dxt * m_step;
             m_tireTMNrrr_state._omega += m_tireTMNrrr_state._dOmega * m_step;
         }
 
@@ -371,6 +370,59 @@ void d24SolverHalfImplicit::rhsFun(double t) {
         // Compute the chassis accelerations
         computeVehicleRHS(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
                           m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_tireTM_param,
+                          m_sus_param);
+    } else {
+        // TMeasy Nr states and structs need to be passed
+        vehToSusTransform(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
+                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, controls.m_steering);
+        vehToTireTransform(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
+                           m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param,
+                           controls.m_steering);
+        // Tire velocities
+        computeTireRHS(m_veh_state, m_tireTMNrlf_state, m_veh_param, m_tireTMNr_param, controls.m_steering);
+        computeTireRHS(m_veh_state, m_tireTMNrrf_state, m_veh_param, m_tireTMNr_param, controls.m_steering);
+        computeTireRHS(m_veh_state, m_tireTMNrlr_state, m_veh_param, m_tireTMNr_param, 0);  // No rear steering
+        computeTireRHS(m_veh_state, m_tireTMNrrr_state, m_veh_param, m_tireTMNr_param, 0);  // No rear steering
+        // compute the tire compression velocity which is to be integrated
+        computeTireCompressionVelocity(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state,
+                                       m_tireTMNrrr_state, m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state);
+#ifdef DEBUG
+        M_DEBUG_LF_TIRE_FX = m_tireTMNrlf_state._fx;
+        M_DEBUG_RF_TIRE_FX = m_tireTMNrrf_state._fx;
+        M_DEBUG_LR_TIRE_FX = m_tireTMNrlr_state._fx;
+        M_DEBUG_RR_TIRE_FX = m_tireTMNrrr_state._fx;
+
+        M_DEBUG_LF_TIRE_FY = m_tireTMNrlf_state._fy;
+        M_DEBUG_RF_TIRE_FY = m_tireTMNrrf_state._fy;
+        M_DEBUG_LR_TIRE_FY = m_tireTMNrlr_state._fy;
+        M_DEBUG_RR_TIRE_FY = m_tireTMNrrr_state._fy;
+
+        M_DEBUG_LF_TIRE_FZ = m_tireTMNrlf_state._fz;
+        M_DEBUG_RF_TIRE_FZ = m_tireTMNrrf_state._fz;
+        M_DEBUG_LR_TIRE_FZ = m_tireTMNrlr_state._fz;
+        M_DEBUG_RR_TIRE_FZ = m_tireTMNrrr_state._fz;
+#endif
+        // Compute the powertrain RHS which provides omegas for tires
+        computePowertrainRHS(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state,
+                             m_tireTMNrrr_state, m_veh_param, m_tireTMNr_param, controls);
+
+        // Tire to vehicle transform to get the tire forces in right frame
+        // for suspension RHS
+        tireToVehTransform(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
+                           m_veh_param, controls.m_steering);
+        // Suspension velocities
+        computeSusRHS(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
+                      m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_sus_param);
+
+        // Transform the forces from the tire along with suspension velocities to forces on
+        // the chassis
+        computeForcesThroughSus(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state,
+                                m_tireTMNrrr_state, m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state,
+                                m_veh_param, m_tireTMNr_param, m_sus_param);
+
+        // Compute the chassis accelerations
+        computeVehicleRHS(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
+                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, m_tireTMNr_param,
                           m_sus_param);
     }
 }

@@ -91,7 +91,7 @@ set(HMMWV_PROGRAMS
 # Sedan demos
 set(SEDAN_PROGRAMS
     # demo_sedan_hi
-    # demo_sedanNr_hi
+    demo_sedanNr_hi
     # demo_sedanNr_sundials
 )
 

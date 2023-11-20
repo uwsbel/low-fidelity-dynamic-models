@@ -848,6 +848,19 @@ void initializeTireSus(const VehicleState& v_states,
                        const VehicleParam& v_params,
                        const TMeasyParam& t_params,
                        const SuspensionParam& sus_params);
+
+void initializeTireSus(const VehicleState& v_states,
+                       TMeasyNrState& tirelf_st,
+                       TMeasyNrState& tirerf_st,
+                       TMeasyNrState& tirelr_st,
+                       TMeasyNrState& tirerr_st,
+                       SuspensionState& suslf_st,
+                       SuspensionState& susrf_st,
+                       SuspensionState& suslr_st,
+                       SuspensionState& susrr_st,
+                       const VehicleParam& v_params,
+                       const TMeasyNrParam& t_params,
+                       const SuspensionParam& sus_params);
 // -----------------------------------------------------------------------------
 // Frame Transform functions
 // -----------------------------------------------------------------------------
@@ -857,6 +870,18 @@ void vehToSusTransform(const VehicleState& v_states,
                        const TMeasyState& tirerf_st,
                        const TMeasyState& tirelr_st,
                        const TMeasyState& tirerr_st,
+                       SuspensionState& suslf_st,
+                       SuspensionState& susrf_st,
+                       SuspensionState& suslr_st,
+                       SuspensionState& susrr_st,
+                       const VehicleParam& v_params,
+                       double steering);
+
+void vehToSusTransform(const VehicleState& v_states,
+                       const TMeasyNrState& tirelf_st,
+                       const TMeasyNrState& tirerf_st,
+                       const TMeasyNrState& tirelr_st,
+                       const TMeasyNrState& tirerr_st,
                        SuspensionState& suslf_st,
                        SuspensionState& susrf_st,
                        SuspensionState& suslr_st,
@@ -875,12 +900,32 @@ void vehToTireTransform(const VehicleState& v_states,
                         const SuspensionState& susrr_st,
                         const VehicleParam& v_params,
                         double steering);
+
+void vehToTireTransform(const VehicleState& v_states,
+                        TMeasyNrState& tirelf_st,
+                        TMeasyNrState& tirerf_st,
+                        TMeasyNrState& tirelr_st,
+                        TMeasyNrState& tirerr_st,
+                        const SuspensionState& suslf_st,
+                        const SuspensionState& susrf_st,
+                        const SuspensionState& suslr_st,
+                        const SuspensionState& susrr_st,
+                        const VehicleParam& v_params,
+                        double steering);
 // Transform forces generated in the contact patch to forces in inertial frame (G-RF)
 void tireToVehTransform(const VehicleState& v_states,
                         TMeasyState& tirelf_st,
                         TMeasyState& tirerf_st,
                         TMeasyState& tirelr_st,
                         TMeasyState& tirerr_st,
+                        const VehicleParam& v_params,
+                        double steering);
+
+void tireToVehTransform(const VehicleState& v_states,
+                        TMeasyNrState& tirelf_st,
+                        TMeasyNrState& tirerf_st,
+                        TMeasyNrState& tirelr_st,
+                        TMeasyNrState& tirerr_st,
                         const VehicleParam& v_params,
                         double steering);
 // Transform the forces from the tire to the struct in the inertial frame(G-RF) this then acts on the Chassis body and
@@ -898,6 +943,18 @@ void computeForcesThroughSus(const VehicleState& v_states,
                              const TMeasyParam& t_params,
                              const SuspensionParam& sus_params);
 
+void computeForcesThroughSus(const VehicleState& v_states,
+                             const TMeasyNrState& tirelf_st,
+                             const TMeasyNrState& tirerf_st,
+                             const TMeasyNrState& tirelr_st,
+                             const TMeasyNrState& tirerr_st,
+                             SuspensionState& suslf_st,
+                             SuspensionState& susrf_st,
+                             SuspensionState& suslr_st,
+                             SuspensionState& susrr_st,
+                             const VehicleParam& v_params,
+                             const TMeasyNrParam& t_params,
+                             const SuspensionParam& sus_params);
 // -----------------------------------------------------------------------------
 // Tire RHS functions and helper functions
 // -----------------------------------------------------------------------------
@@ -927,6 +984,16 @@ void computeTireCompressionVelocity(const VehicleState& v_states,
                                     const SuspensionState& suslr_st,
                                     const SuspensionState& susrr_st);
 
+void computeTireCompressionVelocity(const VehicleState& v_states,
+                                    TMeasyNrState& tirelf_st,
+                                    TMeasyNrState& tirerf_st,
+                                    TMeasyNrState& tirelr_st,
+                                    TMeasyNrState& tirerr_st,
+                                    const SuspensionState& suslf_st,
+                                    const SuspensionState& susrf_st,
+                                    const SuspensionState& suslr_st,
+                                    const SuspensionState& susrr_st);
+
 // -----------------------------------------------------------------------------
 // Suspension RHS functions and helper functions
 // -----------------------------------------------------------------------------
@@ -936,6 +1003,18 @@ void computeSusRHS(const VehicleState& v_states,
                    const TMeasyState& tirerf_st,
                    const TMeasyState& tirelr_st,
                    const TMeasyState& tirerr_st,
+                   SuspensionState& suslf_st,
+                   SuspensionState& susrf_st,
+                   SuspensionState& suslr_st,
+                   SuspensionState& susrr_st,
+                   const VehicleParam& v_params,
+                   const SuspensionParam& sus_params);
+
+void computeSusRHS(const VehicleState& v_states,
+                   const TMeasyNrState& tirelf_st,
+                   const TMeasyNrState& tirerf_st,
+                   const TMeasyNrState& tirelr_st,
+                   const TMeasyNrState& tirerr_st,
                    SuspensionState& suslf_st,
                    SuspensionState& susrf_st,
                    SuspensionState& suslr_st,
@@ -989,6 +1068,19 @@ void computeVehicleRHS(VehicleState& v_states,
                        const SuspensionState& susrr_st,
                        const VehicleParam& v_params,
                        const TMeasyParam& t_params,
+                       const SuspensionParam& sus_params);
+
+void computeVehicleRHS(VehicleState& v_states,
+                       const TMeasyNrState& tirelf_st,
+                       const TMeasyNrState& tirerf_st,
+                       const TMeasyNrState& tirelr_st,
+                       const TMeasyNrState& tirerr_st,
+                       const SuspensionState& suslf_st,
+                       const SuspensionState& susrf_st,
+                       const SuspensionState& suslr_st,
+                       const SuspensionState& susrr_st,
+                       const VehicleParam& v_params,
+                       const TMeasyNrParam& t_params,
                        const SuspensionParam& sus_params);
 
 // -----------------------------------------------------------------------------
