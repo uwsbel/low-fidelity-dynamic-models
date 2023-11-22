@@ -92,7 +92,6 @@ set(HMMWV_PROGRAMS
 set(SEDAN_PROGRAMS
     demo_sedan_hi
     demo_sedanNr_hi
-    demo_sedanNr_sundials
 )
 
 # Add sundials demos if required
@@ -103,6 +102,7 @@ if(USE_SUNDIALS)
   )
   set(SEDAN_PROGRAMS ${SEDAN_PROGRAMS}
       demo_sedan_sundials
+      demo_sedanNr_sundials
   )
 endif()
 
