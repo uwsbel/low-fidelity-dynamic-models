@@ -211,7 +211,7 @@ void packY(const d24::VehicleState& v_states,
            const d24::SuspensionState& suslr_st,
            const d24::SuspensionState& susrr_st,
            bool has_TC,
-           std::vector<double>& y);
+           N_Vector& y);
 
 void packY(const d24::VehicleState& v_states,
            const d24::TMeasyNrState& tirelf_st,
@@ -223,7 +223,7 @@ void packY(const d24::VehicleState& v_states,
            const d24::SuspensionState& suslr_st,
            const d24::SuspensionState& susrr_st,
            bool has_TC,
-           std::vector<double>& y);
+           N_Vector& y);
 
 void packYDOT(const d24::VehicleState& v_states,
               const d24::TMeasyState& tirelf_st,
@@ -235,7 +235,7 @@ void packYDOT(const d24::VehicleState& v_states,
               const d24::SuspensionState& suslr_st,
               const d24::SuspensionState& susrr_st,
               bool has_TC,
-              std::vector<double>& ydot);
+              N_Vector& ydot);
 
 void packYDOT(const d24::VehicleState& v_states,
               const d24::TMeasyNrState& tirelf_st,
@@ -247,9 +247,9 @@ void packYDOT(const d24::VehicleState& v_states,
               const d24::SuspensionState& suslr_st,
               const d24::SuspensionState& susrr_st,
               bool has_TC,
-              std::vector<double>& ydot);
+              N_Vector& ydot);
 
-void unpackY(const std::vector<double>& y,
+void unpackY(const N_Vector& y,
              bool has_TC,
              d24::VehicleState& v_states,
              d24::TMeasyState& tirelf_st,
@@ -261,7 +261,7 @@ void unpackY(const std::vector<double>& y,
              d24::SuspensionState& suslr_st,
              d24::SuspensionState& susrr_st);
 
-void unpackY(const std::vector<double>& y,
+void unpackY(const N_Vector& y,
              bool has_TC,
              d24::VehicleState& v_states,
              d24::TMeasyNrState& tirelf_st,

@@ -75,8 +75,8 @@ set(SOLVER_FILES
 # Add sundials solver if required
 if(USE_SUNDIALS)
   set(SOLVER_FILES ${SOLVER_FILES}
-      # dof24_sundials.h
-      # dof24_sundials.cpp
+      dof24_sundials.h
+      dof24_sundials.cpp
   )
 endif()
 
@@ -92,17 +92,17 @@ set(HMMWV_PROGRAMS
 set(SEDAN_PROGRAMS
     # demo_sedan_hi
     demo_sedanNr_hi
-    # demo_sedanNr_sundials
 )
 
 # Add sundials demos if required
 if(USE_SUNDIALS)
   set(HMMWV_PROGRAMS ${HMMWV_PROGRAMS}
       # demo_hmmwv_sundials_withFSA
-      # demo_hmmwv_sundials
+      demo_hmmwv_sundials
   )
   set(SEDAN_PROGRAMS ${SEDAN_PROGRAMS}
       # demo_sedan_sundials
+      demo_sedanNr_sundials
   )
 endif()
 

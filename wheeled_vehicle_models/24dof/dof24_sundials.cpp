@@ -15,9 +15,13 @@ UserData::UserData(int param_flags,
                    const d24::TMeasyParam& tire_TM,
                    const d24::SuspensionParam& sus_param,
                    const DriverData& driver_data,
-                   const PathData& ref_path = PathData()) m_param_flags(param_flags),
-    m_veh_param(veh_param), m_tireTM_param(tire_TM), m_sus_param(sus_param), m_driver_data(driver_data),
-    m_ref_path(ref_path) {
+                   const PathData& ref_path)
+    : m_param_flags(param_flags),
+      m_veh_param(veh_param),
+      m_tireTM_param(tire_TM),
+      m_sus_param(sus_param),
+      m_driver_data(driver_data),
+      m_ref_path(ref_path) {
     if (IsFlagSet(ParamFlag::ENGINE_MAP)) {
         auto max_val = std::max_element(m_veh_param._powertrainMap.begin(),  //
                                         m_veh_param._powertrainMap.end(),    //
@@ -48,9 +52,13 @@ UserData::UserData(int param_flags,
                    const d24::TMeasyNrParam& tire_TMNr,
                    const d24::SuspensionParam& sus_param,
                    const DriverData& driver_data,
-                   const PathData& ref_path = PathData()) m_param_flags(param_flags),
-    m_veh_param(veh_param), m_tireTMNr_param(tire_TMNr), m_sus_param(sus_param), m_driver_data(driver_data),
-    m_ref_path(ref_path) {
+                   const PathData& ref_path)
+    : m_param_flags(param_flags),
+      m_veh_param(veh_param),
+      m_tireTMNr_param(tire_TMNr),
+      m_sus_param(sus_param),
+      m_driver_data(driver_data),
+      m_ref_path(ref_path) {
     if (IsFlagSet(ParamFlag::ENGINE_MAP)) {
         auto max_val = std::max_element(m_veh_param._powertrainMap.begin(),  //
                                         m_veh_param._powertrainMap.end(),    //
@@ -126,12 +134,13 @@ void d24SolverSundials::Construct(const std::string& vehicle_params_file,
                                   const std::string& driver_inputs_file) {
     // If there is no tire type specified, then use TMeasy
     m_tire_type = TireType::TMeasy;
+    m_data.m_tire_type = TireType::TMeasy;
     // Load vehicle and tire parameters
-    setVehParamsJSON(m_veh_param, vehicle_params_file.c_str());
-    setTireParamsJSON(m_tireTM_param, tire_params_file.c_str());
-    setSuspensionParamsJSON(m_sus_param, sus_params_file.c_str());
+    setVehParamsJSON(m_data.m_veh_param, vehicle_params_file.c_str());
+    setTireParamsJSON(m_data.m_tireTM_param, tire_params_file.c_str());
+    setSuspensionParamsJSON(m_data.m_sus_param, sus_params_file.c_str());
     // Initialize tire parameters that depend on other parameters
-    tireInit(m_tireTM_param);
+    tireInit(m_data.m_tireTM_param);
 
     m_has_TC = m_data.m_veh_param._tcbool;
     m_offset = m_has_TC ? 1 : 0;
@@ -794,7 +803,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
         // Keep track of the current gear
         veh_state._current_gr = udata->GetCurrentGear();
 
-        auto controls = GetDriverInputs(t, udata->GetDriverData());
+        auto controls = GetDriverInput(t, udata->GetDriverData());
 
         // Standard RHS function calls
         vehToSusTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
@@ -833,7 +842,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
                           susrf_state, suslr_state, susrr_state, veh_param, tireTM_param, sus_param);
 
         packYDOT(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state, susrf_state,
-                 suslr_state, veh_param._tcbool, susrr_state, ydot);
+                 suslr_state, susrr_state, veh_param._tcbool, ydot);
         // Keeping track of the current gear
         udata->SetCurrentGear(veh_state._current_gr);
     } else {
@@ -855,7 +864,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
         // Keep track of the current gear
         veh_state._current_gr = udata->GetCurrentGear();
 
-        auto controls = GetDriverInputs(t, udata->GetDriverData());
+        auto controls = GetDriverInput(t, udata->GetDriverData());
         // Standard RHS function calls
         vehToSusTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
                           susrf_state, suslr_state, susrr_state, veh_param, controls.m_steering);
@@ -892,7 +901,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
         computeVehicleRHS(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
                           susrf_state, suslr_state, susrr_state, veh_param, tireTMNr_param, sus_param);
         packYDOT(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state, susrf_state,
-                 suslr_state, veh_param._tcbool, susrr_state, ydot);
+                 suslr_state, susrr_state, veh_param._tcbool, ydot);
         // Keeping track of the current gear
         udata->SetCurrentGear(veh_state._current_gr);
     }
@@ -960,7 +969,7 @@ void packY(const d24::VehicleState& v_states,
            const d24::SuspensionState& suslr_st,
            const d24::SuspensionState& susrr_st,
            bool has_TC,
-           std::vector<double>& y) {
+           N_Vector& y) {
     int index = 0;
 
     // Tire deflections in all three directions
@@ -1027,7 +1036,7 @@ void packY(const d24::VehicleState& v_states,
            const d24::SuspensionState& suslr_st,
            const d24::SuspensionState& susrr_st,
            bool has_TC,
-           std::vector<double>& y) {
+           N_Vector& y) {
     int index = 0;
 
     // Tire deflections only in vertical direction
@@ -1086,7 +1095,7 @@ void packYDOT(const d24::VehicleState& v_states,
               const d24::SuspensionState& suslr_st,
               const d24::SuspensionState& susrr_st,
               bool has_TC,
-              std::vector<double>& ydot) {
+              N_Vector& ydot) {
     int index = 0;
 
     // Tire deflections in all three directions
@@ -1153,7 +1162,7 @@ void packYDOT(const d24::VehicleState& v_states,
               const d24::SuspensionState& suslr_st,
               const d24::SuspensionState& susrr_st,
               bool has_TC,
-              std::vector<double>& ydot) {
+              N_Vector& ydot) {
     int index = 0;
 
     // Tire deflections in all three directions
@@ -1202,7 +1211,7 @@ void packYDOT(const d24::VehicleState& v_states,
     Ith(ydot, index++) = v_states._dtheta;  // pitch angle
 }
 
-void unpackY(const std::vector<double>& y,
+void unpackY(const N_Vector& y,
              bool has_TC,
              d24::VehicleState& v_states,
              d24::TMeasyState& tirelf_st,
@@ -1267,7 +1276,7 @@ void unpackY(const std::vector<double>& y,
     v_states._theta = Ith(y, index++);  // pitch angle
 }
 
-void unpackY(const std::vector<double>& y,
+void unpackY(const N_Vector& y,
              bool has_TC,
              d24::VehicleState& v_states,
              d24::TMeasyNrState& tirelf_st,
