@@ -30,6 +30,12 @@
 # Ignore output directories
 **/output/
 
+# Ignore the plotting directory
+**/plotting/
+
+# Ignore the chrono reference data folder 
+**/chrono_reference_data/
+
 # Ignore Visual Studio Files
 *.suo
 *.user
