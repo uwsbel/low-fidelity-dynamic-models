@@ -23,7 +23,7 @@ int main(int argc, char** argv) {
     solver.Construct(vehParamsJSON, tireParamsJSON, susParamsJSON, driver_file, type);
 
     solver.SetTolerances(1e-5, 1e-3);
-    solver.SetMaxStep(1e-2);
+    solver.SetMaxStep(1e-3);
 
     // Initialize solver (set initial conditions)
     VehicleState veh_st;
