@@ -343,6 +343,28 @@ struct TMeasyNrState {
           _My(0.),
           _engTor(0.) {}
 
+    __device__ __host__ TMeasyNrState(double omega,
+                                      double dOmega,
+                                      double xt,
+                                      double rStat,
+                                      double fx,
+                                      double fy,
+                                      double fz,
+                                      double vsx,
+                                      double vsy,
+                                      double My,
+                                      double engTor)
+        : _omega(omega),
+          _dOmega(dOmega),
+          _xt(xt),
+          _rStat(rStat),
+          _fx(fx),
+          _fy(fy),
+          _fz(fz),
+          _vsx(vsx),
+          _vsy(vsy),
+          _My(My),
+          _engTor(engTor) {}
     // Copy constructor
     __device__ __host__ TMeasyNrState(const TMeasyNrState* other)
         : _omega(other->_omega),
@@ -538,6 +560,40 @@ struct VehicleState {
           _crankOmega(0.),
           _current_gr(0) {}
 
+    __device__ __host__ VehicleState(double x,
+                                     double y,
+                                     double dx,
+                                     double dy,
+                                     double u,
+                                     double v,
+                                     double psi,
+                                     double wz,
+                                     double phi,
+                                     double wx,
+                                     double udot,
+                                     double vdot,
+                                     double wxdot,
+                                     double wzdot,
+                                     double tor,
+                                     double crankOmega,
+                                     int current_gr)
+        : _x(x),
+          _y(y),
+          _dx(dx),
+          _dy(dy),
+          _u(u),
+          _v(v),
+          _psi(psi),
+          _wz(wz),
+          _phi(phi),
+          _wx(wx),
+          _udot(udot),
+          _vdot(vdot),
+          _wxdot(wxdot),
+          _wzdot(wzdot),
+          _tor(tor),
+          _crankOmega(crankOmega),
+          _current_gr(current_gr) {}
     // copy constructor
     __device__ __host__ VehicleState(const VehicleState* other)
         : _x(other->_x),
@@ -577,6 +633,89 @@ struct VehicleState {
     double _crankOmega;
     double _dOmega_crank;
     int _current_gr;
+};
+
+// --------------------------------------------------------
+struct SimData {
+    SimData() : _driver_data(nullptr), _driver_data_len(0), _t_end(0.) {}
+
+    SimData(VehicleParam veh_param, TMeasyParam tireTM_param, DriverInput* driver_data, double t_end)
+        : _veh_param(veh_param), _tireTM_param(tireTM_param), _driver_data(driver_data), _t_end(t_end) {}
+
+    SimData(const SimData&) = delete;             // Delete copy constructor
+    SimData& operator=(const SimData&) = delete;  // Delete copy assignment operator
+
+    // Destructor
+    ~SimData() {
+        cudaFree(_driver_data);  // Assumes _driver_data was allocated with new[]
+    }
+    VehicleParam _veh_param;
+    TMeasyParam _tireTM_param;
+    DriverInput* _driver_data;
+    unsigned int _driver_data_len;
+    double _t_end;
+};
+
+struct SimDataNr {
+    SimDataNr() : _driver_data(nullptr), _driver_data_len(0), _t_end(0.) {}
+
+    SimDataNr(VehicleParam veh_param, TMeasyNrParam tireTMNr_param, DriverInput* driver_data, double t_end)
+        : _veh_param(veh_param), _tireTMNr_param(tireTMNr_param), _driver_data(driver_data), _t_end(t_end) {}
+
+    SimDataNr(const SimDataNr&) = delete;             // Delete copy constructor
+    SimDataNr& operator=(const SimDataNr&) = delete;  // Delete copy assignment operator
+
+    // Destructor
+    ~SimDataNr() {
+        cudaFree(_driver_data);  // Assumes _driver_data was allocated with new[]
+    }
+    VehicleParam _veh_param;
+    TMeasyNrParam _tireTMNr_param;
+    DriverInput* _driver_data;
+    unsigned int _driver_data_len;
+    double _t_end;
+};
+// -------------------------------------------------------------------
+struct SimState {
+    SimState() {}
+
+    SimState(VehicleState veh_state,
+             TMeasyState tirelf_state,
+             TMeasyState tirerf_state,
+             TMeasyState tirelr_state,
+             TMeasyState tirerr_state)
+        : _veh_state(veh_state),
+          _tirelf_state(tirelf_state),
+          _tirerf_state(tirerf_state),
+          _tirelr_state(tirelr_state),
+          _tirerr_state(tirerr_state) {}
+
+    VehicleState _veh_state;
+    TMeasyState _tirelf_state;
+    TMeasyState _tirerf_state;
+    TMeasyState _tirelr_state;
+    TMeasyState _tirerr_state;
+};
+
+struct SimStateNr {
+    SimStateNr() {}
+
+    SimStateNr(VehicleState veh_state,
+               TMeasyNrState tirelf_state,
+               TMeasyNrState tirerf_state,
+               TMeasyNrState tirelr_state,
+               TMeasyNrState tirerr_state)
+        : _veh_state(veh_state),
+          _tirelf_state(tirelf_state),
+          _tirerf_state(tirerf_state),
+          _tirelr_state(tirelr_state),
+          _tirerr_state(tirerr_state) {}
+
+    VehicleState _veh_state;
+    TMeasyNrState _tirelf_state;
+    TMeasyNrState _tirerf_state;
+    TMeasyNrState _tirelr_state;
+    TMeasyNrState _tirerr_state;
 };
 
 // ------------------------------------------------------------------------------
