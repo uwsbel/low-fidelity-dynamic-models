@@ -637,10 +637,13 @@ struct VehicleState {
 
 // --------------------------------------------------------
 struct SimData {
-    SimData() : _driver_data(nullptr), _driver_data_len(0), _t_end(0.) {}
+    SimData() : _driver_data(nullptr), _driver_data_len(0), _csv(" ") {}
 
-    SimData(VehicleParam veh_param, TMeasyParam tireTM_param, DriverInput* driver_data, double t_end)
-        : _veh_param(veh_param), _tireTM_param(tireTM_param), _driver_data(driver_data), _t_end(t_end) {}
+    SimData(VehicleParam veh_param,
+            TMeasyParam tireTM_param,
+            DriverInput* driver_data,
+            const std::string& csv_writer_delim)
+        : _veh_param(veh_param), _tireTM_param(tireTM_param), _driver_data(driver_data), _csv(csv_writer_delim) {}
 
     SimData(const SimData&) = delete;             // Delete copy constructor
     SimData& operator=(const SimData&) = delete;  // Delete copy assignment operator
@@ -653,14 +656,17 @@ struct SimData {
     TMeasyParam _tireTM_param;
     DriverInput* _driver_data;
     unsigned int _driver_data_len;
-    double _t_end;
+    CSV_writer _csv;  // A csv writer in case state output needs to be stored
 };
 
 struct SimDataNr {
-    SimDataNr() : _driver_data(nullptr), _driver_data_len(0), _t_end(0.) {}
+    SimDataNr() : _driver_data(nullptr), _driver_data_len(0), _csv(" ") {}
 
-    SimDataNr(VehicleParam veh_param, TMeasyNrParam tireTMNr_param, DriverInput* driver_data, double t_end)
-        : _veh_param(veh_param), _tireTMNr_param(tireTMNr_param), _driver_data(driver_data), _t_end(t_end) {}
+    SimDataNr(VehicleParam veh_param,
+              TMeasyNrParam tireTMNr_param,
+              DriverInput* driver_data,
+              const std::string& csv_writer_delim)
+        : _veh_param(veh_param), _tireTMNr_param(tireTMNr_param), _driver_data(driver_data), _csv(csv_writer_delim) {}
 
     SimDataNr(const SimDataNr&) = delete;             // Delete copy constructor
     SimDataNr& operator=(const SimDataNr&) = delete;  // Delete copy assignment operator
@@ -673,7 +679,7 @@ struct SimDataNr {
     TMeasyNrParam _tireTMNr_param;
     DriverInput* _driver_data;
     unsigned int _driver_data_len;
-    double _t_end;
+    CSV_writer _csv;  // A csv writer in case state output needs to be stored
 };
 // -------------------------------------------------------------------
 struct SimState {
@@ -825,10 +831,7 @@ __device__ void computePowertrainRHS(VehicleState* v_states,
                                      const TMeasyNrParam* t_params,
                                      const DriverInput* controls);
 
-__device__ void computeVehRHS(VehicleState* v_states,
-                              const VehicleParam* v_params,
-                              const std::vector<double>* fx,
-                              const std::vector<double>* fy);
+__device__ void computeVehRHS(VehicleState* v_states, const VehicleParam* v_params, const double* fx, const double* fy);
 
 // Additional tire functions to compute model required parameters from general parameters
 __host__ double GetTireMaxLoad(unsigned int li);

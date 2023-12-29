@@ -68,15 +68,19 @@ class d18SolverHalfImplicitGPU {
                             TireType type);
 
     // Set the solver time step
+    __host__ void SetEndTime(double tend) { m_tend = tend; }
     __host__ void SetTimeStep(double step) { m_step = step; }
-
+    __host__ void SetKernelSimTime(double time) { m_kernel_sim_time = time; }
+    __host__ void SetHostDumpTime(double time) { m_host_dump_time = time; }
+    __host__ void SetThreadsPerBlock(double threads) { m_threads_per_block = threads; }
     __host__ __device__ double GetStep() { return m_step; }
+    __host__ __device__ double GetEndTime() { return m_tend; }
 
     __host__ __device__ DriverData GetDriverData() { return m_driver_data; }
 
     // Jacobian getter functions
-    double** GetJacobianState() { return m_jacobian_state; }
-    double** GetJacobianControls() { return m_jacobian_controls; }
+    // double** GetJacobianState() { return m_jacobian_state; }
+    // double** GetJacobianControls() { return m_jacobian_controls; }
 
     /// @brief Switch on output to a csv file at the specified frequency.
     /// @param output_file Path to the output file
@@ -136,7 +140,7 @@ class d18SolverHalfImplicitGPU {
 
     /// @brief When using the IntegrateStep, once the integration is complete, this function can be used to Write the
     /// output to a file specified by the user in the SetOutput function.
-    void WriteToFile();
+    __host__ void WriteToFile();
 
     /// @brief Get Tire type
     /// @return Tire type used in the solver
@@ -147,24 +151,39 @@ class d18SolverHalfImplicitGPU {
     __global__ d18::SimState* m_sim_states;       ///< Simulation states for all the vehicles
     __global__ d18::SimStateNr* m_sim_states_nr;  ///< Simulation states but with the TMeasyNr tire for all the vehicles
 
+    double m_kernel_sim_time;  ///< The maximum time a kernel launch simulates a vehicle. This is set for memory
+                               // constraints as we are required to store the states of the vehicle in device array
+                               // within the kernel and this can run out of memory for long simulatins. This is also the
+                               // time for which the vehicles are simulated on different threads of the GPU without
+                               // interaction or communication. This can be set via the SetKernelSimTime function but
+                               // defaults to 2 seconds.
+    double
+        m_host_dump_time;  ///< Time after which the host array is dumped into a csv file. Default is set to 10 seconds
+                           // but can be changed by the user
+    double m_threads_per_block;  ///< Number of threads per block. This is set to 32 by default but can be changed by
+                                 // the user
+
   private:
-    void Integrate();
+    __device__ void Integrate(double current_time);
 
-    void Write(double t);
+    __host__ void Write(double t);
 
-    void rhsFun(double t);
+    __device__ void rhsFun(double t);
 
     void rhsFun(double t, DriverInput& controls);  // We need to provide controls when we are stepping
 
     // For finite differencing for applications in MPC to perturb either controls or y
     void PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot);
 
-    TireType m_tire_type;                         // Tire type
-    CSV_writer m_csv;                             // CSV writer object
-    double m_step;                                // integration time step
-    int m_timeStepsStored;                        // Keeps track of time steps stored if we need data output
-    bool m_output;                                // data output flag
-    double m_dtout;                               // time interval between data output
+    TireType m_tire_type;  // Tire type
+    double m_step;         // integration time step
+    bool m_output;         // data output flag
+    double m_dtout;        // time interval between data output
+    double m_tend;     // end time -> This has to be set by the user through the setter function else a error is thrown
+    bool m_store_all;  // Flag for whether all the vehicles being simulated need to be dumped into a csv file
+    unsigned int m_num_outs;  // Number of vehicles to be dumped into a csv file if m_store_all is false. Which vehicles
+                              // are dumped is picked randomly
+    std::vector<unsigned int> m_which_outs;       // Vector of vehicle indices that need to be dumped into a csv file
     std::string m_output_file;                    // output file path
     DriverData m_driver_data;                     // driver inputs
     int m_num_controls;                           // Number of control states for jacobian
@@ -175,16 +194,30 @@ class d18SolverHalfImplicitGPU {
                                                   // initialize. This is for construct which initializes parameters.
                                                   // There is another one for states
     unsigned int m_vehicle_count_tracker_states;  // Keeps track of number of vehicles initialized to ensure that total
+    unsigned int m_device_collection_timeSteps;   // Number of timesteps out of the total time steps that need to be
+                                                  // stored in the device array. Calculated in the SetOutput function
+    unsigned int m_host_collection_timeSteps;  // Number of timesteps out of the total time steps that need to be stored
+                                               // in the host array. Calculated in the SetOutput function based on the
+                                               // host dump time and the collection time step.
+    // unsigned int m_kernel_calls_per_csv_dump;  // Number of kernel calls that need to be executed before the host
+    // array
+    //                                            // is dumped into a csv file. Calculated in the SetOutput function
+    //                                            based
+    //                                            // on the m_host_dump_time and the m_kernel_sim_time.
+    unsigned int m_collection_states;  // Number of states out of the total states that need to be stored in
+                                       // the device/host array. Set in the SetOutput function
+
+    unsigned int m_device_size;  // Size of the device array. Calculated in the SetOutput function
+
+    unsigned int m_num_blocks;  // Number of blocks to be launched
     // Jacobian matrix incase user needs finite differencing -> This probably needs to move into the simState struct
     double** m_jacobian_state;
     double** m_jacobian_controls;
 
     // Device and host response vectors that contain all the states from all the vehicles at all the timesteps -> This
     // is not to be used by the user, but rather is used internally to write to file
-    double* device_response;
-    double* device_response_nr;
-    double* host_response;
-    double* host_response_nr;
+    double* m_device_response;
+    double* m_host_response;
 };
 
 #ifndef SWIG
