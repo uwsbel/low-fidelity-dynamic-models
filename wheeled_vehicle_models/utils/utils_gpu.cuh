@@ -4,6 +4,9 @@
 #include <fstream>
 #include <cuda.h>
 #include <vector>
+#include <iostream>
+#include <sstream>
+
 static const double C_PI = 3.141592653589793238462643383279;
 static const double C_2PI = 6.283185307179586476925286766559;
 static const double G = 9.81;  // gravity constant
@@ -20,7 +23,6 @@ void check(T err, const char* const func, const char* const file, const int line
         std::cerr << cudaGetErrorString(err) << " " << func << std::endl;
     }
 }
-
 // --------------------------------------------------------------------------------------------------------------------
 
 // Structure for storing driver input - Similar to Chrono

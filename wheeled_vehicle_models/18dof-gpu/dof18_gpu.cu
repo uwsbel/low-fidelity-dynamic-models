@@ -483,16 +483,6 @@ __device__ void d18::computeTireRHS(TMeasyState* t_states,
     double f, fos;
     tmxy_combined(&f, &fos, sc, df0, sm, fm, ss, fs);
 
-    // static or "structural" force
-    double Fx, Fy;
-    if (sc > 0.) {
-        Fx = f * sx / sc;
-        Fy = f * sy / sc;
-    } else {
-        Fx = 0.;
-        Fy = 0.;
-    }
-
     // rolling resistance with smoothing
     double vx_min = 0.;
     double vx_max = 0.;
@@ -659,9 +649,6 @@ __device__ void d18::computeTireRHS(TMeasyNrState* t_states,
     Fy = (1.0 - frblend) * Fy0 + frblend * Fy;
 
     // rolling resistance with smoothing -> Below we don't add any smoothing
-    double vx_min = 0.;
-    double vx_max = 0.;
-
     t_states->_My = -t_params->_rr * fz * t_states->_rStat * tanh(t_states->_omega);
 
     // Set the tire forces

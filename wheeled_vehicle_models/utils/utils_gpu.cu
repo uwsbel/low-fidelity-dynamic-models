@@ -13,6 +13,11 @@ __host__ void LoadDriverData(DriverData& data, const std::string& filename) {
     std::ifstream ifile(filename.c_str());
     std::string line;
 
+    if (!ifile) {
+        std::cerr << "Error opening file: " << filename << std::endl;
+        return;
+    }
+
     // get each line
     while (std::getline(ifile, line)) {
         std::istringstream iss(line);

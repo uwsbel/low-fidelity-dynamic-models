@@ -14,8 +14,8 @@
 class d18SolverHalfImplicitGPU {
   public:
     /// @brief Initialize the solver with the total number of vehicles to be simulated
-    __device__ __host__ d18SolverHalfImplicitGPU(unsigned int total_num_vehicles);
-    __device__ __host__ ~d18SolverHalfImplicitGPU();
+    __host__ d18SolverHalfImplicitGPU(unsigned int total_num_vehicles);
+    __host__ ~d18SolverHalfImplicitGPU();
 
     /// @brief Construct the solver using path to vehicle parameters, tire parameters, number of vehicles and driver
     /// inputs. Each of these vehicles will have the specified parameters and driver inputs. To add more vehicles
@@ -72,7 +72,7 @@ class d18SolverHalfImplicitGPU {
     __host__ void SetTimeStep(double step) { m_step = step; }
     __host__ void SetKernelSimTime(double time) { m_kernel_sim_time = time; }
     __host__ void SetHostDumpTime(double time) { m_host_dump_time = time; }
-    __host__ void SetThreadsPerBlock(double threads) { m_threads_per_block = threads; }
+    __host__ void SetThreadsPerBlock(unsigned int threads) { m_threads_per_block = threads; }
     __host__ __device__ double GetStep() { return m_step; }
     __host__ __device__ double GetEndTime() { return m_tend; }
 
@@ -93,7 +93,7 @@ class d18SolverHalfImplicitGPU {
                             unsigned int no_outs = 50);
 
     /// @brief Solve the system of equations by calling the integrate function
-    void Solve();
+    __host__ void Solve();
 
     /// @brief Initialize vehicle and tire states. This function has to be called before solve and after construct.
     /// Although it is possible to provide non-zero intial states, this is untested and it is recommended to use the
@@ -125,18 +125,6 @@ class d18SolverHalfImplicitGPU {
                              d18::TMeasyNrState& tire_states_LR,
                              d18::TMeasyNrState& tire_states_RR,
                              unsigned int num_vehicles);
-    /// @brief Integrate from t to tend with the specified controls
-    /// @param t Current time (ideally that returned by IntegrateStep)
-    /// @param step Step to take. Note, integration internally will still happen at the time step set by the user or the
-    /// default 1e-3. This step here is to improve GPU efficiency by taking multiple steps at once.
-    /// @param throttle Applied throttle
-    /// @param steering Applied steering
-    /// @param braking Applied braking
-    /// @return Current time after integration
-    double IntegrateStep(double t, double step, double throttle, double steering, double braking);
-
-    // TODO: This would require dynamic parallelism and is thus left for later
-    double IntegrateStepWithJacobian(double t, double throttle, double steering, double braking, bool on);
 
     /// @brief When using the IntegrateStep, once the integration is complete, this function can be used to Write the
     /// output to a file specified by the user in the SetOutput function.
@@ -146,10 +134,10 @@ class d18SolverHalfImplicitGPU {
     /// @return Tire type used in the solver
     TireType GetTireType() const { return m_tire_type; }
 
-    __global__ d18::SimData* m_sim_data;          ///< Simulation data for all the vehicles
-    __global__ d18::SimDataNr* m_sim_data_nr;     ///< Simulation data but with the TMeasyNr tire for all the vehicles
-    __global__ d18::SimState* m_sim_states;       ///< Simulation states for all the vehicles
-    __global__ d18::SimStateNr* m_sim_states_nr;  ///< Simulation states but with the TMeasyNr tire for all the vehicles
+    d18::SimData* m_sim_data;          ///< Simulation data for all the vehicles
+    d18::SimDataNr* m_sim_data_nr;     ///< Simulation data but with the TMeasyNr tire for all the vehicles
+    d18::SimState* m_sim_states;       ///< Simulation states for all the vehicles
+    d18::SimStateNr* m_sim_states_nr;  ///< Simulation states but with the TMeasyNr tire for all the vehicles
 
     double m_kernel_sim_time;  ///< The maximum time a kernel launch simulates a vehicle. This is set for memory
                                // constraints as we are required to store the states of the vehicle in device array
@@ -160,20 +148,12 @@ class d18SolverHalfImplicitGPU {
     double
         m_host_dump_time;  ///< Time after which the host array is dumped into a csv file. Default is set to 10 seconds
                            // but can be changed by the user
-    double m_threads_per_block;  ///< Number of threads per block. This is set to 32 by default but can be changed by
-                                 // the user
+    unsigned int
+        m_threads_per_block;  ///< Number of threads per block. This is set to 32 by default but can be changed by
+                              // the user
 
   private:
-    __device__ void Integrate(double current_time);
-
     __host__ void Write(double t);
-
-    __device__ void rhsFun(double t);
-
-    void rhsFun(double t, DriverInput& controls);  // We need to provide controls when we are stepping
-
-    // For finite differencing for applications in MPC to perturb either controls or y
-    void PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot);
 
     TireType m_tire_type;  // Tire type
     double m_step;         // integration time step
@@ -210,9 +190,6 @@ class d18SolverHalfImplicitGPU {
     unsigned int m_device_size;  // Size of the device array. Calculated in the SetOutput function
 
     unsigned int m_num_blocks;  // Number of blocks to be launched
-    // Jacobian matrix incase user needs finite differencing -> This probably needs to move into the simState struct
-    double** m_jacobian_state;
-    double** m_jacobian_controls;
 
     // Device and host response vectors that contain all the states from all the vehicles at all the timesteps -> This
     // is not to be used by the user, but rather is used internally to write to file
@@ -220,55 +197,35 @@ class d18SolverHalfImplicitGPU {
     double* m_host_response;
 };
 
-#ifndef SWIG
-// Utility functions to help with finite differencing
-void packY(const d18::VehicleState& v_states,
-           const d18::TMeasyState& tirelf_st,
-           const d18::TMeasyState& tirerf_st,
-           const d18::TMeasyState& tirelr_st,
-           const d18::TMeasyState& tirerr_st,
-           bool has_TC,
-           std::vector<double>& y);
-void packY(const d18::VehicleState& v_states,
-           const d18::TMeasyNrState& tirelf_st,
-           const d18::TMeasyNrState& tirerf_st,
-           const d18::TMeasyNrState& tirelr_st,
-           const d18::TMeasyNrState& tirerr_st,
-           bool has_TC,
-           std::vector<double>& y);
-
-void packYDOT(const d18::VehicleState& v_states,
-              const d18::TMeasyState& tirelf_st,
-              const d18::TMeasyState& tirerf_st,
-              const d18::TMeasyState& tirelr_st,
-              const d18::TMeasyState& tirerr_st,
-              bool has_TC,
-              std::vector<double>& ydot);
-
-void packYDOT(const d18::VehicleState& v_states,
-              const d18::TMeasyNrState& tirelf_st,
-              const d18::TMeasyNrState& tirerf_st,
-              const d18::TMeasyNrState& tirelr_st,
-              const d18::TMeasyNrState& tirerr_st,
-              bool has_TC,
-              std::vector<double>& ydot);
-
-void unpackY(const std::vector<double>& y,
-             bool has_TC,
-             d18::VehicleState& v_states,
-             d18::TMeasyState& tirelf_st,
-             d18::TMeasyState& tirerf_st,
-             d18::TMeasyState& tirelr_st,
-             d18::TMeasyState& tirerr_st);
-
-void unpackY(const std::vector<double>& y,
-             bool has_TC,
-             d18::VehicleState& v_states,
-             d18::TMeasyNrState& tirelf_st,
-             d18::TMeasyNrState& tirerf_st,
-             d18::TMeasyNrState& tirelr_st,
-             d18::TMeasyNrState& tirerr_st);
-
-#endif
+// Cannout have global function as class member function
+/// @brief Integrate the system of equations using the half implicit method - Calls the RHS function at each time step
+__global__ void Integrate(double current_time,
+                          double kernel_sim_time,
+                          double step,
+                          bool output,
+                          unsigned int total_num_vehicles,
+                          unsigned int collection_states,
+                          double dtout,
+                          double* device_response,
+                          d18::SimDataNr* sim_data_nr,
+                          d18::SimStateNr* sim_states_nr);
+__global__ void Integrate(double current_time,
+                          double kernel_sim_time,
+                          double step,
+                          bool output,
+                          unsigned int total_num_vehicles,
+                          unsigned int collection_states,
+                          double dtout,
+                          double* device_response,
+                          d18::SimData* sim_data,
+                          d18::SimState* sim_states);
+// Integrate calss rhsFun so this also cannot be a class member function
+/// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations)
+/// @param t Current time
+__device__ void rhsFun(double t, unsigned int total_num_vehicles, d18::SimData* sim_data, d18::SimState* sim_states);
+__device__ void rhsFun(double t,
+                       unsigned int total_num_vehicles,
+                       d18::SimDataNr* sim_data_nr,
+                       d18::SimStateNr* sim_states_nr);
 
 #endif
