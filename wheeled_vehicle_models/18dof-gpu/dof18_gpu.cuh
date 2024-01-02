@@ -637,13 +637,13 @@ struct VehicleState {
 
 // --------------------------------------------------------
 struct SimData {
-    SimData() : _driver_data(nullptr), _driver_data_len(0), _csv(" ") {}
+    SimData() : _driver_data(nullptr), _driver_data_len(0) {}
 
     SimData(VehicleParam veh_param,
             TMeasyParam tireTM_param,
             DriverInput* driver_data,
             const std::string& csv_writer_delim)
-        : _veh_param(veh_param), _tireTM_param(tireTM_param), _driver_data(driver_data), _csv(csv_writer_delim) {}
+        : _veh_param(veh_param), _tireTM_param(tireTM_param), _driver_data(driver_data) {}
 
     SimData(const SimData&) = delete;             // Delete copy constructor
     SimData& operator=(const SimData&) = delete;  // Delete copy assignment operator
@@ -656,17 +656,16 @@ struct SimData {
     TMeasyParam _tireTM_param;
     DriverInput* _driver_data;
     unsigned int _driver_data_len;
-    CSV_writer _csv;  // A csv writer in case state output needs to be stored
 };
 
 struct SimDataNr {
-    SimDataNr() : _driver_data(nullptr), _driver_data_len(0), _csv(" ") {}
+    SimDataNr() : _driver_data(nullptr), _driver_data_len(0) {}
 
     SimDataNr(VehicleParam veh_param,
               TMeasyNrParam tireTMNr_param,
               DriverInput* driver_data,
               const std::string& csv_writer_delim)
-        : _veh_param(veh_param), _tireTMNr_param(tireTMNr_param), _driver_data(driver_data), _csv(csv_writer_delim) {}
+        : _veh_param(veh_param), _tireTMNr_param(tireTMNr_param), _driver_data(driver_data) {}
 
     SimDataNr(const SimDataNr&) = delete;             // Delete copy constructor
     SimDataNr& operator=(const SimDataNr&) = delete;  // Delete copy assignment operator
@@ -679,7 +678,6 @@ struct SimDataNr {
     TMeasyNrParam _tireTMNr_param;
     DriverInput* _driver_data;
     unsigned int _driver_data_len;
-    CSV_writer _csv;  // A csv writer in case state output needs to be stored
 };
 // -------------------------------------------------------------------
 struct SimState {

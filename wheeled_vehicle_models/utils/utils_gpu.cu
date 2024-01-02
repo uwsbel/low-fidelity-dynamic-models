@@ -41,8 +41,8 @@ __device__ DriverInput GetDriverInput(double time, const DriverInput* driver_dat
 
     if (time <= driver_data[0].m_time) {
         input = driver_data[0];
-    } else if (time >= driver_data[data_length].m_time) {
-        input = driver_data[data_length];
+    } else if (time >= driver_data[data_length - 1].m_time) {
+        input = driver_data[data_length - 1];
     } else {
         // if time is within map range, get an iterator and do linear interpolation
         int right = lower_bound(driver_data, data_length, DriverInput(time, 0, 0, 0));
@@ -66,15 +66,14 @@ __device__ double getMapY(const MapEntry* map, const double x, const unsigned in
     // if x outside map range
     if (x <= map[0]._x) {
         return map[0]._y;
-    } else if (x >= map[map_size]._x) {
-        return map[map_size]._y;
+    } else if (x >= map[map_size - 1]._x) {
+        return map[map_size - 1]._y;
     }
 
     // if x within map range, get an iterator and do linear interpolation
 
     int right = lower_bound_map(map, map_size, MapEntry(x, 0));
     int left = right - 1;
-
     // linear interplolation
     double mbar = (x - map[left]._x) / (map[right]._x - map[left]._x);
     return (map[left]._y + mbar * (map[right]._y - map[left]._y));

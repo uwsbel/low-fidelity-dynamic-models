@@ -31,6 +31,9 @@ __host__ d18SolverHalfImplicitGPU::d18SolverHalfImplicitGPU(unsigned int total_n
     // Set device and host arrays to nullptrs in case SetOutput is not called by the user
     m_device_response = nullptr;
     m_host_response = nullptr;
+
+    int deviceId = 0;         // Assume we are using GPU 0
+    cudaSetDevice(deviceId);  // Set the device
 }
 __host__ d18SolverHalfImplicitGPU::~d18SolverHalfImplicitGPU() {
     // Only need to delete the memory of the simData and simStates of the respective tire as the rest of the memory is
@@ -358,6 +361,8 @@ __host__ void d18SolverHalfImplicitGPU::SetOutput(const std::string& output_file
     } else {
         m_num_outs = m_total_num_vehicles;
     }
+    // Allocate memory for the csv_writers
+    m_csv_writers_ptr = std::make_unique<CSV_writer[]>(m_num_outs);
     m_output_file = output_file;
     m_dtout = 1.0 / output_freq;
 
@@ -399,6 +404,11 @@ __host__ void d18SolverHalfImplicitGPU::Solve() {
     unsigned int kernel_launches_since_last_dump = 0;  // Track the number of kernel launches since the last dump of the
                                                        // host response
     double time_since_last_dump = 0.;                  // Track the time since the last dump of the host response
+    // Write the initial conditions
+    if (m_output) {
+        Write(current_time);
+    }
+
     while (current_time < m_tend) {
         // Calculate when this kernel is supposed to end
 
@@ -438,9 +448,8 @@ __host__ void d18SolverHalfImplicitGPU::Solve() {
                                         cudaMemcpyDeviceToHost));
 
             kernel_launches_since_last_dump++;
-
             // Check if host is full and dump that into a csv writer
-            if (time_since_last_dump > m_host_dump_time) {
+            if (abs(time_since_last_dump - m_host_dump_time) < 1e-6) {
                 Write(current_time);
                 time_since_last_dump = 0.;
                 kernel_launches_since_last_dump = 0;
@@ -471,7 +480,7 @@ __host__ void d18SolverHalfImplicitGPU::Write(double t) {
             index_by = m_which_outs[sim_no];
         }
         if (m_tire_type == TireType::TMeasy) {
-            CSV_writer& csv = m_sim_data[index_by]._csv;
+            CSV_writer& csv = m_csv_writers_ptr[sim_no];
             // If we are in initial time step, write the header
             if (t < m_step) {
                 csv << "time";
@@ -505,6 +514,7 @@ __host__ void d18SolverHalfImplicitGPU::Write(double t) {
                 csv << std::endl;
                 return;
             }
+            std::cout << "Writing to csv" << std::endl;
             unsigned int steps_written = 0;
             while (steps_written < m_host_collection_timeSteps) {
                 unsigned int time_offset = steps_written * m_total_num_vehicles * m_collection_states;
@@ -525,7 +535,7 @@ __host__ void d18SolverHalfImplicitGPU::Write(double t) {
                 steps_written++;
             }
         } else {
-            CSV_writer& csv = m_sim_data_nr[index_by]._csv;
+            CSV_writer& csv = m_csv_writers_ptr[sim_no];
             // If we are in initial time step, write the header
             if (t < m_step) {
                 csv << "time";
@@ -604,11 +614,11 @@ __host__ void d18SolverHalfImplicitGPU::WriteToFile() {
             index_by = m_which_outs[sim_no];
         }
         if (m_tire_type == TireType::TMeasy) {
-            CSV_writer& csv = m_sim_data[sim_no]._csv;
+            CSV_writer& csv = m_csv_writers_ptr[sim_no];
             csv.write_to_file(m_output_file + "_" + std::to_string(index_by) + ".csv");
             csv.clearData();
         } else {
-            CSV_writer& csv = m_sim_data_nr[sim_no]._csv;
+            CSV_writer& csv = m_csv_writers_ptr[sim_no];
             csv.write_to_file(m_output_file + "_" + std::to_string(index_by) + ".csv");
             csv.clearData();
         }
@@ -781,7 +791,8 @@ __global__ void Integrate(double current_time,
         // Write to response if required -> regardless of no_outs or store_all we write all the vehicles to the
         // response
         if (output) {
-            if (abs(kernel_time - timeStep_stored * dtout) < 1e-7) {
+            // The +1 here is because state at time 0 is not stored in device response
+            if (abs(kernel_time - (timeStep_stored + 1) * dtout) < 1e-7) {
                 unsigned int time_offset = timeStep_stored * total_num_vehicles * collection_states;
 
                 device_response[time_offset + (total_num_vehicles * 0) + vehicle_id] = t;
@@ -797,6 +808,7 @@ __global__ void Integrate(double current_time,
                 device_response[time_offset + (total_num_vehicles * 10) + vehicle_id] = tirerf_st._omega;
                 device_response[time_offset + (total_num_vehicles * 11) + vehicle_id] = tirelr_st._omega;
                 device_response[time_offset + (total_num_vehicles * 12) + vehicle_id] = tirerr_st._omega;
+                timeStep_stored++;
             }
         }
     }
@@ -816,7 +828,8 @@ __global__ void Integrate(double current_time,
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
 
     unsigned int vehicle_id = blockIdx.x * blockDim.x + threadIdx.x;  // Get the vehicle id
-    while (t < ((t + kernel_sim_time) - step / 10.)) {
+    double end_time = (t + kernel_sim_time) - step / 10.;
+    while (t < end_time) {
         // Call the RHS to get accelerations for all the vehicles
         rhsFun(t, total_num_vehicles, sim_data_nr, sim_states_nr);
         // Extract the states of the vehicle and the tires
@@ -860,7 +873,8 @@ __global__ void Integrate(double current_time,
         // Write to response if required -> regardless of no_outs or store_all we write all the vehicles to the
         // response
         if (output) {
-            if (abs(kernel_time - timeStep_stored * dtout) < 1e-7) {
+            // The +1 here is because state at time 0 is not stored in device response
+            if (abs(kernel_time - (timeStep_stored + 1) * dtout) < 1e-7) {
                 unsigned int time_offset = timeStep_stored * total_num_vehicles * collection_states;
 
                 device_response[time_offset + (total_num_vehicles * 0) + vehicle_id] = t;
@@ -876,6 +890,7 @@ __global__ void Integrate(double current_time,
                 device_response[time_offset + (total_num_vehicles * 10) + vehicle_id] = tirerf_st._omega;
                 device_response[time_offset + (total_num_vehicles * 11) + vehicle_id] = tirelr_st._omega;
                 device_response[time_offset + (total_num_vehicles * 12) + vehicle_id] = tirerr_st._omega;
+                timeStep_stored++;
             }
         }
     }

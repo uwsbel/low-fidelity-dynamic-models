@@ -5,6 +5,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <vector>
+#include <memory>
 
 #include "dof18_gpu.cuh"
 
@@ -195,6 +196,9 @@ class d18SolverHalfImplicitGPU {
     // is not to be used by the user, but rather is used internally to write to file
     double* m_device_response;
     double* m_host_response;
+
+    // Need a bunch of csv writers for each of the vehicles. We will store a pointer to this list
+    std::unique_ptr<CSV_writer[]> m_csv_writers_ptr;
 };
 
 // Cannout have global function as class member function
