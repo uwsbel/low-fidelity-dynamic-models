@@ -23,6 +23,8 @@ endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_compile_options(-g -ggdb3)
     add_definitions(-DDEBUG)
+
+    set(CUDA_NVCC_FLAGS_DEBUG "-G -g" CACHE STRING "NVCC debug flags" FORCE)
 endif()
 if(CMAKE_BUILD_TYPE STREQUAL "Release")
     add_compile_options(-O3)

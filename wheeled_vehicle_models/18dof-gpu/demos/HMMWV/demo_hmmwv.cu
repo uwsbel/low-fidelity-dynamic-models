@@ -18,7 +18,7 @@ int main(int argc, char** argv) {
     // Set the threads per block from command line
     unsigned int threads_per_block = std::stoul(argv[2]);
 
-    std::string file_name = "acc";
+    std::string file_name = "acc3";
     // Driver inputs -> All vehicles have the same driver inputs
     std::string driver_file = "../data/input/" + file_name + ".txt";
 

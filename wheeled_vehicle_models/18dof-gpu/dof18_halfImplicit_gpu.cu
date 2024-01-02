@@ -81,7 +81,7 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
     unsigned int driver_data_len = driver_data.size();
     size_t old_vehicle_count = m_vehicle_count_tracker_params;
     m_vehicle_count_tracker_params += num_vehicles;
-    for (size_t i = old_vehicle_count; i <= m_vehicle_count_tracker_params; i++) {
+    for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_params; i++) {
         m_sim_data[i]._driver_data_len = driver_data_len;
         // Allocate memory for the driver data
         CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data[i]._driver_data,
@@ -92,7 +92,7 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
         m_sim_data[i]._veh_param = veh_param;
         m_sim_data[i]._tireTM_param = tire_param;
     }
-    CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data, sizeof(SimData) * m_vehicle_count_tracker_params,
+    CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data, sizeof(m_sim_data[0]) * m_vehicle_count_tracker_params,
                                           0));  // move the simData onto the GPU
 }
 
@@ -130,7 +130,7 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
         unsigned int driver_data_len = driver_data.size();
         size_t old_vehicle_count = m_vehicle_count_tracker_params;
         m_vehicle_count_tracker_params += num_vehicles;
-        for (size_t i = old_vehicle_count; i <= m_vehicle_count_tracker_params; i++) {
+        for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_params; i++) {
             m_sim_data[i]._driver_data_len = driver_data_len;
             // Allocate memory for the driver data
             CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data[i]._driver_data,
@@ -141,7 +141,7 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
             m_sim_data[i]._veh_param = veh_param;
             m_sim_data[i]._tireTM_param = tire_param;
         }
-        CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data, sizeof(SimData) * m_vehicle_count_tracker_params,
+        CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data, sizeof(m_sim_data[0]) * m_vehicle_count_tracker_params,
                                               0));  // move the simData onto the GPU
     } else {
         // Because of this, we free the memory of the TMeasyNR tire
@@ -166,7 +166,7 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
         unsigned int driver_data_len = driver_data.size();
         size_t old_vehicle_count = m_vehicle_count_tracker_params;
         m_vehicle_count_tracker_params += num_vehicles;
-        for (size_t i = old_vehicle_count; i <= m_vehicle_count_tracker_params; i++) {
+        for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_params; i++) {
             m_sim_data_nr[i]._driver_data_len = driver_data_len;
             // Allocate memory for the driver data
             CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data_nr[i]._driver_data,
@@ -177,7 +177,7 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
             m_sim_data_nr[i]._veh_param = veh_param;
             m_sim_data_nr[i]._tireTMNr_param = tire_param;
         }
-        CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data_nr, sizeof(SimData) * m_vehicle_count_tracker_params,
+        CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data_nr, sizeof(m_sim_data_nr[0]) * m_vehicle_count_tracker_params,
                                               0));  // move the simData onto the GPU
     }
 }
@@ -210,13 +210,13 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
     size_t old_vehicle_count = m_vehicle_count_tracker_params;
     m_vehicle_count_tracker_params += num_vehicles;
-    for (size_t i = old_vehicle_count; i <= m_vehicle_count_tracker_params; i++) {
+    for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_params; i++) {
         // Fill up simulation data from the cpu structs
         m_sim_data[i]._veh_param = veh_param;
         m_sim_data[i]._tireTM_param = tire_param;
     }
 
-    CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data, sizeof(SimData) * m_vehicle_count_tracker_params,
+    CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data, sizeof(m_sim_data[0]) * m_vehicle_count_tracker_params,
                                           0));  // move the simData onto the GPU
 }
 
@@ -249,12 +249,12 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         size_t old_vehicle_count = m_vehicle_count_tracker_params;
         m_vehicle_count_tracker_params += num_vehicles;
-        for (size_t i = old_vehicle_count; i <= m_vehicle_count_tracker_params; i++) {
+        for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_params; i++) {
             // Fill up simulation data from the cpu structs
             m_sim_data[i]._veh_param = veh_param;
             m_sim_data[i]._tireTM_param = tire_param;
         }
-        CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data, sizeof(SimData) * m_vehicle_count_tracker_params,
+        CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data, sizeof(m_sim_data[0]) * m_vehicle_count_tracker_params,
                                               0));  // move the simData onto the GPU
     } else {
         // Because of this, we free the memory of the TMeasyNR tire
@@ -276,12 +276,12 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         size_t old_vehicle_count = m_vehicle_count_tracker_params;
         m_vehicle_count_tracker_params += num_vehicles;
-        for (size_t i = old_vehicle_count; i <= m_vehicle_count_tracker_params; i++) {
+        for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_params; i++) {
             // Fill up simulation data from the cpu structs
             m_sim_data_nr[i]._veh_param = veh_param;
             m_sim_data_nr[i]._tireTMNr_param = tire_param;
         }
-        CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data_nr, sizeof(SimData) * m_vehicle_count_tracker_params,
+        CHECK_CUDA_ERROR(cudaMemPrefetchAsync(m_sim_data_nr, sizeof(m_sim_data_nr[0]) * m_vehicle_count_tracker_params,
                                               0));  // move the simData onto the GPU
     }
 }
@@ -300,7 +300,7 @@ __host__ void d18SolverHalfImplicitGPU::Initialize(d18::VehicleState& vehicle_st
            "Number of vehicles added makes the vehicle count greater than the total number of vehicles");
     size_t old_vehicle_count = m_vehicle_count_tracker_states;
     m_vehicle_count_tracker_states += num_vehicles;
-    for (size_t i = old_vehicle_count; i <= m_vehicle_count_tracker_states; i++) {
+    for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_states; i++) {
         // Fill up simulation data from the cpu structs
         m_sim_states[i]._veh_state = vehicle_states;
         m_sim_states[i]._tirelf_state = tire_states_LF;
@@ -326,7 +326,7 @@ __host__ void d18SolverHalfImplicitGPU::Initialize(d18::VehicleState& vehicle_st
            "Number of vehicles added makes the vehicle count greater than the total number of vehicles");
     size_t old_vehicle_count = m_vehicle_count_tracker_states;
     m_vehicle_count_tracker_states += num_vehicles;
-    for (size_t i = old_vehicle_count; i <= m_vehicle_count_tracker_states; i++) {
+    for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_states; i++) {
         // Fill up simulation data from the cpu structs
         m_sim_states_nr[i]._veh_state = vehicle_states;
         m_sim_states_nr[i]._tirelf_state = tire_states_LF;
