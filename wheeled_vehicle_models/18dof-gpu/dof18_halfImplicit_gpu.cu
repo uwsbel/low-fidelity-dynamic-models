@@ -346,18 +346,27 @@ __host__ void d18SolverHalfImplicitGPU::SetOutput(const std::string& output_file
     m_output = true;
     m_store_all = store_all;
     if (!m_store_all) {
+        // Check if number of outputs asked is greater than the total number of vehicles, if this is the case, raise
+        // awarning and set to m_total_num_vehicles
+        if (no_outs > m_total_num_vehicles) {
+            std::cout << "Number of outputs asked is greater than the total number of vehicles, setting number of "
+                         "outputs to total number of vehicles"
+                      << std::endl;
+            no_outs = m_total_num_vehicles;
+        }
         m_num_outs = no_outs;
         // If store_all is false, randomly assign which vehicles need to be dumped into csv
         float some_seed = 68;
         std::mt19937 generator(some_seed);
-        const int minval_input = 0., maxval_input = m_total_num_vehicles - 1;
-        std::uniform_int_distribution<int> dist_input(minval_input, maxval_input);
 
+        // Generate a range of numbers and shuffle them
+        std::vector<int> numbers(m_total_num_vehicles);
+        std::iota(numbers.begin(), numbers.end(), 0);  // Fill with values from 0 to m_total_num_vehicles - 1
+        std::shuffle(numbers.begin(), numbers.end(), generator);
+
+        // Resize m_which_outs and assign the first 'no_outs' numbers from the shuffled range
         m_which_outs.resize(no_outs);
-        // fill in our numbers
-        for (std::size_t i = 0; i < no_outs; i++) {
-            m_which_outs[i] = dist_input(generator);
-        }
+        std::copy(numbers.begin(), numbers.begin() + no_outs, m_which_outs.begin());
     } else {
         m_num_outs = m_total_num_vehicles;
     }
@@ -396,9 +405,26 @@ __host__ void d18SolverHalfImplicitGPU::Solve() {
     assert(m_tend != 0. && "Final time not set, please use SetEndTime function");
     // Calculate the number of blocks required
     m_num_blocks = (m_total_num_vehicles + m_threads_per_block - 1) / m_threads_per_block;
+#ifdef DEBUG
     std::cout << "Number of blocks: " << m_num_blocks << std::endl;
     std::cout << "Number of threads per block: " << m_threads_per_block << std::endl;
     std::cout << "Total number of vehicles: " << m_total_num_vehicles << std::endl;
+#endif
+    // If m_output is false, then we still need to initialize device array -> We don't need the host array as its
+    // purpose is just to store the final output
+    if (!m_output) {
+        // Number of time steps to be collected on the device
+        m_device_collection_timeSteps = ceil(m_kernel_sim_time / m_dtout);
+
+        // Number of states to store -> For now we only allow storage of the major states which are common to both tire
+        // models [time,x,y,u,v,phi,psi,wx,wz,lf_omega,rf_omega,lr_omega,rr_omega]
+        m_collection_states = 13;
+
+        // Thus device array size becomes
+        m_device_size = sizeof(double) * m_total_num_vehicles * m_collection_states * (m_device_collection_timeSteps);
+
+        CHECK_CUDA_ERROR(cudaMalloc((void**)&m_device_response, m_device_size));
+    }
 
     double current_time = 0.;
     unsigned int kernel_launches_since_last_dump = 0;  // Track the number of kernel launches since the last dump of the
@@ -456,14 +482,18 @@ __host__ void d18SolverHalfImplicitGPU::Solve() {
             }
         }
     }
-
+    // If the simulation ended at a non multiple of m_host_dump_time, we dump the remaining data
+    if (m_output && (kernel_launches_since_last_dump != 0)) {
+        unsigned int time_steps_to_write = kernel_launches_since_last_dump * m_device_collection_timeSteps;
+        Write(current_time, time_steps_to_write);
+    }
     // End of simulation, write to the csv file
     if (m_output) {
         WriteToFile();
     }
 }
 
-__host__ void d18SolverHalfImplicitGPU::Write(double t) {
+__host__ void d18SolverHalfImplicitGPU::Write(double t, unsigned int time_steps_to_write) {
     unsigned int loop_limit = 0;
     if (m_store_all) {
         loop_limit = m_total_num_vehicles;
@@ -471,106 +501,57 @@ __host__ void d18SolverHalfImplicitGPU::Write(double t) {
         loop_limit = m_num_outs;
     }
 
-    for (unsigned int sim_no = 0; sim_no < loop_limit; sim_no++) {
-        unsigned int index_by = 0;
-        // If we are no storing all, we will have to index by random numbers
-        if (m_store_all) {
-            index_by = sim_no;
-        } else {
-            index_by = m_which_outs[sim_no];
+    // If time_steps_to_write is not specified, we write all the data
+    if (time_steps_to_write == 0) {
+        time_steps_to_write = m_host_collection_timeSteps;
+    }
+
+    if (t < m_step) {
+        for (unsigned int sim_no = 0; sim_no < loop_limit; sim_no++) {
+            CSV_writer& csv = m_csv_writers_ptr[sim_no];
+            csv << "time";
+            csv << "x";
+            csv << "y";
+            csv << "vx";
+            csv << "vy";
+            csv << "roll";
+            csv << "yaw";
+            csv << "roll_rate";
+            csv << "yaw_rate";
+            csv << "wlf";
+            csv << "wrf";
+            csv << "wlr";
+            csv << "wrr";
+            csv << std::endl;
+
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << 0;
+            csv << std::endl;
         }
-        if (m_tire_type == TireType::TMeasy) {
+        return;
+    } else {
+        for (unsigned int sim_no = 0; sim_no < loop_limit; sim_no++) {
+            unsigned int index_by = 0;
+            // If we are no storing all, we will have to index by random numbers
+            if (m_store_all) {
+                index_by = sim_no;
+            } else {
+                index_by = m_which_outs[sim_no];
+            }
             CSV_writer& csv = m_csv_writers_ptr[sim_no];
-            // If we are in initial time step, write the header
-            if (t < m_step) {
-                csv << "time";
-                csv << "x";
-                csv << "y";
-                csv << "vx";
-                csv << "vy";
-                csv << "roll";
-                csv << "yaw";
-                csv << "roll_rate";
-                csv << "yaw_rate";
-                csv << "wlf";
-                csv << "wrf";
-                csv << "wlr";
-                csv << "wrr";
-                csv << std::endl;
-
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << std::endl;
-                return;
-            }
-            std::cout << "Writing to csv" << std::endl;
             unsigned int steps_written = 0;
-            while (steps_written < m_host_collection_timeSteps) {
-                unsigned int time_offset = steps_written * m_total_num_vehicles * m_collection_states;
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 0) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 1) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 2) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 3) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 4) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 5) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 6) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 7) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 8) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 9) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 10) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 11) + index_by];
-                csv << m_host_response[time_offset + (m_total_num_vehicles * 12) + index_by];
-                csv << std::endl;
-                steps_written++;
-            }
-        } else {
-            CSV_writer& csv = m_csv_writers_ptr[sim_no];
-            // If we are in initial time step, write the header
-            if (t < m_step) {
-                csv << "time";
-                csv << "x";
-                csv << "y";
-                csv << "vx";
-                csv << "vy";
-                csv << "roll";
-                csv << "yaw";
-                csv << "roll_rate";
-                csv << "yaw_rate";
-                csv << "wlf";
-                csv << "wrf";
-                csv << "wlr";
-                csv << "wrr";
-                csv << std::endl;
-
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << 0;
-                csv << std::endl;
-                return;
-            }
-            unsigned int steps_written = 0;
-            while (steps_written < m_host_collection_timeSteps) {
+            while (steps_written < time_steps_to_write) {
                 unsigned int time_offset = steps_written * m_total_num_vehicles * m_collection_states;
                 csv << m_host_response[time_offset + (m_total_num_vehicles * 0) + index_by];
                 csv << m_host_response[time_offset + (m_total_num_vehicles * 1) + index_by];
@@ -627,6 +608,27 @@ __host__ void d18SolverHalfImplicitGPU::WriteToFile() {
 
 // ======================================================================================================================
 
+__host__ SimState d18SolverHalfImplicitGPU::GetSimState(unsigned int vehicle_index) {
+    assert((vehicle_index < m_total_num_vehicles) && "Vehicle index out of bounds");
+
+    // Synchronize to ensure all GPU operations are completed
+    cudaDeviceSynchronize();
+
+    // Allocate space for a single SimState on the host
+    SimState host_state;
+
+    if (m_tire_type == TireType::TMeasy) {
+        // Copy the specific SimState from the GPU to the host
+        cudaMemcpy(&host_state, &m_sim_states[vehicle_index], sizeof(SimState), cudaMemcpyDeviceToHost);
+    } else {
+        // Similarly for m_sim_states_nr
+        cudaMemcpy(&host_state, &m_sim_states_nr[vehicle_index], sizeof(SimState), cudaMemcpyDeviceToHost);
+    }
+
+    return host_state;
+}
+
+// ======================================================================================================================
 __device__ void rhsFun(double t, unsigned int total_num_vehicles, SimData* sim_data, SimState* sim_states) {
     // Get the vehicle index
     unsigned int vehicle_index = blockIdx.x * blockDim.x + threadIdx.x;
@@ -734,81 +736,83 @@ __global__ void Integrate(double current_time,
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
     double end_time = (t + kernel_sim_time) - step / 10.;
     unsigned int vehicle_id = blockIdx.x * blockDim.x + threadIdx.x;  // Get the vehicle id
-    while (t < end_time) {
-        // Call the RHS to get accelerations for all the vehicles
-        rhsFun(t, total_num_vehicles, sim_data, sim_states);
+    if (vehicle_id < total_num_vehicles) {
+        while (t < end_time) {
+            // Call the RHS to get accelerations for all the vehicles
+            rhsFun(t, total_num_vehicles, sim_data, sim_states);
 
-        // Integrate according to half implicit method for second order states
-        // Integrate according to explicit method for first order states
+            // Integrate according to half implicit method for second order states
+            // Integrate according to explicit method for first order states
 
-        // Extract the states of the vehicle and the tires
-        VehicleState& v_states = sim_states[vehicle_id]._veh_state;
-        VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
-        TMeasyState& tirelf_st = sim_states[vehicle_id]._tirelf_state;
-        TMeasyState& tirerf_st = sim_states[vehicle_id]._tirerf_state;
-        TMeasyState& tirelr_st = sim_states[vehicle_id]._tirelr_state;
-        TMeasyState& tirerr_st = sim_states[vehicle_id]._tirerr_state;
+            // Extract the states of the vehicle and the tires
+            VehicleState& v_states = sim_states[vehicle_id]._veh_state;
+            VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
+            TMeasyState& tirelf_st = sim_states[vehicle_id]._tirelf_state;
+            TMeasyState& tirerf_st = sim_states[vehicle_id]._tirerf_state;
+            TMeasyState& tirelr_st = sim_states[vehicle_id]._tirelr_state;
+            TMeasyState& tirerr_st = sim_states[vehicle_id]._tirerr_state;
 
-        // First the tire states
-        // LF
-        tirelf_st._xe += tirelf_st._xedot * step;
-        tirelf_st._ye += tirelf_st._yedot * step;
-        tirelf_st._omega += tirelf_st._dOmega * step;
-        // RF
-        tirerf_st._xe += tirerf_st._xedot * step;
-        tirerf_st._ye += tirerf_st._yedot * step;
-        tirerf_st._omega += tirerf_st._dOmega * step;
-        // LR
-        tirelr_st._xe += tirelr_st._xedot * step;
-        tirelr_st._ye += tirelr_st._yedot * step;
-        tirelr_st._omega += tirelr_st._dOmega * step;
-        // RR
-        tirerr_st._xe += tirerr_st._xedot * step;
-        tirerr_st._ye += tirerr_st._yedot * step;
-        tirerr_st._omega += tirerr_st._dOmega * step;
+            // First the tire states
+            // LF
+            tirelf_st._xe += tirelf_st._xedot * step;
+            tirelf_st._ye += tirelf_st._yedot * step;
+            tirelf_st._omega += tirelf_st._dOmega * step;
+            // RF
+            tirerf_st._xe += tirerf_st._xedot * step;
+            tirerf_st._ye += tirerf_st._yedot * step;
+            tirerf_st._omega += tirerf_st._dOmega * step;
+            // LR
+            tirelr_st._xe += tirelr_st._xedot * step;
+            tirelr_st._ye += tirelr_st._yedot * step;
+            tirelr_st._omega += tirelr_st._dOmega * step;
+            // RR
+            tirerr_st._xe += tirerr_st._xedot * step;
+            tirerr_st._ye += tirerr_st._yedot * step;
+            tirerr_st._omega += tirerr_st._dOmega * step;
 
-        // Now the vehicle states
-        if (veh_param._tcbool) {
-            v_states._crankOmega += v_states._dOmega_crank * step;
-        }
+            // Now the vehicle states
+            if (veh_param._tcbool) {
+                v_states._crankOmega += v_states._dOmega_crank * step;
+            }
 
-        // Integrate velocity level first
-        v_states._u += v_states._udot * step;
-        v_states._v += v_states._vdot * step;
-        v_states._wx += v_states._wxdot * step;
-        v_states._wz += v_states._wzdot * step;
+            // Integrate velocity level first
+            v_states._u += v_states._udot * step;
+            v_states._v += v_states._vdot * step;
+            v_states._wx += v_states._wxdot * step;
+            v_states._wz += v_states._wzdot * step;
 
-        // Integrate position level next
-        v_states._x += (v_states._u * cos(v_states._psi) - v_states._v * sin(v_states._psi)) * step;
-        v_states._y += (v_states._u * sin(v_states._psi) + v_states._v * cos(v_states._psi)) * step;
-        v_states._psi += v_states._wz * step;
-        v_states._phi += v_states._wx * step;
+            // Integrate position level next
+            v_states._x += (v_states._u * cos(v_states._psi) - v_states._v * sin(v_states._psi)) * step;
+            v_states._y += (v_states._u * sin(v_states._psi) + v_states._v * cos(v_states._psi)) * step;
+            v_states._psi += v_states._wz * step;
+            v_states._phi += v_states._wx * step;
 
-        // Update time
-        t += step;
-        kernel_time += step;
+            // Update time
+            t += step;
+            kernel_time += step;
 
-        // Write to response if required -> regardless of no_outs or store_all we write all the vehicles to the
-        // response
-        if (output) {
-            // The +1 here is because state at time 0 is not stored in device response
-            if (abs(kernel_time - (timeStep_stored + 1) * dtout) < 1e-7) {
-                unsigned int time_offset = timeStep_stored * total_num_vehicles * collection_states;
+            // Write to response if required -> regardless of no_outs or store_all we write all the vehicles to the
+            // response
+            if (output) {
+                // The +1 here is because state at time 0 is not stored in device response
+                if (abs(kernel_time - (timeStep_stored + 1) * dtout) < 1e-7) {
+                    unsigned int time_offset = timeStep_stored * total_num_vehicles * collection_states;
 
-                device_response[time_offset + (total_num_vehicles * 0) + vehicle_id] = t;
-                device_response[time_offset + (total_num_vehicles * 1) + vehicle_id] = v_states._x;
-                device_response[time_offset + (total_num_vehicles * 2) + vehicle_id] = v_states._y;
-                device_response[time_offset + (total_num_vehicles * 3) + vehicle_id] = v_states._u;
-                device_response[time_offset + (total_num_vehicles * 4) + vehicle_id] = v_states._v;
-                device_response[time_offset + (total_num_vehicles * 5) + vehicle_id] = v_states._phi;
-                device_response[time_offset + (total_num_vehicles * 6) + vehicle_id] = v_states._psi;
-                device_response[time_offset + (total_num_vehicles * 7) + vehicle_id] = v_states._wx;
-                device_response[time_offset + (total_num_vehicles * 8) + vehicle_id] = v_states._wz;
-                device_response[time_offset + (total_num_vehicles * 9) + vehicle_id] = tirelf_st._omega;
-                device_response[time_offset + (total_num_vehicles * 10) + vehicle_id] = tirerf_st._omega;
-                device_response[time_offset + (total_num_vehicles * 11) + vehicle_id] = tirelr_st._omega;
-                device_response[time_offset + (total_num_vehicles * 12) + vehicle_id] = tirerr_st._omega;
-                timeStep_stored++;
+                    device_response[time_offset + (total_num_vehicles * 0) + vehicle_id] = t;
+                    device_response[time_offset + (total_num_vehicles * 1) + vehicle_id] = v_states._x;
+                    device_response[time_offset + (total_num_vehicles * 2) + vehicle_id] = v_states._y;
+                    device_response[time_offset + (total_num_vehicles * 3) + vehicle_id] = v_states._u;
+                    device_response[time_offset + (total_num_vehicles * 4) + vehicle_id] = v_states._v;
+                    device_response[time_offset + (total_num_vehicles * 5) + vehicle_id] = v_states._phi;
+                    device_response[time_offset + (total_num_vehicles * 6) + vehicle_id] = v_states._psi;
+                    device_response[time_offset + (total_num_vehicles * 7) + vehicle_id] = v_states._wx;
+                    device_response[time_offset + (total_num_vehicles * 8) + vehicle_id] = v_states._wz;
+                    device_response[time_offset + (total_num_vehicles * 9) + vehicle_id] = tirelf_st._omega;
+                    device_response[time_offset + (total_num_vehicles * 10) + vehicle_id] = tirerf_st._omega;
+                    device_response[time_offset + (total_num_vehicles * 11) + vehicle_id] = tirelr_st._omega;
+                    device_response[time_offset + (total_num_vehicles * 12) + vehicle_id] = tirerr_st._omega;
+                    timeStep_stored++;
+                }
             }
         }
     }
@@ -829,68 +833,70 @@ __global__ void Integrate(double current_time,
 
     unsigned int vehicle_id = blockIdx.x * blockDim.x + threadIdx.x;  // Get the vehicle id
     double end_time = (t + kernel_sim_time) - step / 10.;
-    while (t < end_time) {
-        // Call the RHS to get accelerations for all the vehicles
-        rhsFun(t, total_num_vehicles, sim_data_nr, sim_states_nr);
-        // Extract the states of the vehicle and the tires
-        VehicleState& v_states = sim_states_nr[vehicle_id]._veh_state;
-        VehicleParam& veh_param = sim_data_nr[vehicle_id]._veh_param;
-        TMeasyNrState& tirelf_st = sim_states_nr[vehicle_id]._tirelf_state;
-        TMeasyNrState& tirerf_st = sim_states_nr[vehicle_id]._tirerf_state;
-        TMeasyNrState& tirelr_st = sim_states_nr[vehicle_id]._tirelr_state;
-        TMeasyNrState& tirerr_st = sim_states_nr[vehicle_id]._tirerr_state;
+    if (vehicle_id < total_num_vehicles) {
+        while (t < end_time) {
+            // Call the RHS to get accelerations for all the vehicles
+            rhsFun(t, total_num_vehicles, sim_data_nr, sim_states_nr);
+            // Extract the states of the vehicle and the tires
+            VehicleState& v_states = sim_states_nr[vehicle_id]._veh_state;
+            VehicleParam& veh_param = sim_data_nr[vehicle_id]._veh_param;
+            TMeasyNrState& tirelf_st = sim_states_nr[vehicle_id]._tirelf_state;
+            TMeasyNrState& tirerf_st = sim_states_nr[vehicle_id]._tirerf_state;
+            TMeasyNrState& tirelr_st = sim_states_nr[vehicle_id]._tirelr_state;
+            TMeasyNrState& tirerr_st = sim_states_nr[vehicle_id]._tirerr_state;
 
-        // First the tire states
-        // LF
-        tirelf_st._omega += tirelf_st._dOmega * step;
-        // RF
-        tirerf_st._omega += tirerf_st._dOmega * step;
-        // LR
-        tirelr_st._omega += tirelr_st._dOmega * step;
-        // RR
-        tirerr_st._omega += tirerr_st._dOmega * step;
+            // First the tire states
+            // LF
+            tirelf_st._omega += tirelf_st._dOmega * step;
+            // RF
+            tirerf_st._omega += tirerf_st._dOmega * step;
+            // LR
+            tirelr_st._omega += tirelr_st._dOmega * step;
+            // RR
+            tirerr_st._omega += tirerr_st._dOmega * step;
 
-        // Now the vehicle states
-        if (veh_param._tcbool) {
-            v_states._crankOmega += v_states._dOmega_crank * step;
-        }
+            // Now the vehicle states
+            if (veh_param._tcbool) {
+                v_states._crankOmega += v_states._dOmega_crank * step;
+            }
 
-        // Integrate velocity level first
-        v_states._u += v_states._udot * step;
-        v_states._v += v_states._vdot * step;
-        v_states._wx += v_states._wxdot * step;
-        v_states._wz += v_states._wzdot * step;
-        // Integrate position level next
-        v_states._x += (v_states._u * cos(v_states._psi) - v_states._v * sin(v_states._psi)) * step;
-        v_states._y += (v_states._u * sin(v_states._psi) + v_states._v * cos(v_states._psi)) * step;
-        v_states._psi += v_states._wz * step;
-        v_states._phi += v_states._wx * step;
+            // Integrate velocity level first
+            v_states._u += v_states._udot * step;
+            v_states._v += v_states._vdot * step;
+            v_states._wx += v_states._wxdot * step;
+            v_states._wz += v_states._wzdot * step;
+            // Integrate position level next
+            v_states._x += (v_states._u * cos(v_states._psi) - v_states._v * sin(v_states._psi)) * step;
+            v_states._y += (v_states._u * sin(v_states._psi) + v_states._v * cos(v_states._psi)) * step;
+            v_states._psi += v_states._wz * step;
+            v_states._phi += v_states._wx * step;
 
-        // Update time
-        t += step;
-        kernel_time += step;
+            // Update time
+            t += step;
+            kernel_time += step;
 
-        // Write to response if required -> regardless of no_outs or store_all we write all the vehicles to the
-        // response
-        if (output) {
-            // The +1 here is because state at time 0 is not stored in device response
-            if (abs(kernel_time - (timeStep_stored + 1) * dtout) < 1e-7) {
-                unsigned int time_offset = timeStep_stored * total_num_vehicles * collection_states;
+            // Write to response if required -> regardless of no_outs or store_all we write all the vehicles to the
+            // response
+            if (output) {
+                // The +1 here is because state at time 0 is not stored in device response
+                if (abs(kernel_time - (timeStep_stored + 1) * dtout) < 1e-7) {
+                    unsigned int time_offset = timeStep_stored * total_num_vehicles * collection_states;
 
-                device_response[time_offset + (total_num_vehicles * 0) + vehicle_id] = t;
-                device_response[time_offset + (total_num_vehicles * 1) + vehicle_id] = v_states._x;
-                device_response[time_offset + (total_num_vehicles * 2) + vehicle_id] = v_states._y;
-                device_response[time_offset + (total_num_vehicles * 3) + vehicle_id] = v_states._u;
-                device_response[time_offset + (total_num_vehicles * 4) + vehicle_id] = v_states._v;
-                device_response[time_offset + (total_num_vehicles * 5) + vehicle_id] = v_states._phi;
-                device_response[time_offset + (total_num_vehicles * 6) + vehicle_id] = v_states._psi;
-                device_response[time_offset + (total_num_vehicles * 7) + vehicle_id] = v_states._wx;
-                device_response[time_offset + (total_num_vehicles * 8) + vehicle_id] = v_states._wz;
-                device_response[time_offset + (total_num_vehicles * 9) + vehicle_id] = tirelf_st._omega;
-                device_response[time_offset + (total_num_vehicles * 10) + vehicle_id] = tirerf_st._omega;
-                device_response[time_offset + (total_num_vehicles * 11) + vehicle_id] = tirelr_st._omega;
-                device_response[time_offset + (total_num_vehicles * 12) + vehicle_id] = tirerr_st._omega;
-                timeStep_stored++;
+                    device_response[time_offset + (total_num_vehicles * 0) + vehicle_id] = t;
+                    device_response[time_offset + (total_num_vehicles * 1) + vehicle_id] = v_states._x;
+                    device_response[time_offset + (total_num_vehicles * 2) + vehicle_id] = v_states._y;
+                    device_response[time_offset + (total_num_vehicles * 3) + vehicle_id] = v_states._u;
+                    device_response[time_offset + (total_num_vehicles * 4) + vehicle_id] = v_states._v;
+                    device_response[time_offset + (total_num_vehicles * 5) + vehicle_id] = v_states._phi;
+                    device_response[time_offset + (total_num_vehicles * 6) + vehicle_id] = v_states._psi;
+                    device_response[time_offset + (total_num_vehicles * 7) + vehicle_id] = v_states._wx;
+                    device_response[time_offset + (total_num_vehicles * 8) + vehicle_id] = v_states._wz;
+                    device_response[time_offset + (total_num_vehicles * 9) + vehicle_id] = tirelf_st._omega;
+                    device_response[time_offset + (total_num_vehicles * 10) + vehicle_id] = tirerf_st._omega;
+                    device_response[time_offset + (total_num_vehicles * 11) + vehicle_id] = tirelr_st._omega;
+                    device_response[time_offset + (total_num_vehicles * 12) + vehicle_id] = tirerr_st._omega;
+                    timeStep_stored++;
+                }
             }
         }
     }

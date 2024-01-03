@@ -131,6 +131,11 @@ class d18SolverHalfImplicitGPU {
     /// output to a file specified by the user in the SetOutput function.
     __host__ void WriteToFile();
 
+    /// @brief Get a SimState object for a particular vehicle
+    /// @param vehicle_index Index of the vehicle
+    /// @return SimState object for the vehicle
+    __host__ d18::SimState GetSimState(unsigned int vehicle_index);
+
     /// @brief Get Tire type
     /// @return Tire type used in the solver
     TireType GetTireType() const { return m_tire_type; }
@@ -154,7 +159,7 @@ class d18SolverHalfImplicitGPU {
                               // the user
 
   private:
-    __host__ void Write(double t);
+    __host__ void Write(double t, unsigned int time_steps_to_write = 0);
 
     TireType m_tire_type;  // Tire type
     double m_step;         // integration time step

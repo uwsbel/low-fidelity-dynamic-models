@@ -51,6 +51,7 @@ set(SOLVER_FILES
 # Build the demos
 set(HMMWV_PROGRAMS
     demo_hmmwv
+    demo_hmmwv_varControls
 )
 
 # -----------------------------------------------------
