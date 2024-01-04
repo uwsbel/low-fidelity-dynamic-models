@@ -96,6 +96,9 @@ class d18SolverHalfImplicitGPU {
     /// @brief Solve the system of equations by calling the integrate function
     __host__ void Solve();
 
+    /// @brief Solve the system of equations for a kernel step with the provided controls
+    __host__ double SolveStep(double t, double steering, double throttle, double braking);
+
     /// @brief Initialize vehicle and tire states. This function has to be called before solve and after construct.
     /// Although it is possible to provide non-zero intial states, this is untested and it is recommended to use the
     /// default zero states. To initialize more vehicles, call the Initialize function again.
@@ -135,7 +138,6 @@ class d18SolverHalfImplicitGPU {
     /// @param vehicle_index Index of the vehicle
     /// @return SimState object for the vehicle
     __host__ d18::SimState GetSimState(unsigned int vehicle_index);
-
     /// @brief Get Tire type
     /// @return Tire type used in the solver
     TireType GetTireType() const { return m_tire_type; }
@@ -202,6 +204,12 @@ class d18SolverHalfImplicitGPU {
     double* m_device_response;
     double* m_host_response;
 
+    // Need to track kernel launches and time since last kernel launches for the solveStep function
+    unsigned int m_kernel_launches_since_last_dump;
+    double m_time_since_last_dump;
+    // Need to keep track of current time in SolveStep function
+    double m_current_time;
+
     // Need a bunch of csv writers for each of the vehicles. We will store a pointer to this list
     std::unique_ptr<CSV_writer[]> m_csv_writers_ptr;
 };
@@ -209,6 +217,20 @@ class d18SolverHalfImplicitGPU {
 // Cannout have global function as class member function
 /// @brief Integrate the system of equations using the half implicit method - Calls the RHS function at each time step
 __global__ void Integrate(double current_time,
+                          double kernel_sim_time,
+                          double step,
+                          bool output,
+                          unsigned int total_num_vehicles,
+                          unsigned int collection_states,
+                          double dtout,
+                          double* device_response,
+                          d18::SimDataNr* sim_data_nr,
+                          d18::SimStateNr* sim_states_nr);
+// For the case where the dirver inputs are provided at each time step
+__global__ void Integrate(double current_time,
+                          double steering,
+                          double throttle,
+                          double braking,
                           double kernel_sim_time,
                           double step,
                           bool output,
@@ -228,13 +250,41 @@ __global__ void Integrate(double current_time,
                           double* device_response,
                           d18::SimData* sim_data,
                           d18::SimState* sim_states);
+__global__ void Integrate(double current_time,
+                          double steering,
+                          double throttle,
+                          double braking,
+                          double kernel_sim_time,
+                          double step,
+                          bool output,
+                          unsigned int total_num_vehicles,
+                          unsigned int collection_states,
+                          double dtout,
+                          double* device_response,
+                          d18::SimData* sim_data,
+                          d18::SimState* sim_states);
 // Integrate calss rhsFun so this also cannot be a class member function
 /// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations)
 /// @param t Current time
 __device__ void rhsFun(double t, unsigned int total_num_vehicles, d18::SimData* sim_data, d18::SimState* sim_states);
+// For the case where the dirver inputs are provided at each time step
+__device__ void rhsFun(double t,
+                       unsigned int total_num_vehicles,
+                       d18::SimData* sim_data,
+                       d18::SimState* sim_states,
+                       double steering,
+                       double throttle,
+                       double braking);
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
                        d18::SimDataNr* sim_data_nr,
                        d18::SimStateNr* sim_states_nr);
+__device__ void rhsFun(double t,
+                       unsigned int total_num_vehicles,
+                       d18::SimDataNr* sim_data_nr,
+                       d18::SimStateNr* sim_states_nr,
+                       double steering,
+                       double throttle,
+                       double braking);
 
 #endif
