@@ -53,6 +53,7 @@ set(HMMWV_PROGRAMS
     demo_hmmwv
     demo_hmmwv_varControls
     demo_hmmwv_step
+    demo_hmmwv_controlsFunctor
 )
 
 # -----------------------------------------------------

@@ -548,9 +548,7 @@ __host__ double d18SolverHalfImplicitGPU::SolveStep(double t,
     m_time_since_last_dump += m_kernel_sim_time;
     return m_current_time;
 }
-
-// ======================================================================================================================
-
+//======================================================================================================================
 __host__ void d18SolverHalfImplicitGPU::Write(double t, unsigned int time_steps_to_write) {
     unsigned int loop_limit = 0;
     if (m_store_all) {
@@ -879,7 +877,7 @@ __device__ void rhsFun(double t,
         computeVehRHS(&veh_state, &veh_param, &fx[0], &fy[0]);
     }
 }
-// ======================================================================================================================
+//======================================================================================================================
 
 __global__ void Integrate(double current_time,
                           double kernel_sim_time,
