@@ -1,5 +1,5 @@
-#ifndef DOF18_H
-#define DOF18_H
+#ifndef DOF18_GPU_CUH
+#define DOF18_GPU_CUH
 
 #include <math.h>
 #include <stdint.h>
@@ -639,10 +639,7 @@ struct VehicleState {
 struct SimData {
     SimData() : _driver_data(nullptr), _driver_data_len(0) {}
 
-    SimData(VehicleParam veh_param,
-            TMeasyParam tireTM_param,
-            DriverInput* driver_data,
-            const std::string& csv_writer_delim)
+    SimData(VehicleParam veh_param, TMeasyParam tireTM_param, DriverInput* driver_data)
         : _veh_param(veh_param), _tireTM_param(tireTM_param), _driver_data(driver_data) {}
 
     SimData(const SimData&) = delete;             // Delete copy constructor
@@ -661,10 +658,7 @@ struct SimData {
 struct SimDataNr {
     SimDataNr() : _driver_data(nullptr), _driver_data_len(0) {}
 
-    SimDataNr(VehicleParam veh_param,
-              TMeasyNrParam tireTMNr_param,
-              DriverInput* driver_data,
-              const std::string& csv_writer_delim)
+    SimDataNr(VehicleParam veh_param, TMeasyNrParam tireTMNr_param, DriverInput* driver_data)
         : _veh_param(veh_param), _tireTMNr_param(tireTMNr_param), _driver_data(driver_data) {}
 
     SimDataNr(const SimDataNr&) = delete;             // Delete copy constructor
