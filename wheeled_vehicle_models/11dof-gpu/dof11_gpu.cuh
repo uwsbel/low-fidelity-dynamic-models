@@ -1,5 +1,5 @@
-#ifndef DOF11_H
-#define DOF11_H
+#ifndef DOF11_GPU_CUH
+#define DOF11_GPU_CUH
 
 #include <math.h>
 #include <stdint.h>
