@@ -646,6 +646,36 @@ struct VehicleState {
           _dOmega_crank(0.),
           _current_gr(0) {}
 
+    VehicleState(double x double y,
+                 double dx,
+                 double dy,
+                 double u,
+                 double v,
+                 double psi,
+                 double wz,
+                 double udot,
+                 double vdot,
+                 double wzdot,
+                 double tor,
+                 double crankOmega,
+                 double dOmega_crank,
+                 int current_gr)
+        : _x(x),
+          _y(y),
+          _dx(dx),
+          _dy(dy),
+          _u(u),
+          _v(v),
+          _psi(psi),
+          _wz(wz),
+          _udot(udot),
+          _vdot(vdot),
+          _wzdot(wzdot),
+          _tor(tor),
+          _crankOmega(crankOmega),
+          _dOmega_crank(dOmega_crank),
+          _current_gr(current_gr) {}
+
     // copy constructor
     VehicleState(const VehicleState& other)
         : _x(other._x),
