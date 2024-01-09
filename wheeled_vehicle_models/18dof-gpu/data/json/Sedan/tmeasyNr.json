@@ -1,0 +1,18 @@
+{
+    "highLevelParams": true,
+    "jw": 4.5,
+    "rr": 0.015,
+    "r0": 0.3266,
+    "mu": 1,
+    "rdyncoPn": 0.375,
+    "rdyncoP2n": 0.75,
+    "fzRdynco": 0,
+    "rdyncoCrit": 0,
+    "vCoulomb": 1,
+    "frblendBegin": 1,
+    "frblendEnd": 3,
+    "width": 0.245,
+    "rimRadius": 0.2286,
+    "loadIndex": 97,
+    "vehicleType": "Passenger"
+}
