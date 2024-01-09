@@ -400,16 +400,16 @@ __global__ void Integrate(double current_time,
             // Integrate according to explicit method for first order states
 
             // Extract the states of the vehicle and the tires
-            VehicleState& v_states = sim_states[vehicle_id]._v_states;
-            VehicleParam& veh_param = sim_data[vehicle_id]._veh_params;
-            TMeasyState& tirelf_st = sim_states[vehicle_id]._tirelf_st;
-            TMeasyState& tirerf_st = sim_states[vehicle_id]._tirerf_st;
-            TMeasyState& tirelr_st = sim_states[vehicle_id]._tirelr_st;
-            TMeasyState& tirerr_st = sim_states[vehicle_id]._tirerr_st;
-            SuspensionState& suslf_st = sim_states[vehicle_id]._suslf_st;
-            SuspensionState& susrf_st = sim_states[vehicle_id]._susrf_st;
-            SuspensionState& suslr_st = sim_states[vehicle_id]._suslr_st;
-            SuspensionState& susrr_st = sim_states[vehicle_id]._susrr_st;
+            d24::VehicleState& v_states = sim_states[vehicle_id]._v_states;
+            d24::VehicleParam& veh_param = sim_data[vehicle_id]._veh_params;
+            d24::TMeasyState& tirelf_st = sim_states[vehicle_id]._tirelf_st;
+            d24::TMeasyState& tirerf_st = sim_states[vehicle_id]._tirerf_st;
+            d24::TMeasyState& tirelr_st = sim_states[vehicle_id]._tirelr_st;
+            d24::TMeasyState& tirerr_st = sim_states[vehicle_id]._tirerr_st;
+            d24::SuspensionState& suslf_st = sim_states[vehicle_id]._suslf_st;
+            d24::SuspensionState& susrf_st = sim_states[vehicle_id]._susrf_st;
+            d24::SuspensionState& suslr_st = sim_states[vehicle_id]._suslr_st;
+            d24::SuspensionState& susrr_st = sim_states[vehicle_id]._susrr_st;
 
             // First the tire states
             // LF
@@ -535,16 +535,16 @@ __global__ void Integrate(double current_time,
             // Integrate according to explicit method for first order states
 
             // Extract the states of the vehicle and the tires
-            VehicleState& v_states = sim_states_nr[vehicle_id]._v_states;
-            VehicleParam& veh_param = sim_data_nr[vehicle_id]._veh_params;
-            TMeasyNrState& tirelf_st = sim_states_nr[vehicle_id]._tirelf_st;
-            TMeasyNrState& tirerf_st = sim_states_nr[vehicle_id]._tirerf_st;
-            TMeasyNrState& tirelr_st = sim_states_nr[vehicle_id]._tirelr_st;
-            TMeasyNrState& tirerr_st = sim_states_nr[vehicle_id]._tirerr_st;
-            SuspensionState& suslf_st = sim_states_nr[vehicle_id]._suslf_st;
-            SuspensionState& susrf_st = sim_states_nr[vehicle_id]._susrf_st;
-            SuspensionState& suslr_st = sim_states_nr[vehicle_id]._suslr_st;
-            SuspensionState& susrr_st = sim_states_nr[vehicle_id]._susrr_st;
+            d24::VehicleState& v_states = sim_states_nr[vehicle_id]._v_states;
+            d24::VehicleParam& veh_param = sim_data_nr[vehicle_id]._veh_params;
+            d24::TMeasyNrState& tirelf_st = sim_states_nr[vehicle_id]._tirelf_st;
+            d24::TMeasyNrState& tirerf_st = sim_states_nr[vehicle_id]._tirerf_st;
+            d24::TMeasyNrState& tirelr_st = sim_states_nr[vehicle_id]._tirelr_st;
+            d24::TMeasyNrState& tirerr_st = sim_states_nr[vehicle_id]._tirerr_st;
+            d24::SuspensionState& suslf_st = sim_states_nr[vehicle_id]._suslf_st;
+            d24::SuspensionState& susrf_st = sim_states_nr[vehicle_id]._susrf_st;
+            d24::SuspensionState& suslr_st = sim_states_nr[vehicle_id]._suslr_st;
+            d24::SuspensionState& susrr_st = sim_states_nr[vehicle_id]._susrr_st;
 
             // First the tire states
             // LF
@@ -647,18 +647,18 @@ __device__ void rhsFun(double t,
 
     if (vehicle_index < total_num_vehicles) {
         // All vehicles have one or the other tire type and thus no thread divergence
-        VehicleParam& veh_params = sim_data[vehicle_index]._veh_params;
-        VehicleState& v_states = sim_states[vehicle_index]._v_states;
-        TMeasyParam& tireTM_params = sim_data[vehicle_index]._tireTM_params;
-        TMeasyState& tireTMlf_st = sim_states[vehicle_index]._tirelf_st;
-        TMeasyState& tireTMrf_st = sim_states[vehicle_index]._tirerf_st;
-        TMeasyState& tireTMlr_st = sim_states[vehicle_index]._tirelr_st;
-        TMeasyState& tireTMrr_st = sim_states[vehicle_index]._tirerr_st;
-        SuspensionParam& sus_params = sim_data[vehicle_index]._sus_params;
-        SuspensionState& suslf_st = sim_states[vehicle_index]._suslf_st;
-        SuspensionState& susrf_st = sim_states[vehicle_index]._susrf_st;
-        SuspensionState& suslr_st = sim_states[vehicle_index]._suslr_st;
-        SuspensionState& susrr_st = sim_states[vehicle_index]._susrr_st;
+        d24::VehicleParam& veh_params = sim_data[vehicle_index]._veh_params;
+        d24::VehicleState& v_states = sim_states[vehicle_index]._v_states;
+        d24::TMeasyParam& tireTM_params = sim_data[vehicle_index]._tireTM_params;
+        d24::TMeasyState& tireTMlf_st = sim_states[vehicle_index]._tirelf_st;
+        d24::TMeasyState& tireTMrf_st = sim_states[vehicle_index]._tirerf_st;
+        d24::TMeasyState& tireTMlr_st = sim_states[vehicle_index]._tirelr_st;
+        d24::TMeasyState& tireTMrr_st = sim_states[vehicle_index]._tirerr_st;
+        d24::SuspensionParam& sus_params = sim_data[vehicle_index]._sus_params;
+        d24::SuspensionState& suslf_st = sim_states[vehicle_index]._suslf_st;
+        d24::SuspensionState& susrf_st = sim_states[vehicle_index]._susrf_st;
+        d24::SuspensionState& suslr_st = sim_states[vehicle_index]._suslr_st;
+        d24::SuspensionState& susrr_st = sim_states[vehicle_index]._susrr_st;
 
         // Get controls at the current timeStep
         DriverInput controls;
@@ -709,18 +709,18 @@ __device__ void rhsFun(double t,
 
     if (vehicle_index < total_num_vehicles) {
         // All vehicles have one or the other tire type and thus no thread divergence
-        VehicleParam& veh_params = sim_data_nr[vehicle_index]._veh_params;
-        VehicleState& v_states = sim_states_nr[vehicle_index]._v_states;
-        TMeasyNrParam& tireTM_params = sim_data_nr[vehicle_index]._tireTMNr_params;
-        TMeasyNrState& tireTMlf_st = sim_states_nr[vehicle_index]._tirelf_st;
-        TMeasyNrState& tireTMrf_st = sim_states_nr[vehicle_index]._tirerf_st;
-        TMeasyNrState& tireTMlr_st = sim_states_nr[vehicle_index]._tirelr_st;
-        TMeasyNrState& tireTMrr_st = sim_states_nr[vehicle_index]._tirerr_st;
-        SuspensionParam& sus_params = sim_data_nr[vehicle_index]._sus_params;
-        SuspensionState& suslf_st = sim_states_nr[vehicle_index]._suslf_st;
-        SuspensionState& susrf_st = sim_states_nr[vehicle_index]._susrf_st;
-        SuspensionState& suslr_st = sim_states_nr[vehicle_index]._suslr_st;
-        SuspensionState& susrr_st = sim_states_nr[vehicle_index]._susrr_st;
+        d24::VehicleParam& veh_params = sim_data_nr[vehicle_index]._veh_params;
+        d24::VehicleState& v_states = sim_states_nr[vehicle_index]._v_states;
+        d24::TMeasyNrParam& tireTM_params = sim_data_nr[vehicle_index]._tireTMNr_params;
+        d24::TMeasyNrState& tireTMlf_st = sim_states_nr[vehicle_index]._tirelf_st;
+        d24::TMeasyNrState& tireTMrf_st = sim_states_nr[vehicle_index]._tirerf_st;
+        d24::TMeasyNrState& tireTMlr_st = sim_states_nr[vehicle_index]._tirelr_st;
+        d24::TMeasyNrState& tireTMrr_st = sim_states_nr[vehicle_index]._tirerr_st;
+        d24::SuspensionParam& sus_params = sim_data_nr[vehicle_index]._sus_params;
+        d24::SuspensionState& suslf_st = sim_states_nr[vehicle_index]._suslf_st;
+        d24::SuspensionState& susrf_st = sim_states_nr[vehicle_index]._susrf_st;
+        d24::SuspensionState& suslr_st = sim_states_nr[vehicle_index]._suslr_st;
+        d24::SuspensionState& susrr_st = sim_states_nr[vehicle_index]._susrr_st;
 
         // Get controls at the current timeStep
         DriverInput controls;

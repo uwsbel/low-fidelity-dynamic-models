@@ -15,7 +15,7 @@ using namespace d24;
 // Initialize functions
 // -----------------------------------------------------------------------------
 
-__device__ void d24::tireInit(TMeasyParam* t_params) {
+__host__ void d24::tireInit(TMeasyParam* t_params) {
     // calculates some critical values that are needed
     t_params->_fzRdynco = (t_params->_pn * (t_params->_rdyncoP2n - 2.0 * t_params->_rdyncoPn + 1.)) /
                           (2. * (t_params->_rdyncoP2n - t_params->_rdyncoPn));
@@ -23,7 +23,7 @@ __device__ void d24::tireInit(TMeasyParam* t_params) {
     t_params->_rdyncoCrit = InterpL(t_params->_fzRdynco, t_params->_rdyncoPn, t_params->_rdyncoP2n, t_params->_pn);
 }
 
-__device__ void d24::tireInit(TMeasyNrParam* t_params) {
+__host__ void d24::tireInit(TMeasyNrParam* t_params) {
     // calculates some critical values that are needed
     t_params->_fzRdynco = (t_params->_pn * (t_params->_rdyncoP2n - 2.0 * t_params->_rdyncoPn + 1.)) /
                           (2. * (t_params->_rdyncoP2n - t_params->_rdyncoPn));
@@ -31,18 +31,18 @@ __device__ void d24::tireInit(TMeasyNrParam* t_params) {
     t_params->_rdyncoCrit = InterpL(t_params->_fzRdynco, t_params->_rdyncoPn, t_params->_rdyncoP2n, t_params->_pn);
 }
 
-__device__ void d24::initializeTireSus(const VehicleState* v_states,
-                                       TMeasyState* tirelf_st,
-                                       TMeasyState* tirerf_st,
-                                       TMeasyState* tirelr_st,
-                                       TMeasyState* tirerr_st,
-                                       SuspensionState* suslf_st,
-                                       SuspensionState* susrf_st,
-                                       SuspensionState* suslr_st,
-                                       SuspensionState* susrr_st,
-                                       const VehicleParam* v_params,
-                                       const TMeasyParam* t_params,
-                                       const SuspensionParam* sus_params) {
+__host__ void d24::initializeTireSus(const VehicleState* v_states,
+                                     TMeasyState* tirelf_st,
+                                     TMeasyState* tirerf_st,
+                                     TMeasyState* tirelr_st,
+                                     TMeasyState* tirerr_st,
+                                     SuspensionState* suslf_st,
+                                     SuspensionState* susrf_st,
+                                     SuspensionState* suslr_st,
+                                     SuspensionState* susrr_st,
+                                     const VehicleParam* v_params,
+                                     const TMeasyParam* t_params,
+                                     const SuspensionParam* sus_params) {
     // Compute the tire loads based on static loads at rest
     // Initialize the vertical forces based on the vehicle weight
     double weight_split =
@@ -88,18 +88,18 @@ __device__ void d24::initializeTireSus(const VehicleState* v_states,
     susrr_st->_wu = v_states->_w;
 }
 
-__device__ void d24::initializeTireSus(const VehicleState* v_states,
-                                       TMeasyNrState* tirelf_st,
-                                       TMeasyNrState* tirerf_st,
-                                       TMeasyNrState* tirelr_st,
-                                       TMeasyNrState* tirerr_st,
-                                       SuspensionState* suslf_st,
-                                       SuspensionState* susrf_st,
-                                       SuspensionState* suslr_st,
-                                       SuspensionState* susrr_st,
-                                       const VehicleParam* v_params,
-                                       const TMeasyNrParam* t_params,
-                                       const SuspensionParam* sus_params) {
+__host__ void d24::initializeTireSus(const VehicleState* v_states,
+                                     TMeasyNrState* tirelf_st,
+                                     TMeasyNrState* tirerf_st,
+                                     TMeasyNrState* tirelr_st,
+                                     TMeasyNrState* tirerr_st,
+                                     SuspensionState* suslf_st,
+                                     SuspensionState* susrf_st,
+                                     SuspensionState* suslr_st,
+                                     SuspensionState* susrr_st,
+                                     const VehicleParam* v_params,
+                                     const TMeasyNrParam* t_params,
+                                     const SuspensionParam* sus_params) {
     // Compute the tire loads based on static loads at rest
     // Initialize the vertical forces based on the vehicle weight
     double weight_split =
@@ -346,42 +346,42 @@ __device__ void d24::vehToTireTransform(const VehicleState* v_states,
 
     // LF
     tirelf_st->_vgx =
-        std::cos(v_states->_theta) * (suslf_st->_uu - v_states->_wy * tirelf_st->_rStat) +
-        std::sin(v_states->_theta) * (suslf_st->_wu * std::cos(v_states->_phi) +
-                                      std::sin(v_states->_phi) * (v_states->_wx * tirelf_st->_rStat + suslf_st->_vu));
-    tirelf_st->_vgy = std::cos(v_states->_phi) * (suslf_st->_vu + v_states->_wx * tirelf_st->_rStat) -
-                      suslf_st->_wu * std::sin(v_states->_phi);
+        cos(v_states->_theta) * (suslf_st->_uu - v_states->_wy * tirelf_st->_rStat) +
+        sin(v_states->_theta) * (suslf_st->_wu * cos(v_states->_phi) +
+                                 sin(v_states->_phi) * (v_states->_wx * tirelf_st->_rStat + suslf_st->_vu));
+    tirelf_st->_vgy =
+        cos(v_states->_phi) * (suslf_st->_vu + v_states->_wx * tirelf_st->_rStat) - suslf_st->_wu * sin(v_states->_phi);
     // RF
     tirerf_st->_vgx =
-        std::cos(v_states->_theta) * (susrf_st->_uu - v_states->_wy * tirerf_st->_rStat) +
-        std::sin(v_states->_theta) * (susrf_st->_wu * std::cos(v_states->_phi) +
-                                      std::sin(v_states->_phi) * (v_states->_wx * tirerf_st->_rStat + susrf_st->_vu));
-    tirerf_st->_vgy = std::cos(v_states->_phi) * (susrf_st->_vu + v_states->_wx * tirerf_st->_rStat) -
-                      susrf_st->_wu * std::sin(v_states->_phi);
+        cos(v_states->_theta) * (susrf_st->_uu - v_states->_wy * tirerf_st->_rStat) +
+        sin(v_states->_theta) * (susrf_st->_wu * cos(v_states->_phi) +
+                                 sin(v_states->_phi) * (v_states->_wx * tirerf_st->_rStat + susrf_st->_vu));
+    tirerf_st->_vgy =
+        cos(v_states->_phi) * (susrf_st->_vu + v_states->_wx * tirerf_st->_rStat) - susrf_st->_wu * sin(v_states->_phi);
     // LR
     tirelr_st->_vgx =
-        std::cos(v_states->_theta) * (suslr_st->_uu - v_states->_wy * tirelr_st->_rStat) +
-        std::sin(v_states->_theta) * (suslr_st->_wu * std::cos(v_states->_phi) +
-                                      std::sin(v_states->_phi) * (v_states->_wx * tirelr_st->_rStat + suslr_st->_vu));
-    tirelr_st->_vgy = std::cos(v_states->_phi) * (suslr_st->_vu + v_states->_wx * tirelr_st->_rStat) -
-                      suslr_st->_wu * std::sin(v_states->_phi);
+        cos(v_states->_theta) * (suslr_st->_uu - v_states->_wy * tirelr_st->_rStat) +
+        sin(v_states->_theta) * (suslr_st->_wu * cos(v_states->_phi) +
+                                 sin(v_states->_phi) * (v_states->_wx * tirelr_st->_rStat + suslr_st->_vu));
+    tirelr_st->_vgy =
+        cos(v_states->_phi) * (suslr_st->_vu + v_states->_wx * tirelr_st->_rStat) - suslr_st->_wu * sin(v_states->_phi);
     // RR
     tirerr_st->_vgx =
-        std::cos(v_states->_theta) * (susrr_st->_uu - v_states->_wy * tirerr_st->_rStat) +
-        std::sin(v_states->_theta) * (susrr_st->_wu * std::cos(v_states->_phi) +
-                                      std::sin(v_states->_phi) * (v_states->_wx * tirerr_st->_rStat + susrr_st->_vu));
-    tirerr_st->_vgy = std::cos(v_states->_phi) * (susrr_st->_vu + v_states->_wx * tirerr_st->_rStat) -
-                      susrr_st->_wu * std::sin(v_states->_phi);
+        cos(v_states->_theta) * (susrr_st->_uu - v_states->_wy * tirerr_st->_rStat) +
+        sin(v_states->_theta) * (susrr_st->_wu * cos(v_states->_phi) +
+                                 sin(v_states->_phi) * (v_states->_wx * tirerr_st->_rStat + susrr_st->_vu));
+    tirerr_st->_vgy =
+        cos(v_states->_phi) * (susrr_st->_vu + v_states->_wx * tirerr_st->_rStat) - susrr_st->_wu * sin(v_states->_phi);
 
     // Now we transform this to velocity in the tire contact patch
 
     // LF
     tirelf_st->_vsy = tirelf_st->_vgy;
-    tirelf_st->_vsx = tirelf_st->_vgx * std::cos(delta) + tirelf_st->_vgy * std::sin(delta);
+    tirelf_st->_vsx = tirelf_st->_vgx * cos(delta) + tirelf_st->_vgy * sin(delta);
 
     // RF
     tirerf_st->_vsy = tirerf_st->_vgy;
-    tirerf_st->_vsx = tirerf_st->_vgx * std::cos(delta) + tirerf_st->_vgy * std::sin(delta);
+    tirerf_st->_vsx = tirerf_st->_vgx * cos(delta) + tirerf_st->_vgy * sin(delta);
 
     // LR - No steer
     tirelr_st->_vsy = tirelr_st->_vgy;
@@ -420,42 +420,42 @@ __device__ void d24::vehToTireTransform(const VehicleState* v_states,
 
     // LF
     tirelf_st->_vgx =
-        std::cos(v_states->_theta) * (suslf_st->_uu - v_states->_wy * tirelf_st->_rStat) +
-        std::sin(v_states->_theta) * (suslf_st->_wu * std::cos(v_states->_phi) +
-                                      std::sin(v_states->_phi) * (v_states->_wx * tirelf_st->_rStat + suslf_st->_vu));
-    tirelf_st->_vgy = std::cos(v_states->_phi) * (suslf_st->_vu + v_states->_wx * tirelf_st->_rStat) -
-                      suslf_st->_wu * std::sin(v_states->_phi);
+        cos(v_states->_theta) * (suslf_st->_uu - v_states->_wy * tirelf_st->_rStat) +
+        sin(v_states->_theta) * (suslf_st->_wu * cos(v_states->_phi) +
+                                 sin(v_states->_phi) * (v_states->_wx * tirelf_st->_rStat + suslf_st->_vu));
+    tirelf_st->_vgy =
+        cos(v_states->_phi) * (suslf_st->_vu + v_states->_wx * tirelf_st->_rStat) - suslf_st->_wu * sin(v_states->_phi);
     // RF
     tirerf_st->_vgx =
-        std::cos(v_states->_theta) * (susrf_st->_uu - v_states->_wy * tirerf_st->_rStat) +
-        std::sin(v_states->_theta) * (susrf_st->_wu * std::cos(v_states->_phi) +
-                                      std::sin(v_states->_phi) * (v_states->_wx * tirerf_st->_rStat + susrf_st->_vu));
-    tirerf_st->_vgy = std::cos(v_states->_phi) * (susrf_st->_vu + v_states->_wx * tirerf_st->_rStat) -
-                      susrf_st->_wu * std::sin(v_states->_phi);
+        cos(v_states->_theta) * (susrf_st->_uu - v_states->_wy * tirerf_st->_rStat) +
+        sin(v_states->_theta) * (susrf_st->_wu * cos(v_states->_phi) +
+                                 sin(v_states->_phi) * (v_states->_wx * tirerf_st->_rStat + susrf_st->_vu));
+    tirerf_st->_vgy =
+        cos(v_states->_phi) * (susrf_st->_vu + v_states->_wx * tirerf_st->_rStat) - susrf_st->_wu * sin(v_states->_phi);
     // LR
     tirelr_st->_vgx =
-        std::cos(v_states->_theta) * (suslr_st->_uu - v_states->_wy * tirelr_st->_rStat) +
-        std::sin(v_states->_theta) * (suslr_st->_wu * std::cos(v_states->_phi) +
-                                      std::sin(v_states->_phi) * (v_states->_wx * tirelr_st->_rStat + suslr_st->_vu));
-    tirelr_st->_vgy = std::cos(v_states->_phi) * (suslr_st->_vu + v_states->_wx * tirelr_st->_rStat) -
-                      suslr_st->_wu * std::sin(v_states->_phi);
+        cos(v_states->_theta) * (suslr_st->_uu - v_states->_wy * tirelr_st->_rStat) +
+        sin(v_states->_theta) * (suslr_st->_wu * cos(v_states->_phi) +
+                                 sin(v_states->_phi) * (v_states->_wx * tirelr_st->_rStat + suslr_st->_vu));
+    tirelr_st->_vgy =
+        cos(v_states->_phi) * (suslr_st->_vu + v_states->_wx * tirelr_st->_rStat) - suslr_st->_wu * sin(v_states->_phi);
     // RR
     tirerr_st->_vgx =
-        std::cos(v_states->_theta) * (susrr_st->_uu - v_states->_wy * tirerr_st->_rStat) +
-        std::sin(v_states->_theta) * (susrr_st->_wu * std::cos(v_states->_phi) +
-                                      std::sin(v_states->_phi) * (v_states->_wx * tirerr_st->_rStat + susrr_st->_vu));
-    tirerr_st->_vgy = std::cos(v_states->_phi) * (susrr_st->_vu + v_states->_wx * tirerr_st->_rStat) -
-                      susrr_st->_wu * std::sin(v_states->_phi);
+        cos(v_states->_theta) * (susrr_st->_uu - v_states->_wy * tirerr_st->_rStat) +
+        sin(v_states->_theta) * (susrr_st->_wu * cos(v_states->_phi) +
+                                 sin(v_states->_phi) * (v_states->_wx * tirerr_st->_rStat + susrr_st->_vu));
+    tirerr_st->_vgy =
+        cos(v_states->_phi) * (susrr_st->_vu + v_states->_wx * tirerr_st->_rStat) - susrr_st->_wu * sin(v_states->_phi);
 
     // Now we transform this to velocity in the tire contact patch
 
     // LF
     tirelf_st->_vsy = tirelf_st->_vgy;
-    tirelf_st->_vsx = tirelf_st->_vgx * std::cos(delta) + tirelf_st->_vgy * std::sin(delta);
+    tirelf_st->_vsx = tirelf_st->_vgx * cos(delta) + tirelf_st->_vgy * sin(delta);
 
     // RF
     tirerf_st->_vsy = tirerf_st->_vgy;
-    tirerf_st->_vsx = tirerf_st->_vgx * std::cos(delta) + tirerf_st->_vgy * std::sin(delta);
+    tirerf_st->_vsx = tirerf_st->_vgx * cos(delta) + tirerf_st->_vgy * sin(delta);
 
     // LR - No steer
     tirelr_st->_vsy = tirelr_st->_vgy;
@@ -486,14 +486,14 @@ __device__ void d24::tireToVehTransform(const VehicleState* v_states,
     double _fx, _fy;
     // These forces are still in the tire contact patch
     // left front
-    _fx = tirelf_st->_fx * std::cos(delta) - tirelf_st->_fy * std::sin(delta);
-    _fy = tirelf_st->_fx * std::sin(delta) + tirelf_st->_fy * std::cos(delta);
+    _fx = tirelf_st->_fx * cos(delta) - tirelf_st->_fy * sin(delta);
+    _fy = tirelf_st->_fx * sin(delta) + tirelf_st->_fy * cos(delta);
     tirelf_st->_fx = _fx;
     tirelf_st->_fy = _fy;
 
     // right front
-    _fx = tirerf_st->_fx * std::cos(delta) - tirerf_st->_fy * std::sin(delta);
-    _fy = tirerf_st->_fx * std::sin(delta) + tirerf_st->_fy * std::cos(delta);
+    _fx = tirerf_st->_fx * cos(delta) - tirerf_st->_fy * sin(delta);
+    _fy = tirerf_st->_fx * sin(delta) + tirerf_st->_fy * cos(delta);
     tirerf_st->_fx = _fx;
     tirerf_st->_fy = _fy;
 
@@ -501,44 +501,40 @@ __device__ void d24::tireToVehTransform(const VehicleState* v_states,
 
     // Now we need to get the tire ground forces in the vehicle inertial frame (G-RF)
     // LF
-    tirelf_st->_fxg = tirelf_st->_fx * std::cos(v_states->_theta) - tirelf_st->_fz * std::sin(v_states->_theta);
-    tirelf_st->_fyg = tirelf_st->_fx * std::sin(v_states->_phi) * std::sin(v_states->_theta) +
-                      tirelf_st->_fy * std::cos(v_states->_phi) +
-                      tirelf_st->_fz * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+    tirelf_st->_fxg = tirelf_st->_fx * cos(v_states->_theta) - tirelf_st->_fz * sin(v_states->_theta);
+    tirelf_st->_fyg = tirelf_st->_fx * sin(v_states->_phi) * sin(v_states->_theta) +
+                      tirelf_st->_fy * cos(v_states->_phi) +
+                      tirelf_st->_fz * sin(v_states->_phi) * cos(v_states->_theta);
     tirelf_st->_fzg =
-        tirelf_st->_fx * std::sin(v_states->_theta) * std::cos(v_states->_phi) -
-        tirelf_st->_fy * std::sin(v_states->_phi) +
-        tirelf_st->_fz * std::cos(v_states->_phi) * std::cos(v_states->_theta);  // I dont think this is used anywhere
+        tirelf_st->_fx * sin(v_states->_theta) * cos(v_states->_phi) - tirelf_st->_fy * sin(v_states->_phi) +
+        tirelf_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 
     // RF
-    tirerf_st->_fxg = tirerf_st->_fx * std::cos(v_states->_theta) - tirerf_st->_fz * std::sin(v_states->_theta);
-    tirerf_st->_fyg = tirerf_st->_fx * std::sin(v_states->_phi) * std::sin(v_states->_theta) +
-                      tirerf_st->_fy * std::cos(v_states->_phi) +
-                      tirerf_st->_fz * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+    tirerf_st->_fxg = tirerf_st->_fx * cos(v_states->_theta) - tirerf_st->_fz * sin(v_states->_theta);
+    tirerf_st->_fyg = tirerf_st->_fx * sin(v_states->_phi) * sin(v_states->_theta) +
+                      tirerf_st->_fy * cos(v_states->_phi) +
+                      tirerf_st->_fz * sin(v_states->_phi) * cos(v_states->_theta);
     tirerf_st->_fzg =
-        tirerf_st->_fx * std::sin(v_states->_theta) * std::cos(v_states->_phi) -
-        tirerf_st->_fy * std::sin(v_states->_phi) +
-        tirerf_st->_fz * std::cos(v_states->_phi) * std::cos(v_states->_theta);  // I dont think this is used anywhere
+        tirerf_st->_fx * sin(v_states->_theta) * cos(v_states->_phi) - tirerf_st->_fy * sin(v_states->_phi) +
+        tirerf_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 
     // LR
-    tirelr_st->_fxg = tirelr_st->_fx * std::cos(v_states->_theta) - tirelr_st->_fz * std::sin(v_states->_theta);
-    tirelr_st->_fyg = tirelr_st->_fx * std::sin(v_states->_phi) * std::sin(v_states->_theta) +
-                      tirelr_st->_fy * std::cos(v_states->_phi) +
-                      tirelr_st->_fz * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+    tirelr_st->_fxg = tirelr_st->_fx * cos(v_states->_theta) - tirelr_st->_fz * sin(v_states->_theta);
+    tirelr_st->_fyg = tirelr_st->_fx * sin(v_states->_phi) * sin(v_states->_theta) +
+                      tirelr_st->_fy * cos(v_states->_phi) +
+                      tirelr_st->_fz * sin(v_states->_phi) * cos(v_states->_theta);
     tirelr_st->_fzg =
-        tirelr_st->_fx * std::sin(v_states->_theta) * std::cos(v_states->_phi) -
-        tirelr_st->_fy * std::sin(v_states->_phi) +
-        tirelr_st->_fz * std::cos(v_states->_phi) * std::cos(v_states->_theta);  // I dont think this is used anywhere
+        tirelr_st->_fx * sin(v_states->_theta) * cos(v_states->_phi) - tirelr_st->_fy * sin(v_states->_phi) +
+        tirelr_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 
     // RR
-    tirerr_st->_fxg = tirerr_st->_fx * std::cos(v_states->_theta) - tirerr_st->_fz * std::sin(v_states->_theta);
-    tirerr_st->_fyg = tirerr_st->_fx * std::sin(v_states->_phi) * std::sin(v_states->_theta) +
-                      tirerr_st->_fy * std::cos(v_states->_phi) +
-                      tirerr_st->_fz * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+    tirerr_st->_fxg = tirerr_st->_fx * cos(v_states->_theta) - tirerr_st->_fz * sin(v_states->_theta);
+    tirerr_st->_fyg = tirerr_st->_fx * sin(v_states->_phi) * sin(v_states->_theta) +
+                      tirerr_st->_fy * cos(v_states->_phi) +
+                      tirerr_st->_fz * sin(v_states->_phi) * cos(v_states->_theta);
     tirerr_st->_fzg =
-        tirerr_st->_fx * std::sin(v_states->_theta) * std::cos(v_states->_phi) -
-        tirerr_st->_fy * std::sin(v_states->_phi) +
-        tirerr_st->_fz * std::cos(v_states->_phi) * std::cos(v_states->_theta);  // I dont think this is used anywhere
+        tirerr_st->_fx * sin(v_states->_theta) * cos(v_states->_phi) - tirerr_st->_fy * sin(v_states->_phi) +
+        tirerr_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 }
 
 __device__ void d24::tireToVehTransform(const VehicleState* v_states,
@@ -561,14 +557,14 @@ __device__ void d24::tireToVehTransform(const VehicleState* v_states,
     double _fx, _fy;
     // These forces are still in the tire contact patch
     // left front
-    _fx = tirelf_st->_fx * std::cos(delta) - tirelf_st->_fy * std::sin(delta);
-    _fy = tirelf_st->_fx * std::sin(delta) + tirelf_st->_fy * std::cos(delta);
+    _fx = tirelf_st->_fx * cos(delta) - tirelf_st->_fy * sin(delta);
+    _fy = tirelf_st->_fx * sin(delta) + tirelf_st->_fy * cos(delta);
     tirelf_st->_fx = _fx;
     tirelf_st->_fy = _fy;
 
     // right front
-    _fx = tirerf_st->_fx * std::cos(delta) - tirerf_st->_fy * std::sin(delta);
-    _fy = tirerf_st->_fx * std::sin(delta) + tirerf_st->_fy * std::cos(delta);
+    _fx = tirerf_st->_fx * cos(delta) - tirerf_st->_fy * sin(delta);
+    _fy = tirerf_st->_fx * sin(delta) + tirerf_st->_fy * cos(delta);
     tirerf_st->_fx = _fx;
     tirerf_st->_fy = _fy;
 
@@ -576,44 +572,40 @@ __device__ void d24::tireToVehTransform(const VehicleState* v_states,
 
     // Now we need to get the tire ground forces in the vehicle inertial frame (G-RF)
     // LF
-    tirelf_st->_fxg = tirelf_st->_fx * std::cos(v_states->_theta) - tirelf_st->_fz * std::sin(v_states->_theta);
-    tirelf_st->_fyg = tirelf_st->_fx * std::sin(v_states->_phi) * std::sin(v_states->_theta) +
-                      tirelf_st->_fy * std::cos(v_states->_phi) +
-                      tirelf_st->_fz * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+    tirelf_st->_fxg = tirelf_st->_fx * cos(v_states->_theta) - tirelf_st->_fz * sin(v_states->_theta);
+    tirelf_st->_fyg = tirelf_st->_fx * sin(v_states->_phi) * sin(v_states->_theta) +
+                      tirelf_st->_fy * cos(v_states->_phi) +
+                      tirelf_st->_fz * sin(v_states->_phi) * cos(v_states->_theta);
     tirelf_st->_fzg =
-        tirelf_st->_fx * std::sin(v_states->_theta) * std::cos(v_states->_phi) -
-        tirelf_st->_fy * std::sin(v_states->_phi) +
-        tirelf_st->_fz * std::cos(v_states->_phi) * std::cos(v_states->_theta);  // I dont think this is used anywhere
+        tirelf_st->_fx * sin(v_states->_theta) * cos(v_states->_phi) - tirelf_st->_fy * sin(v_states->_phi) +
+        tirelf_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 
     // RF
-    tirerf_st->_fxg = tirerf_st->_fx * std::cos(v_states->_theta) - tirerf_st->_fz * std::sin(v_states->_theta);
-    tirerf_st->_fyg = tirerf_st->_fx * std::sin(v_states->_phi) * std::sin(v_states->_theta) +
-                      tirerf_st->_fy * std::cos(v_states->_phi) +
-                      tirerf_st->_fz * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+    tirerf_st->_fxg = tirerf_st->_fx * cos(v_states->_theta) - tirerf_st->_fz * sin(v_states->_theta);
+    tirerf_st->_fyg = tirerf_st->_fx * sin(v_states->_phi) * sin(v_states->_theta) +
+                      tirerf_st->_fy * cos(v_states->_phi) +
+                      tirerf_st->_fz * sin(v_states->_phi) * cos(v_states->_theta);
     tirerf_st->_fzg =
-        tirerf_st->_fx * std::sin(v_states->_theta) * std::cos(v_states->_phi) -
-        tirerf_st->_fy * std::sin(v_states->_phi) +
-        tirerf_st->_fz * std::cos(v_states->_phi) * std::cos(v_states->_theta);  // I dont think this is used anywhere
+        tirerf_st->_fx * sin(v_states->_theta) * cos(v_states->_phi) - tirerf_st->_fy * sin(v_states->_phi) +
+        tirerf_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 
     // LR
-    tirelr_st->_fxg = tirelr_st->_fx * std::cos(v_states->_theta) - tirelr_st->_fz * std::sin(v_states->_theta);
-    tirelr_st->_fyg = tirelr_st->_fx * std::sin(v_states->_phi) * std::sin(v_states->_theta) +
-                      tirelr_st->_fy * std::cos(v_states->_phi) +
-                      tirelr_st->_fz * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+    tirelr_st->_fxg = tirelr_st->_fx * cos(v_states->_theta) - tirelr_st->_fz * sin(v_states->_theta);
+    tirelr_st->_fyg = tirelr_st->_fx * sin(v_states->_phi) * sin(v_states->_theta) +
+                      tirelr_st->_fy * cos(v_states->_phi) +
+                      tirelr_st->_fz * sin(v_states->_phi) * cos(v_states->_theta);
     tirelr_st->_fzg =
-        tirelr_st->_fx * std::sin(v_states->_theta) * std::cos(v_states->_phi) -
-        tirelr_st->_fy * std::sin(v_states->_phi) +
-        tirelr_st->_fz * std::cos(v_states->_phi) * std::cos(v_states->_theta);  // I dont think this is used anywhere
+        tirelr_st->_fx * sin(v_states->_theta) * cos(v_states->_phi) - tirelr_st->_fy * sin(v_states->_phi) +
+        tirelr_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 
     // RR
-    tirerr_st->_fxg = tirerr_st->_fx * std::cos(v_states->_theta) - tirerr_st->_fz * std::sin(v_states->_theta);
-    tirerr_st->_fyg = tirerr_st->_fx * std::sin(v_states->_phi) * std::sin(v_states->_theta) +
-                      tirerr_st->_fy * std::cos(v_states->_phi) +
-                      tirerr_st->_fz * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+    tirerr_st->_fxg = tirerr_st->_fx * cos(v_states->_theta) - tirerr_st->_fz * sin(v_states->_theta);
+    tirerr_st->_fyg = tirerr_st->_fx * sin(v_states->_phi) * sin(v_states->_theta) +
+                      tirerr_st->_fy * cos(v_states->_phi) +
+                      tirerr_st->_fz * sin(v_states->_phi) * cos(v_states->_theta);
     tirerr_st->_fzg =
-        tirerr_st->_fx * std::sin(v_states->_theta) * std::cos(v_states->_phi) -
-        tirerr_st->_fy * std::sin(v_states->_phi) +
-        tirerr_st->_fz * std::cos(v_states->_phi) * std::cos(v_states->_theta);  // I dont think this is used anywhere
+        tirerr_st->_fx * sin(v_states->_theta) * cos(v_states->_phi) - tirerr_st->_fy * sin(v_states->_phi) +
+        tirerr_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 }
 
 __device__ void d24::computeForcesThroughSus(const VehicleState* v_states,
@@ -630,37 +622,33 @@ __device__ void d24::computeForcesThroughSus(const VehicleState* v_states,
                                              const SuspensionParam* sus_params) {
     // Forces to be transformed to the chassis through the suspension struct points
     // LF
-    suslf_st->_fxs = tirelf_st->_fxg + v_params->_muf * G * std::sin(v_states->_theta) -
-                     v_params->_muf * suslf_st->_duu + v_params->_muf * v_states->_wz * suslf_st->_vu -
-                     v_params->_muf * v_states->_wy * suslf_st->_wu;
-    suslf_st->_fys = tirelf_st->_fyg - v_params->_muf * G * std::sin(v_states->_phi) * std::cos(v_states->_theta) -
+    suslf_st->_fxs = tirelf_st->_fxg + v_params->_muf * G * sin(v_states->_theta) - v_params->_muf * suslf_st->_duu +
+                     v_params->_muf * v_states->_wz * suslf_st->_vu - v_params->_muf * v_states->_wy * suslf_st->_wu;
+    suslf_st->_fys = tirelf_st->_fyg - v_params->_muf * G * sin(v_states->_phi) * cos(v_states->_theta) -
                      v_params->_muf * suslf_st->_dvu + v_params->_muf * v_states->_wx * suslf_st->_wu -
                      v_params->_muf * v_states->_wz * suslf_st->_uu;
     suslf_st->_fzs = suslf_st->_xs * sus_params->_ks + suslf_st->_dxs * sus_params->_bs;
 
     // RF
-    susrf_st->_fxs = tirerf_st->_fxg + v_params->_muf * G * std::sin(v_states->_theta) -
-                     v_params->_muf * susrf_st->_duu + v_params->_muf * v_states->_wz * susrf_st->_vu -
-                     v_params->_muf * v_states->_wy * susrf_st->_wu;
-    susrf_st->_fys = tirerf_st->_fyg - v_params->_muf * G * std::sin(v_states->_phi) * std::cos(v_states->_theta) -
+    susrf_st->_fxs = tirerf_st->_fxg + v_params->_muf * G * sin(v_states->_theta) - v_params->_muf * susrf_st->_duu +
+                     v_params->_muf * v_states->_wz * susrf_st->_vu - v_params->_muf * v_states->_wy * susrf_st->_wu;
+    susrf_st->_fys = tirerf_st->_fyg - v_params->_muf * G * sin(v_states->_phi) * cos(v_states->_theta) -
                      v_params->_muf * susrf_st->_dvu + v_params->_muf * v_states->_wx * susrf_st->_wu -
                      v_params->_muf * v_states->_wz * susrf_st->_uu;
     susrf_st->_fzs = susrf_st->_xs * sus_params->_ks + susrf_st->_dxs * sus_params->_bs;
 
     // LR
-    suslr_st->_fxs = tirelr_st->_fxg + v_params->_mur * G * std::sin(v_states->_theta) -
-                     v_params->_mur * suslr_st->_duu + v_params->_mur * v_states->_wz * suslr_st->_vu -
-                     v_params->_mur * v_states->_wy * suslr_st->_wu;
-    suslr_st->_fys = tirelr_st->_fyg - v_params->_mur * G * std::sin(v_states->_phi) * std::cos(v_states->_theta) -
+    suslr_st->_fxs = tirelr_st->_fxg + v_params->_mur * G * sin(v_states->_theta) - v_params->_mur * suslr_st->_duu +
+                     v_params->_mur * v_states->_wz * suslr_st->_vu - v_params->_mur * v_states->_wy * suslr_st->_wu;
+    suslr_st->_fys = tirelr_st->_fyg - v_params->_mur * G * sin(v_states->_phi) * cos(v_states->_theta) -
                      v_params->_mur * suslr_st->_dvu + v_params->_mur * v_states->_wx * suslr_st->_wu -
                      v_params->_mur * v_states->_wz * suslr_st->_uu;
     suslr_st->_fzs = suslr_st->_xs * sus_params->_ks + suslr_st->_dxs * sus_params->_bs;
 
     // RR
-    susrr_st->_fxs = tirerr_st->_fxg + v_params->_mur * G * std::sin(v_states->_theta) -
-                     v_params->_mur * susrr_st->_duu + v_params->_mur * v_states->_wz * susrr_st->_vu -
-                     v_params->_mur * v_states->_wy * susrr_st->_wu;
-    susrr_st->_fys = tirerr_st->_fyg - v_params->_mur * G * std::sin(v_states->_phi) - v_params->_mur * susrr_st->_dvu +
+    susrr_st->_fxs = tirerr_st->_fxg + v_params->_mur * G * sin(v_states->_theta) - v_params->_mur * susrr_st->_duu +
+                     v_params->_mur * v_states->_wz * susrr_st->_vu - v_params->_mur * v_states->_wy * susrr_st->_wu;
+    susrr_st->_fys = tirerr_st->_fyg - v_params->_mur * G * sin(v_states->_phi) - v_params->_mur * susrr_st->_dvu +
                      v_params->_mur * v_states->_wx * susrr_st->_wu - v_params->_mur * v_states->_wz * susrr_st->_uu;
     susrr_st->_fzs = susrr_st->_xs * sus_params->_ks + susrr_st->_dxs * sus_params->_bs;
 
@@ -716,37 +704,33 @@ __device__ void d24::computeForcesThroughSus(const VehicleState* v_states,
                                              const SuspensionParam* sus_params) {
     // Forces to be transformed to the chassis through the suspension struct points
     // LF
-    suslf_st->_fxs = tirelf_st->_fxg + v_params->_muf * G * std::sin(v_states->_theta) -
-                     v_params->_muf * suslf_st->_duu + v_params->_muf * v_states->_wz * suslf_st->_vu -
-                     v_params->_muf * v_states->_wy * suslf_st->_wu;
-    suslf_st->_fys = tirelf_st->_fyg - v_params->_muf * G * std::sin(v_states->_phi) * std::cos(v_states->_theta) -
+    suslf_st->_fxs = tirelf_st->_fxg + v_params->_muf * G * sin(v_states->_theta) - v_params->_muf * suslf_st->_duu +
+                     v_params->_muf * v_states->_wz * suslf_st->_vu - v_params->_muf * v_states->_wy * suslf_st->_wu;
+    suslf_st->_fys = tirelf_st->_fyg - v_params->_muf * G * sin(v_states->_phi) * cos(v_states->_theta) -
                      v_params->_muf * suslf_st->_dvu + v_params->_muf * v_states->_wx * suslf_st->_wu -
                      v_params->_muf * v_states->_wz * suslf_st->_uu;
     suslf_st->_fzs = suslf_st->_xs * sus_params->_ks + suslf_st->_dxs * sus_params->_bs;
 
     // RF
-    susrf_st->_fxs = tirerf_st->_fxg + v_params->_muf * G * std::sin(v_states->_theta) -
-                     v_params->_muf * susrf_st->_duu + v_params->_muf * v_states->_wz * susrf_st->_vu -
-                     v_params->_muf * v_states->_wy * susrf_st->_wu;
-    susrf_st->_fys = tirerf_st->_fyg - v_params->_muf * G * std::sin(v_states->_phi) * std::cos(v_states->_theta) -
+    susrf_st->_fxs = tirerf_st->_fxg + v_params->_muf * G * sin(v_states->_theta) - v_params->_muf * susrf_st->_duu +
+                     v_params->_muf * v_states->_wz * susrf_st->_vu - v_params->_muf * v_states->_wy * susrf_st->_wu;
+    susrf_st->_fys = tirerf_st->_fyg - v_params->_muf * G * sin(v_states->_phi) * cos(v_states->_theta) -
                      v_params->_muf * susrf_st->_dvu + v_params->_muf * v_states->_wx * susrf_st->_wu -
                      v_params->_muf * v_states->_wz * susrf_st->_uu;
     susrf_st->_fzs = susrf_st->_xs * sus_params->_ks + susrf_st->_dxs * sus_params->_bs;
 
     // LR
-    suslr_st->_fxs = tirelr_st->_fxg + v_params->_mur * G * std::sin(v_states->_theta) -
-                     v_params->_mur * suslr_st->_duu + v_params->_mur * v_states->_wz * suslr_st->_vu -
-                     v_params->_mur * v_states->_wy * suslr_st->_wu;
-    suslr_st->_fys = tirelr_st->_fyg - v_params->_mur * G * std::sin(v_states->_phi) * std::cos(v_states->_theta) -
+    suslr_st->_fxs = tirelr_st->_fxg + v_params->_mur * G * sin(v_states->_theta) - v_params->_mur * suslr_st->_duu +
+                     v_params->_mur * v_states->_wz * suslr_st->_vu - v_params->_mur * v_states->_wy * suslr_st->_wu;
+    suslr_st->_fys = tirelr_st->_fyg - v_params->_mur * G * sin(v_states->_phi) * cos(v_states->_theta) -
                      v_params->_mur * suslr_st->_dvu + v_params->_mur * v_states->_wx * suslr_st->_wu -
                      v_params->_mur * v_states->_wz * suslr_st->_uu;
     suslr_st->_fzs = suslr_st->_xs * sus_params->_ks + suslr_st->_dxs * sus_params->_bs;
 
     // RR
-    susrr_st->_fxs = tirerr_st->_fxg + v_params->_mur * G * std::sin(v_states->_theta) -
-                     v_params->_mur * susrr_st->_duu + v_params->_mur * v_states->_wz * susrr_st->_vu -
-                     v_params->_mur * v_states->_wy * susrr_st->_wu;
-    susrr_st->_fys = tirerr_st->_fyg - v_params->_mur * G * std::sin(v_states->_phi) - v_params->_mur * susrr_st->_dvu +
+    susrr_st->_fxs = tirerr_st->_fxg + v_params->_mur * G * sin(v_states->_theta) - v_params->_mur * susrr_st->_duu +
+                     v_params->_mur * v_states->_wz * susrr_st->_vu - v_params->_mur * v_states->_wy * susrr_st->_wu;
+    susrr_st->_fys = tirerr_st->_fyg - v_params->_mur * G * sin(v_states->_phi) - v_params->_mur * susrr_st->_dvu +
                      v_params->_mur * v_states->_wx * susrr_st->_wu - v_params->_mur * v_states->_wz * susrr_st->_uu;
     susrr_st->_fzs = susrr_st->_xs * sus_params->_ks + susrr_st->_dxs * sus_params->_bs;
 
@@ -792,62 +776,61 @@ __device__ void d24::computeForcesThroughSus(const VehicleState* v_states,
 // -----------------------------------------------------------------------------
 
 __device__ void
-d24::tmxy_combined(double& f, double& fos, double s, double df0, double sm, double fm, double ss, double fs) {
+d24::tmxy_combined(double* f, double* fos, double s, double df0, double sm, double fm, double ss, double fs) {
     double df0loc = 0.0;
     if (sm > 0.0) {
-        df0loc = std::max(2.0 * fm / sm, df0);
+        df0loc = max(2.0 * fm / sm, df0);
     }
 
     if (s > 0.0 && df0loc > 0.0) {  // normal operating conditions
         if (s > ss) {               // full sliding
-            f = fs;
-            fos = f / s;
+            *f = fs;
+            *fos = *f / s;
         } else {
             if (s < sm) {  // adhesion
                 double p = df0loc * sm / fm - 2.0;
                 double sn = s / sm;
                 double dn = 1.0 + (sn + p) * sn;
-                f = df0loc * sm * sn / dn;
-                fos = df0loc / dn;
+                *f = df0loc * sm * sn / dn;
+                *fos = df0loc / dn;
             } else {
-                double a = std::pow(fm / sm, 2.0) / (df0loc * sm);  // parameter from 2. deriv. of f @ s=sm
-                double sstar = sm + (fm - fs) / (a * (ss - sm));    // connecting point
-                if (sstar <= ss) {                                  // 2 parabolas
+                double a = pow(fm / sm, 2.0) / (df0loc * sm);     // parameter from 2. deriv. of f @ s=sm
+                double sstar = sm + (fm - fs) / (a * (ss - sm));  // connecting point
+                if (sstar <= ss) {                                // 2 parabolas
                     if (s <= sstar) {
                         // 1. parabola sm < s < sstar
-                        f = fm - a * (s - sm) * (s - sm);
+                        *f = fm - a * (s - sm) * (s - sm);
                     } else {
                         // 2. parabola sstar < s < ss
                         double b = a * (sstar - sm) / (ss - sstar);
-                        f = fs + b * (ss - s) * (ss - s);
+                        *f = fs + b * (ss - s) * (ss - s);
                     }
                 } else {
                     // cubic fallback function
                     double sn = (s - sm) / (ss - sm);
-                    f = fm - (fm - fs) * sn * sn * (3.0 - 2.0 * sn);
+                    *f = fm - (fm - fs) * sn * sn * (3.0 - 2.0 * sn);
                 }
-                fos = f / s;
+                *fos = *f / s;
             }
         }
     } else {
-        f = 0.0;
-        fos = 0.0;
+        *f = 0.0;
+        *fos = 0.0;
     }
 }
 
 __device__ void
-d24::computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb) {
-    fx = tanh(-2.0 * vsx / vcoulomb) * fz * mu;
-    fy = tanh(-2.0 * vsy / vcoulomb) * fz * mu;
+d24::computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb) {
+    *fx = tanh(-2.0 * vsx / vcoulomb) * fz * mu;
+    *fy = tanh(-2.0 * vsy / vcoulomb) * fz * mu;
 
     // Nromalize F to the circle
-    if (std::hypot(fx, fy) > fz * mu) {
-        double f = fz * mu / std::hypot(fx, fy);
-        fx *= f;
-        fy *= f;
+    if (hypot(*fx, *fy) > fz * mu) {
+        double f = fz * mu / hypot(*fx, *fy);
+        *fx *= f;
+        *fy *= f;
     }
 }
-
 __device__ void d24::computeTireRHS(const VehicleState* v_states,
                                     TMeasyState* t_states,
                                     const VehicleParam* v_params,
@@ -868,7 +851,7 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     double fz = t_states->_fz;                      // vertical force
     double vsy = t_states->_vsy;                    // y slip velocity
     double vsx = t_states->_vsx;                    // x slip velocity
-    t_states->_rStat = (t_params->_r0 - t_states->_xt) / (std::cos(v_states->_theta) * std::cos(v_states->_phi));
+    t_states->_rStat = (t_params->_r0 - t_states->_xt) / (cos(v_states->_theta) * cos(v_states->_phi));
 
     // If the wheel is off contact, set all states to 0 and return
     if (fz <= 0) {
@@ -897,14 +880,14 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     vsx = vsx - (t_states->_omega * r_eff);
 
     // get the transport velocity - 0.01 here is to prevent singularity
-    double vta = r_eff * std::abs(t_states->_omega) + 0.01;
+    double vta = r_eff * abs(t_states->_omega) + 0.01;
 
     // evaluate the slips
     double sx = -vsx / vta;
     double alpha;
     // only front wheel steering
-    alpha = std::atan2(vsy, vta) - delta;
-    double sy = -std::tan(alpha);
+    alpha = atan2(vsy, vta) - delta;
+    double sy = -tan(alpha);
 
     // limit fz
     if (fz > t_params->_pnmax) {
@@ -936,7 +919,7 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     double syn = sy / hsyn;
 
     // combined slip
-    double sc = std::hypot(sxn, syn);
+    double sc = hypot(sxn, syn);
 
     // cos and sine alphs
     double calpha;
@@ -945,30 +928,20 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
         calpha = sxn / sc;
         salpha = syn / sc;
     } else {
-        calpha = std::sqrt(2.) / 2.;
-        salpha = std::sqrt(2.) / 2.;
+        calpha = sqrt(2.) / 2.;
+        salpha = sqrt(2.) / 2.;
     }
 
     // resultant curve parameters in both directions
-    double df0 = std::hypot(dfx0 * calpha * hsxn, dfy0 * salpha * hsyn);
-    double fm = std::hypot(fxm * calpha, fym * salpha);
-    double sm = std::hypot(sxm * calpha / hsxn, sym * salpha / hsyn);
-    double fs = std::hypot(fxs * calpha, fys * salpha);
-    double ss = std::hypot(sxs * calpha / hsxn, sys * salpha / hsyn);
+    double df0 = hypot(dfx0 * calpha * hsxn, dfy0 * salpha * hsyn);
+    double fm = hypot(fxm * calpha, fym * salpha);
+    double sm = hypot(sxm * calpha / hsxn, sym * salpha / hsyn);
+    double fs = hypot(fxs * calpha, fys * salpha);
+    double ss = hypot(sxs * calpha / hsxn, sys * salpha / hsyn);
 
     // calculate force and force /slip from the curve characteritics
     double f, fos;
-    tmxy_combined(f, fos, sc, df0, sm, fm, ss, fs);
-
-    // static or "structural" force
-    double Fx, Fy;
-    if (sc > 0.) {
-        Fx = f * sx / sc;
-        Fy = f * sy / sc;
-    } else {
-        Fx = 0.;
-        Fy = 0.;
-    }
+    tmxy_combined(&f, &fos, sc, df0, sm, fm, ss, fs);
 
     // rolling resistance with smoothing
     double vx_min = 0.;
@@ -978,11 +951,11 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
         -sineStep(vta, vx_min, 0., vx_max, 1.) * t_params->_rr * fz * t_states->_rStat * sgn(t_states->_omega);
 
     // some normalised slip velocities
-    double vtxs = r_eff * std::abs(t_states->_omega) * hsxn + 0.01;
-    double vtys = r_eff * std::abs(t_states->_omega) * hsyn + 0.01;
+    double vtxs = r_eff * abs(t_states->_omega) * hsxn + 0.01;
+    double vtys = r_eff * abs(t_states->_omega) * hsyn + 0.01;
 
-    // double vtxs = r_eff * std::abs(t_states->_omega) * hsxn;
-    // double vtys = r_eff * std::abs(t_states->_omega) * hsyn;
+    // double vtxs = r_eff * abs(t_states->_omega) * hsxn;
+    // double vtys = r_eff * abs(t_states->_omega) * hsyn;
 
     // Tire velocities for the RHS
     t_states->_xedot = (-vtxs * t_params->_cx * t_states->_xe - fos * vsx) / (vtxs * t_params->_dx + fos);
@@ -1003,8 +976,8 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     double fystr =
         clamp(t_states->_ye * t_params->_cy + t_states->_yedot * t_params->_dy, -t_params->_fymP2n, t_params->_fymP2n);
 
-    double weightx = sineStep(std::abs(vsx), 1., 1., 1.5, 0.);
-    double weighty = sineStep(std::abs(-sy * vta), 1., 1., 1.5, 0.);
+    double weightx = sineStep(abs(vsx), 1., 1., 1.5, 0.);
+    double weighty = sineStep(abs(-sy * vta), 1., 1., 1.5, 0.);
 
     // now finally get the resultant force
     t_states->_fx = weightx * fxstr + (1. - weightx) * fxdyn;
@@ -1031,7 +1004,7 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     double fz = t_states->_fz;                      // vertical force
     double vsy = t_states->_vsy;                    // y slip velocity
     double vsx = t_states->_vsx;                    // x slip velocity
-    t_states->_rStat = (t_params->_r0 - t_states->_xt) / (std::cos(v_states->_theta) * std::cos(v_states->_phi));
+    t_states->_rStat = (t_params->_r0 - t_states->_xt) / (cos(v_states->_theta) * cos(v_states->_phi));
 
     // If the wheel is off contact, set all states to 0 and return
     if (fz <= 0) {
@@ -1060,19 +1033,19 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     vsx = vsx - (t_states->_omega * r_eff);
 
     // get the transport velocity - 0.01 here is to prevent singularity
-    double vta = r_eff * std::abs(t_states->_omega) + 0.01;
+    double vta = r_eff * abs(t_states->_omega) + 0.01;
 
     // Compute the combined column force (used for low speed stability)
     double Fx0 = 0;
     double Fy0 = 0;
-    computeCombinedColumbForce(Fx0, Fy0, t_params->_mu, vsx, vsy, fz, t_params->_vcoulomb);
+    computeCombinedColumbForce(&Fx0, &Fy0, t_params->_mu, vsx, vsy, fz, t_params->_vcoulomb);
 
     // evaluate the slips
     double sx = -vsx / vta;
     double alpha;
     // only front wheel steering
-    alpha = std::atan2(vsy, vta) - delta;
-    double sy = -std::tan(alpha);
+    alpha = atan2(vsy, vta) - delta;
+    double sy = -tan(alpha);
 
     // limit fz
     if (fz > t_params->_pnmax) {
@@ -1096,29 +1069,29 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     double sys = InterpL(fz, t_params->_sysPn, t_params->_sysP2n, t_params->_pn);
 
     // Compute the coefficient to "blend" the columb force with the slip force
-    double frblend = sineStep(std::abs(t_states->_vsx), t_params->_frblend_begin, 0., t_params->_frblend_end, 1.);
+    double frblend = sineStep(abs(t_states->_vsx), t_params->_frblend_begin, 0., t_params->_frblend_end, 1.);
     // Now standard TMeasy tire forces
     // For now, not using any normalization of the slips - similar to Chrono implementation
-    double sc = std::hypot(sx, sy);
+    double sc = hypot(sx, sy);
     double salpha = 0;
     double calpha = 0;
     if (sc > 0) {
         calpha = sx / sc;
         salpha = sy / sc;
     } else {
-        calpha = std::sqrt(2.) / 2.;
-        salpha = std::sqrt(2.) / 2.;
+        calpha = sqrt(2.) / 2.;
+        salpha = sqrt(2.) / 2.;
     }
 
     // resultant curve parameters in both directions
-    double df0 = std::hypot(dfx0 * calpha, dfy0 * salpha);
-    double fm = t_params->_mu * std::hypot(fxm * calpha, fym * salpha);
-    double sm = t_params->_mu * std::hypot(sxm * calpha, sym * salpha);
-    double fs = t_params->_mu * std::hypot(fxs * calpha, fys * salpha);
-    double ss = t_params->_mu * std::hypot(sxs * calpha, sys * salpha);
+    double df0 = hypot(dfx0 * calpha, dfy0 * salpha);
+    double fm = t_params->_mu * hypot(fxm * calpha, fym * salpha);
+    double sm = t_params->_mu * hypot(sxm * calpha, sym * salpha);
+    double fs = t_params->_mu * hypot(fxs * calpha, fys * salpha);
+    double ss = t_params->_mu * hypot(sxs * calpha, sys * salpha);
 
     double f, fos;
-    tmxy_combined(f, fos, sc, df0, sm, fm, ss, fs);
+    tmxy_combined(&f, &fos, sc, df0, sm, fm, ss, fs);
 
     // static or "structural" force
     double Fx, Fy;
@@ -1136,10 +1109,6 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     Fx = (1.0 - frblend) * Fx0 + frblend * Fx;
     Fy = (1.0 - frblend) * Fy0 + frblend * Fy;
 
-    // rolling resistance with smoothing -> Below we don't add any smoothing
-    double vx_min = 0.;
-    double vx_max = 0.;
-
     t_states->_My = -t_params->_rr * fz * t_states->_rStat * tanh(t_states->_omega);
 
     // Set the tire forces
@@ -1155,25 +1124,25 @@ __device__ void d24::computeTireCompressionVelocity(const VehicleState* v_states
                                                     const SuspensionState* susrf_st,
                                                     const SuspensionState* suslr_st,
                                                     const SuspensionState* susrr_st) {
-    tirelf_st->_dxt = tirelf_st->_vsz - (std::cos(v_states->_theta) *
-                                             (suslf_st->_wu * std::cos(v_states->_phi)  // vsz is 0 for a smooth road
-                                              + suslf_st->_vu * std::sin(v_states->_phi)) -
-                                         suslf_st->_uu * std::sin(v_states->_theta));
+    tirelf_st->_dxt =
+        tirelf_st->_vsz - (cos(v_states->_theta) * (suslf_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
+                                                    + suslf_st->_vu * sin(v_states->_phi)) -
+                           suslf_st->_uu * sin(v_states->_theta));
 
-    tirerf_st->_dxt = tirerf_st->_vsz - (std::cos(v_states->_theta) *
-                                             (susrf_st->_wu * std::cos(v_states->_phi)  // vsz is 0 for a smooth road
-                                              + susrf_st->_vu * std::sin(v_states->_phi)) -
-                                         susrf_st->_uu * std::sin(v_states->_theta));
+    tirerf_st->_dxt =
+        tirerf_st->_vsz - (cos(v_states->_theta) * (susrf_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
+                                                    + susrf_st->_vu * sin(v_states->_phi)) -
+                           susrf_st->_uu * sin(v_states->_theta));
 
-    tirelr_st->_dxt = tirelr_st->_vsz - (std::cos(v_states->_theta) *
-                                             (suslr_st->_wu * std::cos(v_states->_phi)  // vsz is 0 for a smooth road
-                                              + suslr_st->_vu * std::sin(v_states->_phi)) -
-                                         suslr_st->_uu * std::sin(v_states->_theta));
+    tirelr_st->_dxt =
+        tirelr_st->_vsz - (cos(v_states->_theta) * (suslr_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
+                                                    + suslr_st->_vu * sin(v_states->_phi)) -
+                           suslr_st->_uu * sin(v_states->_theta));
 
-    tirerr_st->_dxt = tirerr_st->_vsz - (std::cos(v_states->_theta) *
-                                             (susrr_st->_wu * std::cos(v_states->_phi)  // vsz is 0 for a smooth road
-                                              + susrr_st->_vu * std::sin(v_states->_phi)) -
-                                         susrr_st->_uu * std::sin(v_states->_theta));
+    tirerr_st->_dxt =
+        tirerr_st->_vsz - (cos(v_states->_theta) * (susrr_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
+                                                    + susrr_st->_vu * sin(v_states->_phi)) -
+                           susrr_st->_uu * sin(v_states->_theta));
 }
 
 __device__ void d24::computeTireCompressionVelocity(const VehicleState* v_states,
@@ -1185,25 +1154,25 @@ __device__ void d24::computeTireCompressionVelocity(const VehicleState* v_states
                                                     const SuspensionState* susrf_st,
                                                     const SuspensionState* suslr_st,
                                                     const SuspensionState* susrr_st) {
-    tirelf_st->_dxt = tirelf_st->_vsz - (std::cos(v_states->_theta) *
-                                             (suslf_st->_wu * std::cos(v_states->_phi)  // vsz is 0 for a smooth road
-                                              + suslf_st->_vu * std::sin(v_states->_phi)) -
-                                         suslf_st->_uu * std::sin(v_states->_theta));
+    tirelf_st->_dxt =
+        tirelf_st->_vsz - (cos(v_states->_theta) * (suslf_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
+                                                    + suslf_st->_vu * sin(v_states->_phi)) -
+                           suslf_st->_uu * sin(v_states->_theta));
 
-    tirerf_st->_dxt = tirerf_st->_vsz - (std::cos(v_states->_theta) *
-                                             (susrf_st->_wu * std::cos(v_states->_phi)  // vsz is 0 for a smooth road
-                                              + susrf_st->_vu * std::sin(v_states->_phi)) -
-                                         susrf_st->_uu * std::sin(v_states->_theta));
+    tirerf_st->_dxt =
+        tirerf_st->_vsz - (cos(v_states->_theta) * (susrf_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
+                                                    + susrf_st->_vu * sin(v_states->_phi)) -
+                           susrf_st->_uu * sin(v_states->_theta));
 
-    tirelr_st->_dxt = tirelr_st->_vsz - (std::cos(v_states->_theta) *
-                                             (suslr_st->_wu * std::cos(v_states->_phi)  // vsz is 0 for a smooth road
-                                              + suslr_st->_vu * std::sin(v_states->_phi)) -
-                                         suslr_st->_uu * std::sin(v_states->_theta));
+    tirelr_st->_dxt =
+        tirelr_st->_vsz - (cos(v_states->_theta) * (suslr_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
+                                                    + suslr_st->_vu * sin(v_states->_phi)) -
+                           suslr_st->_uu * sin(v_states->_theta));
 
-    tirerr_st->_dxt = tirerr_st->_vsz - (std::cos(v_states->_theta) *
-                                             (susrr_st->_wu * std::cos(v_states->_phi)  // vsz is 0 for a smooth road
-                                              + susrr_st->_vu * std::sin(v_states->_phi)) -
-                                         susrr_st->_uu * std::sin(v_states->_theta));
+    tirerr_st->_dxt =
+        tirerr_st->_vsz - (cos(v_states->_theta) * (susrr_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
+                                                    + susrr_st->_vu * sin(v_states->_phi)) -
+                           susrr_st->_uu * sin(v_states->_theta));
 }
 
 __device__ void d24::computeSusRHS(const VehicleState* v_states,
@@ -1220,36 +1189,31 @@ __device__ void d24::computeSusRHS(const VehicleState* v_states,
     // Lets extract the cardan angles as they are a pain to type
     double theta = v_states->_theta;
     double phi = v_states->_phi;
-    double psi = v_states->_psi;
 
     // Unsprung mass vertical velocity differential equation
-    suslf_st->_dwu =
-        (1 / v_params->_muf) *
-        (std::cos(phi) * (std::cos(theta) * (tirelf_st->_fz - v_params->_muf * G) + std::sin(theta) * tirelf_st->_fx) -
-         std::sin(phi) * tirelf_st->_fy - suslf_st->_fzd - suslf_st->_xs * sus_params->_ks -
-         suslf_st->_dxs * sus_params->_bs -
-         v_params->_muf * (suslf_st->_vu * v_states->_wx - suslf_st->_uu * v_states->_wy));
+    suslf_st->_dwu = (1 / v_params->_muf) *
+                     (cos(phi) * (cos(theta) * (tirelf_st->_fz - v_params->_muf * G) + sin(theta) * tirelf_st->_fx) -
+                      sin(phi) * tirelf_st->_fy - suslf_st->_fzd - suslf_st->_xs * sus_params->_ks -
+                      suslf_st->_dxs * sus_params->_bs -
+                      v_params->_muf * (suslf_st->_vu * v_states->_wx - suslf_st->_uu * v_states->_wy));
 
-    susrf_st->_dwu =
-        (1 / v_params->_muf) *
-        (std::cos(phi) * (std::cos(theta) * (tirerf_st->_fz - v_params->_muf * G) + std::sin(theta) * tirerf_st->_fx) -
-         std::sin(phi) * tirerf_st->_fy - susrf_st->_fzd - susrf_st->_xs * sus_params->_ks -
-         susrf_st->_dxs * sus_params->_bs -
-         v_params->_muf * (susrf_st->_vu * v_states->_wx - susrf_st->_uu * v_states->_wy));
+    susrf_st->_dwu = (1 / v_params->_muf) *
+                     (cos(phi) * (cos(theta) * (tirerf_st->_fz - v_params->_muf * G) + sin(theta) * tirerf_st->_fx) -
+                      sin(phi) * tirerf_st->_fy - susrf_st->_fzd - susrf_st->_xs * sus_params->_ks -
+                      susrf_st->_dxs * sus_params->_bs -
+                      v_params->_muf * (susrf_st->_vu * v_states->_wx - susrf_st->_uu * v_states->_wy));
 
-    suslr_st->_dwu =
-        (1 / v_params->_mur) *
-        (std::cos(phi) * (std::cos(theta) * (tirelr_st->_fz - v_params->_mur * G) + std::sin(theta) * tirelr_st->_fx) -
-         std::sin(phi) * tirelr_st->_fy - suslr_st->_fzd - suslr_st->_xs * sus_params->_ks -
-         suslr_st->_dxs * sus_params->_bs -
-         v_params->_mur * (suslr_st->_vu * v_states->_wx - suslr_st->_uu * v_states->_wy));
+    suslr_st->_dwu = (1 / v_params->_mur) *
+                     (cos(phi) * (cos(theta) * (tirelr_st->_fz - v_params->_mur * G) + sin(theta) * tirelr_st->_fx) -
+                      sin(phi) * tirelr_st->_fy - suslr_st->_fzd - suslr_st->_xs * sus_params->_ks -
+                      suslr_st->_dxs * sus_params->_bs -
+                      v_params->_mur * (suslr_st->_vu * v_states->_wx - suslr_st->_uu * v_states->_wy));
 
-    susrr_st->_dwu =
-        (1 / v_params->_mur) *
-        (std::cos(phi) * (std::cos(theta) * (tirerr_st->_fz - v_params->_mur * G) + std::sin(theta) * tirerr_st->_fx) -
-         std::sin(phi) * tirerr_st->_fy - susrr_st->_fzd - susrr_st->_xs * sus_params->_ks -
-         susrr_st->_dxs * sus_params->_bs -
-         v_params->_mur * (susrr_st->_vu * v_states->_wx - susrr_st->_uu * v_states->_wy));
+    susrr_st->_dwu = (1 / v_params->_mur) *
+                     (cos(phi) * (cos(theta) * (tirerr_st->_fz - v_params->_mur * G) + sin(theta) * tirerr_st->_fx) -
+                      sin(phi) * tirerr_st->_fy - susrr_st->_fzd - susrr_st->_xs * sus_params->_ks -
+                      susrr_st->_dxs * sus_params->_bs -
+                      v_params->_mur * (susrr_st->_vu * v_states->_wx - susrr_st->_uu * v_states->_wy));
 
     // instantaneous suspension spring deflection
     suslf_st->_dxs = -suslf_st->_ws + suslf_st->_wu;
@@ -1272,36 +1236,31 @@ __device__ void d24::computeSusRHS(const VehicleState* v_states,
     // Lets extract the cardan angles as they are a pain to type
     double theta = v_states->_theta;
     double phi = v_states->_phi;
-    double psi = v_states->_psi;
 
     // Unsprung mass vertical velocity differential equation
-    suslf_st->_dwu =
-        (1 / v_params->_muf) *
-        (std::cos(phi) * (std::cos(theta) * (tirelf_st->_fz - v_params->_muf * G) + std::sin(theta) * tirelf_st->_fx) -
-         std::sin(phi) * tirelf_st->_fy - suslf_st->_fzd - suslf_st->_xs * sus_params->_ks -
-         suslf_st->_dxs * sus_params->_bs -
-         v_params->_muf * (suslf_st->_vu * v_states->_wx - suslf_st->_uu * v_states->_wy));
+    suslf_st->_dwu = (1 / v_params->_muf) *
+                     (cos(phi) * (cos(theta) * (tirelf_st->_fz - v_params->_muf * G) + sin(theta) * tirelf_st->_fx) -
+                      sin(phi) * tirelf_st->_fy - suslf_st->_fzd - suslf_st->_xs * sus_params->_ks -
+                      suslf_st->_dxs * sus_params->_bs -
+                      v_params->_muf * (suslf_st->_vu * v_states->_wx - suslf_st->_uu * v_states->_wy));
 
-    susrf_st->_dwu =
-        (1 / v_params->_muf) *
-        (std::cos(phi) * (std::cos(theta) * (tirerf_st->_fz - v_params->_muf * G) + std::sin(theta) * tirerf_st->_fx) -
-         std::sin(phi) * tirerf_st->_fy - susrf_st->_fzd - susrf_st->_xs * sus_params->_ks -
-         susrf_st->_dxs * sus_params->_bs -
-         v_params->_muf * (susrf_st->_vu * v_states->_wx - susrf_st->_uu * v_states->_wy));
+    susrf_st->_dwu = (1 / v_params->_muf) *
+                     (cos(phi) * (cos(theta) * (tirerf_st->_fz - v_params->_muf * G) + sin(theta) * tirerf_st->_fx) -
+                      sin(phi) * tirerf_st->_fy - susrf_st->_fzd - susrf_st->_xs * sus_params->_ks -
+                      susrf_st->_dxs * sus_params->_bs -
+                      v_params->_muf * (susrf_st->_vu * v_states->_wx - susrf_st->_uu * v_states->_wy));
 
-    suslr_st->_dwu =
-        (1 / v_params->_mur) *
-        (std::cos(phi) * (std::cos(theta) * (tirelr_st->_fz - v_params->_mur * G) + std::sin(theta) * tirelr_st->_fx) -
-         std::sin(phi) * tirelr_st->_fy - suslr_st->_fzd - suslr_st->_xs * sus_params->_ks -
-         suslr_st->_dxs * sus_params->_bs -
-         v_params->_mur * (suslr_st->_vu * v_states->_wx - suslr_st->_uu * v_states->_wy));
+    suslr_st->_dwu = (1 / v_params->_mur) *
+                     (cos(phi) * (cos(theta) * (tirelr_st->_fz - v_params->_mur * G) + sin(theta) * tirelr_st->_fx) -
+                      sin(phi) * tirelr_st->_fy - suslr_st->_fzd - suslr_st->_xs * sus_params->_ks -
+                      suslr_st->_dxs * sus_params->_bs -
+                      v_params->_mur * (suslr_st->_vu * v_states->_wx - suslr_st->_uu * v_states->_wy));
 
-    susrr_st->_dwu =
-        (1 / v_params->_mur) *
-        (std::cos(phi) * (std::cos(theta) * (tirerr_st->_fz - v_params->_mur * G) + std::sin(theta) * tirerr_st->_fx) -
-         std::sin(phi) * tirerr_st->_fy - susrr_st->_fzd - susrr_st->_xs * sus_params->_ks -
-         susrr_st->_dxs * sus_params->_bs -
-         v_params->_mur * (susrr_st->_vu * v_states->_wx - susrr_st->_uu * v_states->_wy));
+    susrr_st->_dwu = (1 / v_params->_mur) *
+                     (cos(phi) * (cos(theta) * (tirerr_st->_fz - v_params->_mur * G) + sin(theta) * tirerr_st->_fx) -
+                      sin(phi) * tirerr_st->_fy - susrr_st->_fzd - susrr_st->_xs * sus_params->_ks -
+                      susrr_st->_dxs * sus_params->_bs -
+                      v_params->_mur * (susrr_st->_vu * v_states->_wx - susrr_st->_uu * v_states->_wy));
 
     // instantaneous suspension spring deflection
     suslf_st->_dxs = -suslf_st->_ws + suslf_st->_wu;
@@ -1345,9 +1304,9 @@ __device__ void d24::differentialSplit(double torque,
                                        double max_bias,
                                        double speed_left,
                                        double speed_right,
-                                       double& torque_left,
-                                       double& torque_right) {
-    double diff = std::abs(speed_left - speed_right);
+                                       double* torque_left,
+                                       double* torque_right) {
+    double diff = abs(speed_left - speed_right);
 
     // The bias grows from 1 at diff=0.25 to max_bias at diff=0.5
     double bias = 1;
@@ -1361,12 +1320,12 @@ __device__ void d24::differentialSplit(double torque,
     double slow = alpha * torque;
     double fast = torque - slow;
 
-    if (std::abs(speed_left) < std::abs(speed_right)) {
-        torque_left = slow;
-        torque_right = fast;
+    if (abs(speed_left) < abs(speed_right)) {
+        *torque_left = slow;
+        *torque_right = fast;
     } else {
-        torque_left = fast;
-        torque_right = slow;
+        *torque_left = fast;
+        *torque_right = slow;
     }
 }
 // Computes the powertrain and produces the wheel angular veloocity differential equations
@@ -1377,7 +1336,7 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
                                           TMeasyState* tirerr_st,
                                           const VehicleParam* v_params,
                                           const TMeasyParam* t_params,
-                                          const DriverInput& controls) {
+                                          const DriverInput* controls) {
     // some variables needed outside
     double torque_t = 0;
     double max_bias = 2;
@@ -1430,7 +1389,7 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
             tr = getMapY(v_params->_TRmap, sr, tr_size);
         }
         // torque applied to the crank shaft
-        double torque_in = -std::pow((omega_in / cf), 2);
+        double torque_in = -pow((omega_in / cf), 2);
 
         // if its reverse flow, this should act as a brake
         if (tc_reverse_flow) {
@@ -1447,13 +1406,13 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
 
         // Now torque after the transimission
         torque_t = torque_out / v_params->_gearRatios[v_states->_current_gr];
-        if (std::abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
+        if (abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
             torque_t = 0;
         }
 
         //////// Integrate Crank shaft
         v_states->_dOmega_crank = (1. / v_params->_crankInertia) *
-                                  (driveTorque(v_params, controls.m_throttle, v_states->_crankOmega) + torque_in);
+                                  (driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) + torque_in);
 
         ////// Gear shift for the next time step -> Here we have to check the
         /// RPM of
@@ -1478,10 +1437,10 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
 
         // The torque after tranny will then just become as there is no torque
         // converter
-        torque_t = driveTorque(v_params, controls.m_throttle, v_states->_crankOmega) /
+        torque_t = driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) /
                    v_params->_gearRatios[v_states->_current_gr];
 
-        if (std::abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
+        if (abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
             torque_t = 0;
         }
 
@@ -1522,28 +1481,28 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
     }
 
     // first the front wheels
-    differentialSplit(torque_front, max_bias, tirelf_st->_omega, tirerf_st->_omega, tirelf_st->_engTor,
-                      tirerf_st->_engTor);
+    differentialSplit(torque_front, max_bias, tirelf_st->_omega, tirerf_st->_omega, &tirelf_st->_engTor,
+                      &tirerf_st->_engTor);
     // then rear wheels
-    differentialSplit(torque_rear, max_bias, tirelr_st->_omega, tirerr_st->_omega, tirelr_st->_engTor,
-                      tirerr_st->_engTor);
+    differentialSplit(torque_rear, max_bias, tirelr_st->_omega, tirerr_st->_omega, &tirelr_st->_engTor,
+                      &tirerr_st->_engTor);
 
     // now use this force for our omegas
     // Get dOmega for each tire
     tirelf_st->_dOmega = (1 / t_params->_jw) * (tirelf_st->_engTor + tirelf_st->_My -
-                                                sgn(tirelf_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                                sgn(tirelf_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                 tirelf_st->_fx * tirelf_st->_rStat);
 
     tirerf_st->_dOmega = (1 / t_params->_jw) * (tirerf_st->_engTor + tirerf_st->_My -
-                                                sgn(tirerf_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                                sgn(tirerf_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                 tirerf_st->_fx * tirerf_st->_rStat);
 
     tirelr_st->_dOmega = (1 / t_params->_jw) * (tirelr_st->_engTor + tirelr_st->_My -
-                                                sgn(tirelr_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                                sgn(tirelr_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                 tirelr_st->_fx * tirelr_st->_rStat);
 
     tirerr_st->_dOmega = (1 / t_params->_jw) * (tirerr_st->_engTor + tirerr_st->_My -
-                                                sgn(tirerr_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                                sgn(tirerr_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                 tirerr_st->_fx * tirerr_st->_rStat);
 }
 
@@ -1554,7 +1513,7 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
                                           TMeasyNrState* tirerr_st,
                                           const VehicleParam* v_params,
                                           const TMeasyNrParam* t_params,
-                                          const DriverInput& controls) {
+                                          const DriverInput* controls) {
     // some variables needed outside
     double torque_t = 0;
     double max_bias = 2;
@@ -1606,7 +1565,7 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
             tr = getMapY(v_params->_TRmap, sr, tr_size);
         }
         // torque applied to the crank shaft
-        double torque_in = -std::pow((omega_in / cf), 2);
+        double torque_in = -pow((omega_in / cf), 2);
 
         // if its reverse flow, this should act as a brake
         if (tc_reverse_flow) {
@@ -1623,13 +1582,13 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
 
         // Now torque after the transimission
         torque_t = torque_out / v_params->_gearRatios[v_states->_current_gr];
-        if (std::abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
+        if (abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
             torque_t = 0;
         }
 
         //////// Integrate Crank shaft
         v_states->_dOmega_crank = (1. / v_params->_crankInertia) *
-                                  (driveTorque(v_params, controls.m_throttle, v_states->_crankOmega) + torque_in);
+                                  (driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) + torque_in);
 
         ////// Gear shift for the next time step -> Here we have to check the
         /// RPM of
@@ -1654,10 +1613,10 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
 
         // The torque after tranny will then just become as there is no torque
         // converter
-        torque_t = driveTorque(v_params, controls.m_throttle, v_states->_crankOmega) /
+        torque_t = driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) /
                    v_params->_gearRatios[v_states->_current_gr];
 
-        if (std::abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
+        if (abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
             torque_t = 0;
         }
 
@@ -1698,28 +1657,28 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
     }
 
     // first the front wheels
-    differentialSplit(torque_front, max_bias, tirelf_st->_omega, tirerf_st->_omega, tirelf_st->_engTor,
-                      tirerf_st->_engTor);
+    differentialSplit(torque_front, max_bias, tirelf_st->_omega, tirerf_st->_omega, &tirelf_st->_engTor,
+                      &tirerf_st->_engTor);
     // then rear wheels
-    differentialSplit(torque_rear, max_bias, tirelr_st->_omega, tirerr_st->_omega, tirelr_st->_engTor,
-                      tirerr_st->_engTor);
+    differentialSplit(torque_rear, max_bias, tirelr_st->_omega, tirerr_st->_omega, &tirelr_st->_engTor,
+                      &tirerr_st->_engTor);
 
     // now use this force for our omegas
     // Get dOmega for each tire
     tirelf_st->_dOmega = (1 / t_params->_jw) * (tirelf_st->_engTor + tirelf_st->_My -
-                                                sgn(tirelf_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                                sgn(tirelf_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                 tirelf_st->_fx * tirelf_st->_rStat);
 
     tirerf_st->_dOmega = (1 / t_params->_jw) * (tirerf_st->_engTor + tirerf_st->_My -
-                                                sgn(tirerf_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                                sgn(tirerf_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                 tirerf_st->_fx * tirerf_st->_rStat);
 
     tirelr_st->_dOmega = (1 / t_params->_jw) * (tirelr_st->_engTor + tirelr_st->_My -
-                                                sgn(tirelr_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                                sgn(tirelr_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                 tirelr_st->_fx * tirelr_st->_rStat);
 
     tirerr_st->_dOmega = (1 / t_params->_jw) * (tirerr_st->_engTor + tirerr_st->_My -
-                                                sgn(tirerr_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                                sgn(tirerr_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                 tirerr_st->_fx * tirerr_st->_rStat);
 }
 
@@ -1738,16 +1697,16 @@ __device__ void d24::computeVehicleRHS(VehicleState* v_states,
     // Chassis dynamics equations
     v_states->_udot = v_states->_wz * v_states->_v - v_states->_wy * v_states->_w +
                       (1 / v_params->_m) * (suslf_st->_fxs + susrf_st->_fxs + suslr_st->_fxs + susrr_st->_fxs) +
-                      G * std::sin(v_states->_theta);
+                      G * sin(v_states->_theta);
 
     v_states->_vdot = v_states->_wx * v_states->_w - v_states->_wz * v_states->_u +
                       (1 / v_params->_m) * (suslf_st->_fys + susrf_st->_fys + suslr_st->_fys + susrr_st->_fys) -
-                      G * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+                      G * sin(v_states->_phi) * cos(v_states->_theta);
 
     v_states->_wdot = v_states->_wy * v_states->_u - v_states->_wx * v_states->_v +
                       (1 / v_params->_m) * (suslf_st->_fzs + susrf_st->_fzs + suslr_st->_fzs + susrr_st->_fzs +
                                             suslf_st->_fzd + susrf_st->_fzd + suslr_st->_fzd + susrr_st->_fzd) -
-                      G * std::cos(v_states->_phi) * std::cos(v_states->_theta);
+                      G * cos(v_states->_phi) * cos(v_states->_theta);
 
     v_states->_wxdot = (1 / v_params->_jx) * ((suslf_st->_mx + susrf_st->_mx + suslr_st->_mx + susrr_st->_mx) +
                                               (suslf_st->_fzs - susrf_st->_fzs) * (v_params->_cf / 2.) +
@@ -1763,17 +1722,16 @@ __device__ void d24::computeVehicleRHS(VehicleState* v_states,
                                               (-suslf_st->_fxs + susrf_st->_fxs) * (v_params->_cf / 2.) +
                                               (-suslr_st->_fxs + susrr_st->_fxs) * (v_params->_cr / 2.));
 
-    v_states->_dtheta = v_states->_wy * std::cos(v_states->_phi) - v_states->_wz * std::sin(v_states->_phi);
-    v_states->_dpsi =
-        (v_states->_wy * std::sin(v_states->_phi) / std::cos(v_states->_theta)) +
-        (v_states->_wz * std::cos(v_states->_phi) / std::cos(v_states->_theta));  // Trouble when theta is 90?
-    v_states->_dphi = v_states->_wx + v_states->_wy * std::sin(v_states->_phi) * std::tan(v_states->_theta) +
-                      v_states->_wz * std::cos(v_states->_phi) * std::tan(v_states->_theta);
+    v_states->_dtheta = v_states->_wy * cos(v_states->_phi) - v_states->_wz * sin(v_states->_phi);
+    v_states->_dpsi = (v_states->_wy * sin(v_states->_phi) / cos(v_states->_theta)) +
+                      (v_states->_wz * cos(v_states->_phi) / cos(v_states->_theta));  // Trouble when theta is 90?
+    v_states->_dphi = v_states->_wx + v_states->_wy * sin(v_states->_phi) * tan(v_states->_theta) +
+                      v_states->_wz * cos(v_states->_phi) * tan(v_states->_theta);
 
     // Get the global X and Y -> I do not know how to get the global Z
-    v_states->_dx = (v_states->_u * std::cos(v_states->_psi) - v_states->_v * std::sin(v_states->_psi));
+    v_states->_dx = (v_states->_u * cos(v_states->_psi) - v_states->_v * sin(v_states->_psi));
 
-    v_states->_dy = (v_states->_u * std::sin(v_states->_psi) + v_states->_v * std::cos(v_states->_psi));
+    v_states->_dy = (v_states->_u * sin(v_states->_psi) + v_states->_v * cos(v_states->_psi));
 }
 
 __device__ void d24::computeVehicleRHS(VehicleState* v_states,
@@ -1791,16 +1749,16 @@ __device__ void d24::computeVehicleRHS(VehicleState* v_states,
     // Chassis dynamics equations
     v_states->_udot = v_states->_wz * v_states->_v - v_states->_wy * v_states->_w +
                       (1 / v_params->_m) * (suslf_st->_fxs + susrf_st->_fxs + suslr_st->_fxs + susrr_st->_fxs) +
-                      G * std::sin(v_states->_theta);
+                      G * sin(v_states->_theta);
 
     v_states->_vdot = v_states->_wx * v_states->_w - v_states->_wz * v_states->_u +
                       (1 / v_params->_m) * (suslf_st->_fys + susrf_st->_fys + suslr_st->_fys + susrr_st->_fys) -
-                      G * std::sin(v_states->_phi) * std::cos(v_states->_theta);
+                      G * sin(v_states->_phi) * cos(v_states->_theta);
 
     v_states->_wdot = v_states->_wy * v_states->_u - v_states->_wx * v_states->_v +
                       (1 / v_params->_m) * (suslf_st->_fzs + susrf_st->_fzs + suslr_st->_fzs + susrr_st->_fzs +
                                             suslf_st->_fzd + susrf_st->_fzd + suslr_st->_fzd + susrr_st->_fzd) -
-                      G * std::cos(v_states->_phi) * std::cos(v_states->_theta);
+                      G * cos(v_states->_phi) * cos(v_states->_theta);
 
     v_states->_wxdot = (1 / v_params->_jx) * ((suslf_st->_mx + susrf_st->_mx + suslr_st->_mx + susrr_st->_mx) +
                                               (suslf_st->_fzs - susrf_st->_fzs) * (v_params->_cf / 2.) +
@@ -1816,17 +1774,16 @@ __device__ void d24::computeVehicleRHS(VehicleState* v_states,
                                               (-suslf_st->_fxs + susrf_st->_fxs) * (v_params->_cf / 2.) +
                                               (-suslr_st->_fxs + susrr_st->_fxs) * (v_params->_cr / 2.));
 
-    v_states->_dtheta = v_states->_wy * std::cos(v_states->_phi) - v_states->_wz * std::sin(v_states->_phi);
-    v_states->_dpsi =
-        (v_states->_wy * std::sin(v_states->_phi) / std::cos(v_states->_theta)) +
-        (v_states->_wz * std::cos(v_states->_phi) / std::cos(v_states->_theta));  // Trouble when theta is 90?
-    v_states->_dphi = v_states->_wx + v_states->_wy * std::sin(v_states->_phi) * std::tan(v_states->_theta) +
-                      v_states->_wz * std::cos(v_states->_phi) * std::tan(v_states->_theta);
+    v_states->_dtheta = v_states->_wy * cos(v_states->_phi) - v_states->_wz * sin(v_states->_phi);
+    v_states->_dpsi = (v_states->_wy * sin(v_states->_phi) / cos(v_states->_theta)) +
+                      (v_states->_wz * cos(v_states->_phi) / cos(v_states->_theta));  // Trouble when theta is 90?
+    v_states->_dphi = v_states->_wx + v_states->_wy * sin(v_states->_phi) * tan(v_states->_theta) +
+                      v_states->_wz * cos(v_states->_phi) * tan(v_states->_theta);
 
     // Get the global X and Y -> I do not know how to get the global Z
-    v_states->_dx = (v_states->_u * std::cos(v_states->_psi) - v_states->_v * std::sin(v_states->_psi));
+    v_states->_dx = (v_states->_u * cos(v_states->_psi) - v_states->_v * sin(v_states->_psi));
 
-    v_states->_dy = (v_states->_u * std::sin(v_states->_psi) + v_states->_v * std::cos(v_states->_psi));
+    v_states->_dy = (v_states->_u * sin(v_states->_psi) + v_states->_v * cos(v_states->_psi));
 }
 
 // -----------------------------------------------------------------------------
@@ -1837,6 +1794,7 @@ __device__ void d24::computeVehicleRHS(VehicleState* v_states,
 // Tire
 // ----------
 // setting Tire parameters using a JSON file
+
 __host__ void d24::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");

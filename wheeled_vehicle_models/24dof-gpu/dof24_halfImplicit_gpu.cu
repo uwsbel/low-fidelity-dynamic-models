@@ -13,7 +13,7 @@ using namespace d24;
 // ======================================================================================================================
 // Constructor
 d24SolverHalfImplicitGPU::d24SolverHalfImplicitGPU(unsigned int total_num_vehicles)
-    : step(0.001),
+    : m_step(0.001),
       m_output(false),
       m_vehicle_count_tracker_params(0),
       m_vehicle_count_tracker_states(0),
@@ -326,6 +326,9 @@ __host__ void d24SolverHalfImplicitGPU::Initialize(d24::VehicleState& vehicle_st
     size_t old_vehicle_count = m_vehicle_count_tracker_states;
     m_vehicle_count_tracker_states += num_vehicles;
     for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_states; i++) {
+        initializeTireSus(&vehicle_states, &tire_states_LF, &tire_states_RF, &tire_states_LR, &tire_states_RR,
+                          &sus_states_LF, &sus_states_RF, &sus_states_LR, &sus_states_RR, &m_sim_data[i]._veh_params,
+                          &m_sim_data[i]._tireTM_params, &m_sim_data[i]._sus_params);
         // Fill up simulation data from the cpu structs
         m_sim_states[i]._v_states = vehicle_states;
         m_sim_states[i]._tirelf_st = tire_states_LF;
@@ -359,6 +362,9 @@ __host__ void d24SolverHalfImplicitGPU::Initialize(d24::VehicleState& vehicle_st
     size_t old_vehicle_count = m_vehicle_count_tracker_states;
     m_vehicle_count_tracker_states += num_vehicles;
     for (size_t i = old_vehicle_count; i < m_vehicle_count_tracker_states; i++) {
+        initializeTireSus(&vehicle_states, &tire_states_LF, &tire_states_RF, &tire_states_LR, &tire_states_RR,
+                          &sus_states_LF, &sus_states_RF, &sus_states_LR, &sus_states_RR, &m_sim_data_nr[i]._veh_params,
+                          &m_sim_data_nr[i]._tireTMNr_params, &m_sim_data_nr[i]._sus_params);
         // Fill up simulation data from the cpu structs
         m_sim_states_nr[i]._v_states = vehicle_states;
         m_sim_states_nr[i]._tirelf_st = tire_states_LF;
