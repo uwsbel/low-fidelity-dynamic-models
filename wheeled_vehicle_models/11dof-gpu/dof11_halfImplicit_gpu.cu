@@ -1,5 +1,6 @@
 #include <algorithm>
 #include <cassert>
+#include <random>
 #include <cmath>
 #include <iostream>
 #include <stdint.h>
@@ -288,7 +289,8 @@ __host__ void d11SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
 void d11SolverHalfImplicitGPU::Initialize(d11::VehicleState& vehicle_states,
                                           d11::TMeasyState& tire_states_F,
-                                          d11::TMeasyState& tire_states_R) {
+                                          d11::TMeasyState& tire_states_R,
+                                          unsigned int num_vehicles) {
     // Esnure that construct was called with TMeasy tire type
     assert((m_tire_type == TireType::TMeasy) &&
            "Construct function called with TMeasyNr tire type, but Initialize called with TMeasy tire type");
@@ -308,7 +310,8 @@ void d11SolverHalfImplicitGPU::Initialize(d11::VehicleState& vehicle_states,
 
 void d11SolverHalfImplicitGPU::Initialize(d11::VehicleState& vehicle_states,
                                           d11::TMeasyNrState& tire_states_F,
-                                          d11::TMeasyNrState& tire_states_R) {
+                                          d11::TMeasyNrState& tire_states_R,
+                                          unsigned int num_vehicles) {
     // Esnure that construct was called with TMeasyNr tire type
     assert((m_tire_type == TireType::TMeasyNr) &&
            "Construct function called with TMeasy tire type, but Initialize called with TMeasyNR tire type");
@@ -682,7 +685,7 @@ __device__ void rhsFun(double t, unsigned int total_num_vehicles, SimData* sim_d
 
         // Tire velocities using TMEasy tire
         computeTireRHS(&tireTMf_state, &tireTM_param, &veh_param, controls.m_steering);
-        computeTireRHS(&tireTMr_state, &tireTM_param, &veh_param, controls.m_steering);
+        computeTireRHS(&tireTMr_state, &tireTM_param, &veh_param, 0);
 
         // Powertrain dynamics
         computePowertrainRHS(&veh_state, &tireTMf_state, &tireTMr_state, &veh_param, &tireTM_param, &controls);
@@ -728,7 +731,7 @@ __device__ void rhsFun(double t,
 
         // Tire velocities using TMEasy tire
         computeTireRHS(&tireTMf_state, &tireTM_param, &veh_param, controls.m_steering);
-        computeTireRHS(&tireTMr_state, &tireTM_param, &veh_param, controls.m_steering);
+        computeTireRHS(&tireTMr_state, &tireTM_param, &veh_param, 0.);
 
         // Powertrain dynamics
         computePowertrainRHS(&veh_state, &tireTMf_state, &tireTMr_state, &veh_param, &tireTM_param, &controls);
@@ -770,7 +773,7 @@ __device__ void rhsFun(double t,
         vehToTireTransform(&tireTMNrf_state, &tireTMNrr_state, &veh_state, &loads[0], &veh_param, controls.m_steering);
         // Tire velocities using TMEasyNr tire
         computeTireRHS(&tireTMNrf_state, &tireTMNr_param, &veh_param, controls.m_steering);
-        computeTireRHS(&tireTMNrr_state, &tireTMNr_param, &veh_param, controls.m_steering);
+        computeTireRHS(&tireTMNrr_state, &tireTMNr_param, &veh_param, 0.);
 
         // Powertrain dynamics
         computePowertrainRHS(&veh_state, &tireTMNrf_state, &tireTMNrr_state, &veh_param, &tireTMNr_param, &controls);
@@ -801,8 +804,6 @@ __device__ void rhsFun(double t,
         TMeasyNrState& tireTMNrf_state = sim_states_nr[vehicle_index]._tiref_state;
         TMeasyNrState& tireTMNrr_state = sim_states_nr[vehicle_index]._tirer_state;
 
-        DriverInput* driver_data = sim_data_nr[vehicle_index]._driver_data;
-        unsigned int len = sim_data_nr[vehicle_index]._driver_data_len;
         // Get controls at the current timeStep
         DriverInput controls;
         controls.m_steering = steering;
@@ -817,7 +818,7 @@ __device__ void rhsFun(double t,
         vehToTireTransform(&tireTMNrf_state, &tireTMNrr_state, &veh_state, &loads[0], &veh_param, controls.m_steering);
         // Tire velocities using TMEasyNr tire
         computeTireRHS(&tireTMNrf_state, &tireTMNr_param, &veh_param, controls.m_steering);
-        computeTireRHS(&tireTMNrr_state, &tireTMNr_param, &veh_param, controls.m_steering);
+        computeTireRHS(&tireTMNrr_state, &tireTMNr_param, &veh_param, 0.);
 
         // Powertrain dynamics
         computePowertrainRHS(&veh_state, &tireTMNrf_state, &tireTMNrr_state, &veh_param, &tireTMNr_param, &controls);

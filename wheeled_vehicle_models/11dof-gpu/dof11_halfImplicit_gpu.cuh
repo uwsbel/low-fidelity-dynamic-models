@@ -530,7 +530,7 @@ __device__ void rhsFun(double t,
 
         // Tire velocities using TMEasy tire
         computeTireRHS(&tireTMf_state, &tireTM_param, &veh_param, controls.m_steering);
-        computeTireRHS(&tireTMr_state, &tireTM_param, &veh_param, controls.m_steering);
+        computeTireRHS(&tireTMr_state, &tireTM_param, &veh_param, 0.);
 
         // Powertrain dynamics
         computePowertrainRHS(&veh_state, &tireTMf_state, &tireTMr_state, &veh_param, &tireTM_param, &controls);
@@ -548,8 +548,8 @@ __device__ void rhsFun(double t,
 template <typename Func>
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d11::SimData* sim_data,
-                       d11::SimState* sim_states,
+                       d11::SimDataNr* sim_data_nr,
+                       d11::SimStateNr* sim_states_nr,
                        Func func) {  // Get the vehicle index
     unsigned int vehicle_index = blockIdx.x * blockDim.x + threadIdx.x;
 
@@ -572,7 +572,7 @@ __device__ void rhsFun(double t,
         vehToTireTransform(&tireTMNrf_state, &tireTMNrr_state, &veh_state, &loads[0], &veh_param, controls.m_steering);
         // Tire velocities using TMEasyNr tire
         computeTireRHS(&tireTMNrf_state, &tireTMNr_param, &veh_param, controls.m_steering);
-        computeTireRHS(&tireTMNrr_state, &tireTMNr_param, &veh_param, controls.m_steering);
+        computeTireRHS(&tireTMNrr_state, &tireTMNr_param, &veh_param, 0.);
 
         // Powertrain dynamics
         computePowertrainRHS(&veh_state, &tireTMNrf_state, &tireTMNrr_state, &veh_param, &tireTMNr_param, &controls);

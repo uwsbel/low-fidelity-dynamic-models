@@ -649,7 +649,7 @@ struct SimStateNr {
     SimStateNr() {}
 
     SimStateNr(VehicleState veh_state, TMeasyNrState tiref_state, TMeasyNrState tirer_state)
-        : _veh_state(veh_state), _tirelf_state(tiref_state), _tirerf_state(tirer_state) {}
+        : _veh_state(veh_state), _tiref_state(tiref_state), _tirer_state(tirer_state) {}
 
     VehicleState _veh_state;
     TMeasyNrState _tiref_state;
@@ -660,7 +660,7 @@ struct SimStateNr {
 __device__ double driveTorque(const VehicleParam* v_params, const double throttle, const double omega);
 
 __device__ inline double brakeTorque(const VehicleParam* v_params, const double brake) {
-    return v_params._maxBrakeTorque * brake;
+    return v_params->_maxBrakeTorque * brake;
 }
 __device__ void differentialSplit(double torque,
                                   double max_bias,

@@ -46,23 +46,23 @@ __device__ void d11::vehToTireTransform(TMeasyState* tiref_st,
                                         double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
-    if (v_params->nonLinearSteer) {
+    if (v_params->_nonLinearSteer) {
         // Extract steer map
-        MapEntry* steer_map = v_params->steerMap;
+        MapEntry* steer_map = v_params->_steerMap;
         size_t len = v_params->_steerMapSize;
         delta = getMapY(steer_map, steering, len);
     } else {
-        delta = steering * v_params->maxSteer;
+        delta = steering * v_params->_maxSteer;
     }
 
     // left front
     tiref_st->_fz = loads[0];
-    tiref_st->_vsy = v_states->_v + v_states->_wz * v_params->a;
+    tiref_st->_vsy = v_states->_v + v_states->_wz * v_params->_a;
     tiref_st->_vsx = v_states->_u * cos(delta) + tiref_st->_vsy * sin(delta);
 
     // right front
     tirer_st->_fz = loads[1];
-    tirer_st->_vsy = v_states->_v - v_states->_wz * v_params->b;
+    tirer_st->_vsy = v_states->_v - v_states->_wz * v_params->_b;
     tirer_st->_vsx = v_states->_u;
 }
 
@@ -75,23 +75,23 @@ __device__ void d11::vehToTireTransform(TMeasyNrState* tiref_st,
                                         double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
-    if (v_params->nonLinearSteer) {
+    if (v_params->_nonLinearSteer) {
         // Extract steer map
-        MapEntry* steer_map = v_params->steerMap;
+        MapEntry* steer_map = v_params->_steerMap;
         size_t len = v_params->_steerMapSize;
         delta = getMapY(steer_map, steering, len);
     } else {
-        delta = steering * v_params->maxSteer;
+        delta = steering * v_params->_maxSteer;
     }
 
     // left front
     tiref_st->_fz = loads[0];
-    tiref_st->_vsy = v_states->_v + v_states->_wz * v_params->a;
+    tiref_st->_vsy = v_states->_v + v_states->_wz * v_params->_a;
     tiref_st->_vsx = v_states->_u * cos(delta) + tiref_st->_vsy * sin(delta);
 
     // right front
     tirer_st->_fz = loads[1];
-    tirer_st->_vsy = v_states->_v - v_states->_wz * v_params->b;
+    tirer_st->_vsy = v_states->_v - v_states->_wz * v_params->_b;
     tirer_st->_vsx = v_states->_u;
 }
 
@@ -102,13 +102,13 @@ __device__ void d11::tireToVehTransform(TMeasyState* tiref_st,
                                         double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
-    if (v_params->nonLinearSteer) {
+    if (v_params->_nonLinearSteer) {
         // Extract steer map
-        MapEntry* steer_map = v_params->steerMap;
+        MapEntry* steer_map = v_params->_steerMap;
         size_t len = v_params->_steerMapSize;
         delta = getMapY(steer_map, steering, len);
     } else {
-        delta = steering * v_params->maxSteer;
+        delta = steering * v_params->_maxSteer;
     }
 
     double _fx, _fy;
@@ -129,13 +129,13 @@ __device__ void d11::tireToVehTransform(TMeasyNrState* tiref_st,
                                         double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
-    if (v_params->nonLinearSteer) {
+    if (v_params->_nonLinearSteer) {
         // Extract steer map
-        MapEntry* steer_map = v_params->steerMap;
+        MapEntry* steer_map = v_params->_steerMap;
         size_t len = v_params->_steerMapSize;
         delta = getMapY(steer_map, steering, len);
     } else {
-        delta = steering * v_params->maxSteer;
+        delta = steering * v_params->_maxSteer;
     }
 
     double _fx, _fy;
@@ -234,14 +234,14 @@ __device__ void d11::computeTireLoads(double* loads,
     double hur = t_params->_r0;
 
     // Static vertical load transfer based on d"Almberts principle
-    double Z1 = (v_params->m * G * v_params->b) / (2. * (v_params->a + v_params->b)) + (v_params->muf * G) / 2.;
-    double Z2 = ((v_params->m * v_params->h + v_params->muf * huf + v_params->mur * hur) *
+    double Z1 = (v_params->_m * G * v_params->_b) / (2. * (v_params->_a + v_params->_b)) + (v_params->_muf * G) / 2.;
+    double Z2 = ((v_params->_m * v_params->_h + v_params->_muf * huf + v_params->_mur * hur) *
                  (v_states->_udot - v_states->_wz * v_states->_v)) /
-                (2. * (v_params->a + v_params->b));
+                (2. * (v_params->_a + v_params->_b));
 
     loads[0] = (Z1 - Z2) > 0. ? (Z1 - Z2) : 0.;
 
-    double Z3 = (v_params->m * G * v_params->a) / (2. * (v_params->a + v_params->b)) + (v_params->mur * G) / 2.;
+    double Z3 = (v_params->_m * G * v_params->_a) / (2. * (v_params->_a + v_params->_b)) + (v_params->_mur * G) / 2.;
 
     loads[1] = (Z3 + Z2) > 0. ? (Z3 + Z2) : 0.;
 }
@@ -254,14 +254,14 @@ __device__ void d11::computeTireLoads(double* loads,
     double hur = t_params->_r0;
 
     // Static vertical load transfer based on d"Almberts principle
-    double Z1 = (v_params->m * G * v_params->b) / (2. * (v_params->a + v_params->b)) + (v_params->muf * G) / 2.;
-    double Z2 = ((v_params->m * v_params->h + v_params->muf * huf + v_params->mur * hur) *
+    double Z1 = (v_params->_m * G * v_params->_b) / (2. * (v_params->_a + v_params->_b)) + (v_params->_muf * G) / 2.;
+    double Z2 = ((v_params->_m * v_params->_h + v_params->_muf * huf + v_params->_mur * hur) *
                  (v_states->_udot - v_states->_wz * v_states->_v)) /
-                (2. * (v_params->a + v_params->b));
+                (2. * (v_params->_a + v_params->_b));
 
     loads[0] = (Z1 - Z2) > 0. ? (Z1 - Z2) : 0.;
 
-    double Z3 = (v_params->m * G * v_params->a) / (2. * (v_params->a + v_params->b)) + (v_params->mur * G) / 2.;
+    double Z3 = (v_params->_m * G * v_params->_a) / (2. * (v_params->_a + v_params->_b)) + (v_params->_mur * G) / 2.;
 
     loads[1] = (Z3 + Z2) > 0. ? (Z3 + Z2) : 0.;
 }
@@ -314,13 +314,13 @@ __device__ void d11::computeTireRHS(TMeasyState* t_states,
                                     const VehicleParam* v_params,
                                     double steering) {
     double delta = 0;
-    if (v_params->nonLinearSteer) {
+    if (v_params->_nonLinearSteer) {
         // Extract steer map
-        MapEntry* steer_map = v_params->steerMap;
+        MapEntry* steer_map = v_params->_steerMap;
         size_t len = v_params->_steerMapSize;
         delta = getMapY(steer_map, steering, len);
     } else {
-        delta = steering * v_params->maxSteer;
+        delta = steering * v_params->_maxSteer;
     }
 
     // Get the whichTire based variables out of the way
@@ -467,13 +467,13 @@ __device__ void d11::computeTireRHS(TMeasyNrState* t_states,
                                     const VehicleParam* v_params,
                                     double steering) {
     double delta = 0;
-    if (v_params->nonLinearSteer) {
+    if (v_params->_nonLinearSteer) {
         // Extract steer map
-        MapEntry* steer_map = v_params->steerMap;
+        MapEntry* steer_map = v_params->_steerMap;
         size_t len = v_params->_steerMapSize;
         delta = getMapY(steer_map, steering, len);
     } else {
-        delta = steering * v_params->maxSteer;
+        delta = steering * v_params->_maxSteer;
     }
 
     // Get the whichTire based variables out of the way
@@ -586,10 +586,6 @@ __device__ void d11::computeTireRHS(TMeasyNrState* t_states,
     Fx = (1.0 - frblend) * Fx0 + frblend * Fx;
     Fy = (1.0 - frblend) * Fy0 + frblend * Fy;
 
-    // rolling resistance with smoothing -> Below we don't add any smoothing
-    double vx_min = 0.;
-    double vx_max = 0.;
-
     t_states->_My = -t_params->_rr * fz * t_states->_rStat * tanh(t_states->_omega);
 
     // Set the tire forces
@@ -608,7 +604,7 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
     double max_bias = 2;
 
     // If we have a torque converter
-    if (v_params->tcbool) {
+    if (v_params->_tcbool) {
         // set reverse flow to false at each timestep
         bool tc_reverse_flow = false;
         // Split the angular velocities all the way uptill the gear box. All
@@ -617,7 +613,7 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
 
         // get the angular velocity at the torque converter wheel side
         // Note, the gear includes the differential gear as well
-        double omega_out = omega_t / (v_params->gearRatios[v_states->_current_gr]);
+        double omega_out = omega_t / (v_params->_gearRatios[v_states->_current_gr]);
 
         // Get the omega input to the torque from the engine from the previous
         // time step
@@ -629,10 +625,10 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
         if ((omega_out < 1e-9) || (omega_in < 1e-9)) {  // if we are at the start things can get unstable
             sr = 0;
             // Get capacity factor from capacity lookup table
-            cf = getMapY(v_params->CFmap, sr, cf_size);
+            cf = getMapY(v_params->_CFmap, sr, cf_size);
 
             // Get torque ratio from Torque ratio lookup table
-            tr = getMapY(v_params->TRmap, sr, tr_size);
+            tr = getMapY(v_params->_TRmap, sr, tr_size);
         } else {
             // speed ratio for torque converter
             sr = omega_out / omega_in;
@@ -648,10 +644,10 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
             }
 
             // get capacity factor from lookup table
-            cf = getMapY(v_params->CFmap, sr, cf_size);
+            cf = getMapY(v_params->_CFmap, sr, cf_size);
 
             // Get torque ratio from Torque ratio lookup table
-            tr = getMapY(v_params->TRmap, sr, tr_size);
+            tr = getMapY(v_params->_TRmap, sr, tr_size);
         }
         // torque applied to the crank shaft
         double torque_in = -pow((omega_in / cf), 2);
@@ -670,26 +666,26 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
         }
 
         // Now torque after the transimission
-        torque_t = torque_out / v_params->gearRatios[v_states->_current_gr];
+        torque_t = torque_out / v_params->_gearRatios[v_states->_current_gr];
         if (abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
             torque_t = 0;
         }
 
         //////// Integrate Crank shaft
-        v_states->_dOmega_crank = (1. / v_params->crankInertia) *
-                                  (driveTorque(v_params, controls.m_throttle, v_states->_crankOmega) + torque_in);
+        v_states->_dOmega_crank = (1. / v_params->_crankInertia) *
+                                  (driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) + torque_in);
 
         ////// Gear shift for the next time step -> Here we have to check the
         /// RPM of
         /// the shaft from the T.C
-        if (omega_out > v_params->shiftMap[v_states->_current_gr]._y) {
+        if (omega_out > v_params->_shiftMap[v_states->_current_gr]._y) {
             // check if we have enough gears to upshift
             if (v_states->_current_gr < v_params->_noGears - 1) {
                 v_states->_current_gr++;
             }
         }
         // downshift
-        else if (omega_out < v_params->shiftMap[v_states->_current_gr]._x) {
+        else if (omega_out < v_params->_shiftMap[v_states->_current_gr]._x) {
             // check if we can down shift
             if (v_states->_current_gr > 0) {
                 v_states->_current_gr--;
@@ -698,12 +694,12 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
     } else {  // If there is no torque converter, then the crank shaft does not
               // have a state so we directly updated the crankOmega to be used
         v_states->_crankOmega =
-            0.5 * (tiref_st->_omega + tirer_st->_omega) / v_params->gearRatios[v_states->_current_gr];
+            0.5 * (tiref_st->_omega + tirer_st->_omega) / v_params->_gearRatios[v_states->_current_gr];
 
         // The torque after tranny will then just become as there is no torque
         // converter
-        torque_t = driveTorque(v_params, controls.m_throttle, v_states->_crankOmega) /
-                   v_params->gearRatios[v_states->_current_gr];
+        torque_t = driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) /
+                   v_params->_gearRatios[v_states->_current_gr];
 
         if (abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
             torque_t = 0;
@@ -712,14 +708,14 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
         ///// Upshift gear for next time step -> Here the crank shaft is
         /// directly
         /// connected to the gear box
-        if (v_states->_crankOmega > v_params->shiftMap[v_states->_current_gr]._y) {
+        if (v_states->_crankOmega > v_params->_shiftMap[v_states->_current_gr]._y) {
             // check if we have enough gears to upshift
             if (v_states->_current_gr < v_params->_noGears - 1) {
                 v_states->_current_gr++;
             }
         }
         // downshift
-        else if (v_states->_crankOmega < v_params->shiftMap[v_states->_current_gr]._x) {
+        else if (v_states->_crankOmega < v_params->_shiftMap[v_states->_current_gr]._x) {
             // check if we can down shift
             if (v_states->_current_gr > 0) {
                 v_states->_current_gr--;
@@ -730,16 +726,16 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
     //////// Amount of torque transmitted to the wheels
 
     differentialSplit(torque_t, max_bias, tirer_st->_omega, tiref_st->_omega, &tirer_st->_engTor, &tiref_st->_engTor,
-                      v_params->driveType, v_params->whichWheels);
+                      v_params->_driveType, v_params->_whichWheels);
 
     // now use this force for our omegas
     // Get dOmega for each tire
     tiref_st->_dOmega = (1 / t_params->_jw) * (tiref_st->_engTor + tiref_st->_My -
-                                               sgn(tiref_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                               sgn(tiref_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                tiref_st->_fx * tiref_st->_rStat);
 
     tirer_st->_dOmega = (1 / t_params->_jw) * (tirer_st->_engTor + tirer_st->_My -
-                                               sgn(tirer_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                               sgn(tirer_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                tirer_st->_fx * tirer_st->_rStat);
 }
 
@@ -754,7 +750,7 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
     double max_bias = 2;
 
     // If we have a torque converter
-    if (v_params->tcbool) {
+    if (v_params->_tcbool) {
         // set reverse flow to false at each timestep
         bool tc_reverse_flow = false;
         // Split the angular velocities all the way uptill the gear box. All
@@ -763,7 +759,7 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
 
         // get the angular velocity at the torque converter wheel side
         // Note, the gear includes the differential gear as well
-        double omega_out = omega_t / (v_params->gearRatios[v_states->_current_gr]);
+        double omega_out = omega_t / (v_params->_gearRatios[v_states->_current_gr]);
 
         // Get the omega input to the torque from the engine from the previous
         // time step
@@ -775,10 +771,10 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
         if ((omega_out < 1e-9) || (omega_in < 1e-9)) {  // if we are at the start things can get unstable
             sr = 0;
             // Get capacity factor from capacity lookup table
-            cf = getMapY(v_params->CFmap, sr, cf_size);
+            cf = getMapY(v_params->_CFmap, sr, cf_size);
 
             // Get torque ratio from Torque ratio lookup table
-            tr = getMapY(v_params->TRmap, sr, tr_size);
+            tr = getMapY(v_params->_TRmap, sr, tr_size);
         } else {
             // speed ratio for torque converter
             sr = omega_out / omega_in;
@@ -794,10 +790,10 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
             }
 
             // get capacity factor from lookup table
-            cf = getMapY(v_params->CFmap, sr, cf_size);
+            cf = getMapY(v_params->_CFmap, sr, cf_size);
 
             // Get torque ratio from Torque ratio lookup table
-            tr = getMapY(v_params->TRmap, sr.tr_size);
+            tr = getMapY(v_params->_TRmap, sr, tr_size);
         }
         // torque applied to the crank shaft
         double torque_in = -pow((omega_in / cf), 2);
@@ -816,26 +812,26 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
         }
 
         // Now torque after the transimission
-        torque_t = torque_out / v_params->gearRatios[v_states->_current_gr];
+        torque_t = torque_out / v_params->_gearRatios[v_states->_current_gr];
         if (abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
             torque_t = 0;
         }
 
         //////// Integrate Crank shaft
-        v_states->_dOmega_crank = (1. / v_params->crankInertia) *
-                                  (driveTorque(v_params, controls.m_throttle, v_states->_crankOmega) + torque_in);
+        v_states->_dOmega_crank = (1. / v_params->_crankInertia) *
+                                  (driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) + torque_in);
 
         ////// Gear shift for the next time step -> Here we have to check the
         /// RPM of
         /// the shaft from the T.C
-        if (omega_out > v_params->shiftMap[v_states->_current_gr]._y) {
+        if (omega_out > v_params->_shiftMap[v_states->_current_gr]._y) {
             // check if we have enough gears to upshift
             if (v_states->_current_gr < v_params->_noGears - 1) {
                 v_states->_current_gr++;
             }
         }
         // downshift
-        else if (omega_out < v_params->shiftMap[v_states->_current_gr]._x) {
+        else if (omega_out < v_params->_shiftMap[v_states->_current_gr]._x) {
             // check if we can down shift
             if (v_states->_current_gr > 0) {
                 v_states->_current_gr--;
@@ -844,12 +840,12 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
     } else {  // If there is no torque converter, then the crank shaft does not
               // have a state so we directly updated the crankOmega to be used
         v_states->_crankOmega =
-            0.5 * (tiref_st->_omega + tirer_st->_omega) / v_params->gearRatios[v_states->_current_gr];
+            0.5 * (tiref_st->_omega + tirer_st->_omega) / v_params->_gearRatios[v_states->_current_gr];
 
         // The torque after tranny will then just become as there is no torque
         // converter
-        torque_t = driveTorque(v_params, controls.m_throttle, v_states->_crankOmega) /
-                   v_params->gearRatios[v_states->_current_gr];
+        torque_t = driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) /
+                   v_params->_gearRatios[v_states->_current_gr];
 
         if (abs((v_states->_u - 0) < 1e-9) && (torque_t < 0)) {
             torque_t = 0;
@@ -858,14 +854,14 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
         ///// Upshift gear for next time step -> Here the crank shaft is
         /// directly
         /// connected to the gear box
-        if (v_states->_crankOmega > v_params->shiftMap[v_states->_current_gr]._y) {
+        if (v_states->_crankOmega > v_params->_shiftMap[v_states->_current_gr]._y) {
             // check if we have enough gears to upshift
             if (v_states->_current_gr < v_params->_noGears - 1) {
                 v_states->_current_gr++;
             }
         }
         // downshift
-        else if (v_states->_crankOmega < v_params->shiftMap[v_states->_current_gr]._x) {
+        else if (v_states->_crankOmega < v_params->_shiftMap[v_states->_current_gr]._x) {
             // check if we can down shift
             if (v_states->_current_gr > 0) {
                 v_states->_current_gr--;
@@ -875,17 +871,17 @@ __device__ void d11::computePowertrainRHS(VehicleState* v_states,
 
     //////// Amount of torque transmitted to the wheels
 
-    differentialSplit(torque_t, max_bias, tirer_st->_omega, &tiref_st->_omega, &tirer_st->_engTor, tiref_st->_engTor,
-                      v_params->driveType, v_params->whichWheels);
+    differentialSplit(torque_t, max_bias, tirer_st->_omega, tiref_st->_omega, &tirer_st->_engTor, &tiref_st->_engTor,
+                      v_params->_driveType, v_params->_whichWheels);
 
     // now use this force for our omegas
     // Get dOmega for each tire
     tiref_st->_dOmega = (1 / t_params->_jw) * (tiref_st->_engTor + tiref_st->_My -
-                                               sgn(tiref_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                               sgn(tiref_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                tiref_st->_fx * tiref_st->_rStat);
 
     tirer_st->_dOmega = (1 / t_params->_jw) * (tirer_st->_engTor + tirer_st->_My -
-                                               sgn(tirer_st->_omega) * brakeTorque(v_params, controls.m_braking) -
+                                               sgn(tirer_st->_omega) * brakeTorque(v_params, controls->m_braking) -
                                                tirer_st->_fx * tirer_st->_rStat);
 }
 
@@ -893,12 +889,12 @@ __device__ void d11::computeVehRHS(VehicleState* v_states,
                                    const VehicleParam* v_params,
                                    const double* fx,
                                    const double* fy) {
-    double mt = v_params->m + 2 * (v_params->muf + v_params->mur);
+    double mt = v_params->_m + 2 * (v_params->_muf + v_params->_mur);
 
     // ODEs
     v_states->_vdot = -v_states->_u * v_states->_wz + (fy[0] + fy[1]) / mt;
     v_states->_udot = v_states->_v * v_states->_wz + (fx[0] + fx[1]) / mt;
-    v_states->_wzdot = (v_params->a * fy[0] - v_params->b * fy[1]) / v_params->jz;
+    v_states->_wzdot = (v_params->_a * fy[0] - v_params->_b * fy[1]) / v_params->_jz;
 
     v_states->_dx = v_states->_u * cos(v_states->_psi) - v_states->_v * sin(v_states->_psi);
     v_states->_dy = v_states->_u * sin(v_states->_psi) + v_states->_v * cos(v_states->_psi);
@@ -938,13 +934,15 @@ __host__ void d11::setVehParamsJSON(VehicleParam& v_params, const char* fileName
     // angle
     v_params._nonLinearSteer = d["nonLinearSteer"].GetBool();
     if (v_params._nonLinearSteer) {
-        unsigned int steerMapSize = d["steerMap"].Size();
+        size_t steerMapSize = d["steerMap"].Size();
+        CHECK_CUDA_ERROR(cudaMallocManaged((void**)&v_params._steerMap, sizeof(MapEntry) * steerMapSize));
         for (unsigned int i = 0; i < steerMapSize; i++) {
             MapEntry m;
             m._x = d["steerMap"][i][0u].GetDouble();
             m._y = d["steerMap"][i][1u].GetDouble();
-            v_params._steerMap.push_back(m);
+            v_params._steerMap[i] = m;
         }
+        v_params._steerMapSize = steerMapSize;
     }
     // If there is no non linear steer then the normalized steering input is
     // just multiplied by the max steering wheel angle
@@ -955,74 +953,85 @@ __host__ void d11::setVehParamsJSON(VehicleParam& v_params, const char* fileName
     v_params._maxSteer = d["maxSteer"].GetDouble();
 
     // read the gear ratios
-    unsigned int gears = d["gearRatios"].Size();
-    for (unsigned int i = 0; i < gears; i++) {
-        v_params._gearRatios.push_back(d["gearRatios"][i].GetDouble());
+    size_t noGears = d["gearRatios"].Size();
+    CHECK_CUDA_ERROR(
+        cudaMallocManaged((void**)&v_params._gearRatios, sizeof(double) * noGears));  // assign the memory for the gears
+    for (unsigned int i = 0; i < noGears; i++) {
+        v_params._gearRatios[i] = d["gearRatios"][i].GetDouble();
     }
+    v_params._noGears = noGears;
 
     // Check if we have upshiftRPM and downshiftRPM set
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&v_params._shiftMap, sizeof(MapEntry) * noGears));
     if (d.HasMember("upshiftRPM") && d.HasMember("downshiftRPM")) {
         // If this is the case then just set the shift map for all gears to the
         // same value
-        for (unsigned int i = 0; i < gears; i++) {
+        for (unsigned int i = 0; i < noGears; i++) {
             MapEntry m;
             m._x = d["downshiftRPM"].GetDouble() * rpm2rad;
             m._y = d["upshiftRPM"].GetDouble() * rpm2rad;
-            v_params._shiftMap.push_back(m);
+            v_params._shiftMap[i] = m;
         }
     } else {
         // If there is no upshiftRPM and downshiftRPM then there should be a
         // shift map and this should have as many entries as the number of gears
-        for (unsigned int i = 0; i < gears; i++) {
+        for (unsigned int i = 0; i < noGears; i++) {
             MapEntry m;
             m._x = d["shiftMap"][i][0u].GetDouble() * rpm2rad;  // downshift
             m._y = d["shiftMap"][i][1u].GetDouble() * rpm2rad;  // upshift
-            v_params._shiftMap.push_back(m);
+            v_params._shiftMap[i] = m;
         }
     }
 
     v_params._tcbool = d["tcBool"].GetBool();
 
     v_params._maxBrakeTorque = d["maxBrakeTorque"].GetDouble();
-    v_params._step = d["step"].GetDouble();
 
     v_params._throttleMod = d["throttleMod"].GetBool();
     // Read the powertrain map
-    unsigned int map_size = d["torqueMap"].Size();
-    for (unsigned int i = 0; i < map_size; i++) {
+    size_t powertrainMapSize = d["torqueMap"].Size();
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&v_params._powertrainMap, sizeof(MapEntry) * powertrainMapSize));
+    for (unsigned int i = 0; i < powertrainMapSize; i++) {
         MapEntry m;
         m._x = d["torqueMap"][i][0u].GetDouble() * rpm2rad;
         m._y = d["torqueMap"][i][1u].GetDouble();
-        v_params._powertrainMap.push_back(m);
+        v_params._powertrainMap[i] = m;
     }
+    v_params._powertrainMapSize = powertrainMapSize;
 
     // Read the losses map
-    unsigned int map_size2 = d["lossesMap"].Size();
-    for (unsigned int i = 0; i < map_size2; i++) {
+    size_t lossesMapSize = d["lossesMap"].Size();
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&v_params._lossesMap, sizeof(MapEntry) * lossesMapSize));
+    for (unsigned int i = 0; i < lossesMapSize; i++) {
         MapEntry m;
         m._x = d["lossesMap"][i][0u].GetDouble() * rpm2rad;
         m._y = d["lossesMap"][i][1u].GetDouble();
-        v_params._lossesMap.push_back(m);
+        v_params._lossesMap[i] = m;
     }
+    v_params._lossesMapSize = lossesMapSize;
 
     // if we have a torque converter, we need this data
     if (v_params._tcbool) {
         v_params._crankInertia = d["crankInertia"].GetDouble();
-        unsigned int map_size_cf = d["capacityFactorMap"].Size();
-        for (unsigned int i = 0; i < map_size_cf; i++) {
+        size_t CFmapSize = d["capacityFactorMap"].Size();
+        CHECK_CUDA_ERROR(cudaMallocManaged((void**)&v_params._CFmap, sizeof(MapEntry) * CFmapSize));
+        for (unsigned int i = 0; i < CFmapSize; i++) {
             MapEntry m;
             m._x = d["capacityFactorMap"][i][0u].GetDouble();
             m._y = d["capacityFactorMap"][i][1u].GetDouble();
-            v_params._CFmap.push_back(m);
+            v_params._CFmap[i] = m;
         }
+        v_params._CFmapSize = CFmapSize;
 
-        unsigned int map_size_tr = d["torqueRatioMap"].Size();
-        for (unsigned int i = 0; i < map_size_tr; i++) {
+        unsigned int TRmapSize = d["torqueRatioMap"].Size();
+        CHECK_CUDA_ERROR(cudaMallocManaged((void**)&v_params._TRmap, sizeof(MapEntry) * TRmapSize));
+        for (unsigned int i = 0; i < TRmapSize; i++) {
             MapEntry m;
             m._x = d["torqueRatioMap"][i][0u].GetDouble();
             m._y = d["torqueRatioMap"][i][1u].GetDouble();
-            v_params._TRmap.push_back(m);
+            v_params._TRmap[i] = m;
         }
+        v_params._TRmapSize = TRmapSize;
     }
 
     // Store the drive Type (1 is 4WD and 0 is 2WD (rear wheels))
