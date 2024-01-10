@@ -9,13 +9,13 @@
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 
-using namespace d24;
+using namespace d24GPU;
 
 // -----------------------------------------------------------------------------
 // Initialize functions
 // -----------------------------------------------------------------------------
 
-__host__ void d24::tireInit(TMeasyParam* t_params) {
+__host__ void d24GPU::tireInit(TMeasyParam* t_params) {
     // calculates some critical values that are needed
     t_params->_fzRdynco = (t_params->_pn * (t_params->_rdyncoP2n - 2.0 * t_params->_rdyncoPn + 1.)) /
                           (2. * (t_params->_rdyncoP2n - t_params->_rdyncoPn));
@@ -23,7 +23,7 @@ __host__ void d24::tireInit(TMeasyParam* t_params) {
     t_params->_rdyncoCrit = InterpL(t_params->_fzRdynco, t_params->_rdyncoPn, t_params->_rdyncoP2n, t_params->_pn);
 }
 
-__host__ void d24::tireInit(TMeasyNrParam* t_params) {
+__host__ void d24GPU::tireInit(TMeasyNrParam* t_params) {
     // calculates some critical values that are needed
     t_params->_fzRdynco = (t_params->_pn * (t_params->_rdyncoP2n - 2.0 * t_params->_rdyncoPn + 1.)) /
                           (2. * (t_params->_rdyncoP2n - t_params->_rdyncoPn));
@@ -31,7 +31,7 @@ __host__ void d24::tireInit(TMeasyNrParam* t_params) {
     t_params->_rdyncoCrit = InterpL(t_params->_fzRdynco, t_params->_rdyncoPn, t_params->_rdyncoP2n, t_params->_pn);
 }
 
-__host__ void d24::initializeTireSus(const VehicleState* v_states,
+__host__ void d24GPU::initializeTireSus(const VehicleState* v_states,
                                      TMeasyState* tirelf_st,
                                      TMeasyState* tirerf_st,
                                      TMeasyState* tirelr_st,
@@ -88,7 +88,7 @@ __host__ void d24::initializeTireSus(const VehicleState* v_states,
     susrr_st->_wu = v_states->_w;
 }
 
-__host__ void d24::initializeTireSus(const VehicleState* v_states,
+__host__ void d24GPU::initializeTireSus(const VehicleState* v_states,
                                      TMeasyNrState* tirelf_st,
                                      TMeasyNrState* tirerf_st,
                                      TMeasyNrState* tirelr_st,
@@ -147,7 +147,7 @@ __host__ void d24::initializeTireSus(const VehicleState* v_states,
 // -----------------------------------------------------------------------------
 // Frame Transformation functions
 // -----------------------------------------------------------------------------
-__device__ void d24::vehToSusTransform(const VehicleState* v_states,
+__device__ void d24GPU::vehToSusTransform(const VehicleState* v_states,
                                        const TMeasyState* tirelf_st,
                                        const TMeasyState* tirerf_st,
                                        const TMeasyState* tirelr_st,
@@ -233,7 +233,7 @@ __device__ void d24::vehToSusTransform(const VehicleState* v_states,
     susrr_st->_dvu = susrr_st->_dvs + (-susrr_st->_dxs * v_states->_wx + susrr_st->_ls * v_states->_wxdot);
 }
 
-__device__ void d24::vehToSusTransform(const VehicleState* v_states,
+__device__ void d24GPU::vehToSusTransform(const VehicleState* v_states,
                                        const TMeasyNrState* tirelf_st,
                                        const TMeasyNrState* tirerf_st,
                                        const TMeasyNrState* tirelr_st,
@@ -318,7 +318,7 @@ __device__ void d24::vehToSusTransform(const VehicleState* v_states,
     susrr_st->_duu = susrr_st->_dus - (-susrr_st->_dxs * v_states->_wy + susrr_st->_ls * v_states->_wydot);
     susrr_st->_dvu = susrr_st->_dvs + (-susrr_st->_dxs * v_states->_wx + susrr_st->_ls * v_states->_wxdot);
 }
-__device__ void d24::vehToTireTransform(const VehicleState* v_states,
+__device__ void d24GPU::vehToTireTransform(const VehicleState* v_states,
                                         TMeasyState* tirelf_st,
                                         TMeasyState* tirerf_st,
                                         TMeasyState* tirelr_st,
@@ -392,7 +392,7 @@ __device__ void d24::vehToTireTransform(const VehicleState* v_states,
     tirerr_st->_vsx = tirerr_st->_vgx;
 }
 
-__device__ void d24::vehToTireTransform(const VehicleState* v_states,
+__device__ void d24GPU::vehToTireTransform(const VehicleState* v_states,
                                         TMeasyNrState* tirelf_st,
                                         TMeasyNrState* tirerf_st,
                                         TMeasyNrState* tirelr_st,
@@ -466,7 +466,7 @@ __device__ void d24::vehToTireTransform(const VehicleState* v_states,
     tirerr_st->_vsx = tirerr_st->_vgx;
 }
 
-__device__ void d24::tireToVehTransform(const VehicleState* v_states,
+__device__ void d24GPU::tireToVehTransform(const VehicleState* v_states,
                                         TMeasyState* tirelf_st,
                                         TMeasyState* tirerf_st,
                                         TMeasyState* tirelr_st,
@@ -537,7 +537,7 @@ __device__ void d24::tireToVehTransform(const VehicleState* v_states,
         tirerr_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 }
 
-__device__ void d24::tireToVehTransform(const VehicleState* v_states,
+__device__ void d24GPU::tireToVehTransform(const VehicleState* v_states,
                                         TMeasyNrState* tirelf_st,
                                         TMeasyNrState* tirerf_st,
                                         TMeasyNrState* tirelr_st,
@@ -608,7 +608,7 @@ __device__ void d24::tireToVehTransform(const VehicleState* v_states,
         tirerr_st->_fz * cos(v_states->_phi) * cos(v_states->_theta);  // I dont think this is used anywhere
 }
 
-__device__ void d24::computeForcesThroughSus(const VehicleState* v_states,
+__device__ void d24GPU::computeForcesThroughSus(const VehicleState* v_states,
                                              const TMeasyState* tirelf_st,
                                              const TMeasyState* tirerf_st,
                                              const TMeasyState* tirelr_st,
@@ -690,7 +690,7 @@ __device__ void d24::computeForcesThroughSus(const VehicleState* v_states,
     susrr_st->_mz = 0;
 }
 
-__device__ void d24::computeForcesThroughSus(const VehicleState* v_states,
+__device__ void d24GPU::computeForcesThroughSus(const VehicleState* v_states,
                                              const TMeasyNrState* tirelf_st,
                                              const TMeasyNrState* tirerf_st,
                                              const TMeasyNrState* tirelr_st,
@@ -776,7 +776,7 @@ __device__ void d24::computeForcesThroughSus(const VehicleState* v_states,
 // -----------------------------------------------------------------------------
 
 __device__ void
-d24::tmxy_combined(double* f, double* fos, double s, double df0, double sm, double fm, double ss, double fs) {
+d24GPU::tmxy_combined(double* f, double* fos, double s, double df0, double sm, double fm, double ss, double fs) {
     double df0loc = 0.0;
     if (sm > 0.0) {
         df0loc = max(2.0 * fm / sm, df0);
@@ -820,7 +820,7 @@ d24::tmxy_combined(double* f, double* fos, double s, double df0, double sm, doub
 }
 
 __device__ void
-d24::computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb) {
+d24GPU::computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb) {
     *fx = tanh(-2.0 * vsx / vcoulomb) * fz * mu;
     *fy = tanh(-2.0 * vsy / vcoulomb) * fz * mu;
 
@@ -831,7 +831,7 @@ d24::computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, d
         *fy *= f;
     }
 }
-__device__ void d24::computeTireRHS(const VehicleState* v_states,
+__device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
                                     TMeasyState* t_states,
                                     const VehicleParam* v_params,
                                     const TMeasyParam* t_params,
@@ -984,7 +984,7 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     t_states->_fy = weighty * fystr + (1. - weighty) * fydyn;
 }
 
-__device__ void d24::computeTireRHS(const VehicleState* v_states,
+__device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
                                     TMeasyNrState* t_states,
                                     const VehicleParam* v_params,
                                     const TMeasyNrParam* t_params,
@@ -1115,7 +1115,7 @@ __device__ void d24::computeTireRHS(const VehicleState* v_states,
     t_states->_fx = Fx;
     t_states->_fy = Fy;
 }
-__device__ void d24::computeTireCompressionVelocity(const VehicleState* v_states,
+__device__ void d24GPU::computeTireCompressionVelocity(const VehicleState* v_states,
                                                     TMeasyState* tirelf_st,
                                                     TMeasyState* tirerf_st,
                                                     TMeasyState* tirelr_st,
@@ -1145,7 +1145,7 @@ __device__ void d24::computeTireCompressionVelocity(const VehicleState* v_states
                            susrr_st->_uu * sin(v_states->_theta));
 }
 
-__device__ void d24::computeTireCompressionVelocity(const VehicleState* v_states,
+__device__ void d24GPU::computeTireCompressionVelocity(const VehicleState* v_states,
                                                     TMeasyNrState* tirelf_st,
                                                     TMeasyNrState* tirerf_st,
                                                     TMeasyNrState* tirelr_st,
@@ -1175,7 +1175,7 @@ __device__ void d24::computeTireCompressionVelocity(const VehicleState* v_states
                            susrr_st->_uu * sin(v_states->_theta));
 }
 
-__device__ void d24::computeSusRHS(const VehicleState* v_states,
+__device__ void d24GPU::computeSusRHS(const VehicleState* v_states,
                                    const TMeasyState* tirelf_st,
                                    const TMeasyState* tirerf_st,
                                    const TMeasyState* tirelr_st,
@@ -1222,7 +1222,7 @@ __device__ void d24::computeSusRHS(const VehicleState* v_states,
     susrr_st->_dxs = -susrr_st->_ws + susrr_st->_wu;
 }
 
-__device__ void d24::computeSusRHS(const VehicleState* v_states,
+__device__ void d24GPU::computeSusRHS(const VehicleState* v_states,
                                    const TMeasyNrState* tirelf_st,
                                    const TMeasyNrState* tirerf_st,
                                    const TMeasyNrState* tirelr_st,
@@ -1273,7 +1273,7 @@ __device__ void d24::computeSusRHS(const VehicleState* v_states,
 // Powertrain and helper functions
 // -----------------------------------------------------------------------------
 // Returns drive torque at a given omega
-__device__ double d24::driveTorque(const VehicleParam* v_params, const double throttle, const double motor_speed) {
+__device__ double d24GPU::driveTorque(const VehicleParam* v_params, const double throttle, const double motor_speed) {
     double motor_torque = 0.;
     // If we have throttle modulation like in a motor
     if (v_params->_throttleMod) {
@@ -1300,7 +1300,7 @@ __device__ double d24::driveTorque(const VehicleParam* v_params, const double th
 
 // Function that calculates the torque split to each tire based on the
 // differential max bias Exactly the same as Chrono implementation
-__device__ void d24::differentialSplit(double torque,
+__device__ void d24GPU::differentialSplit(double torque,
                                        double max_bias,
                                        double speed_left,
                                        double speed_right,
@@ -1329,7 +1329,7 @@ __device__ void d24::differentialSplit(double torque,
     }
 }
 // Computes the powertrain and produces the wheel angular veloocity differential equations
-__device__ void d24::computePowertrainRHS(VehicleState* v_states,
+__device__ void d24GPU::computePowertrainRHS(VehicleState* v_states,
                                           TMeasyState* tirelf_st,
                                           TMeasyState* tirerf_st,
                                           TMeasyState* tirelr_st,
@@ -1506,7 +1506,7 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
                                                 tirerr_st->_fx * tirerr_st->_rStat);
 }
 
-__device__ void d24::computePowertrainRHS(VehicleState* v_states,
+__device__ void d24GPU::computePowertrainRHS(VehicleState* v_states,
                                           TMeasyNrState* tirelf_st,
                                           TMeasyNrState* tirerf_st,
                                           TMeasyNrState* tirelr_st,
@@ -1682,7 +1682,7 @@ __device__ void d24::computePowertrainRHS(VehicleState* v_states,
                                                 tirerr_st->_fx * tirerr_st->_rStat);
 }
 
-__device__ void d24::computeVehicleRHS(VehicleState* v_states,
+__device__ void d24GPU::computeVehicleRHS(VehicleState* v_states,
                                        const TMeasyState* tirelf_st,
                                        const TMeasyState* tirerf_st,
                                        const TMeasyState* tirelr_st,
@@ -1734,7 +1734,7 @@ __device__ void d24::computeVehicleRHS(VehicleState* v_states,
     v_states->_dy = (v_states->_u * sin(v_states->_psi) + v_states->_v * cos(v_states->_psi));
 }
 
-__device__ void d24::computeVehicleRHS(VehicleState* v_states,
+__device__ void d24GPU::computeVehicleRHS(VehicleState* v_states,
                                        const TMeasyNrState* tirelf_st,
                                        const TMeasyNrState* tirerf_st,
                                        const TMeasyNrState* tirelr_st,
@@ -1795,7 +1795,7 @@ __device__ void d24::computeVehicleRHS(VehicleState* v_states,
 // ----------
 // setting Tire parameters using a JSON file
 
-__host__ void d24::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
+__host__ void d24GPU::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
@@ -1852,7 +1852,7 @@ __host__ void d24::setTireParamsJSON(TMeasyParam& t_params, const char* fileName
 }
 
 // setting Tire parameters using a JSON file for a TMeasyNr
-__host__ void d24::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
+__host__ void d24GPU::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
@@ -2044,7 +2044,7 @@ __host__ void d24::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileNa
 // can get from a spec sheet These functions are directly copy pasted from Chrono with minor modifications
 
 // Function to compute the max tire load from the load index specified by the user
-double d24::GetTireMaxLoad(unsigned int li) {
+double d24GPU::GetTireMaxLoad(unsigned int li) {
     double Weight_per_Tire[] = {
         45,    46.5,  47.5,   48.7,   50,     51.5,   53,     54.5,   56,     58,     60,     61.5,   63,     65,
         67,    69,    71,     73,     75,     77.5,   80.0,   82.5,   85.0,   87.5,   90.0,   92.5,   95.0,   97.5,
@@ -2079,7 +2079,7 @@ double d24::GetTireMaxLoad(unsigned int li) {
 }
 
 // Guessing tire parameters for a truck tire
-__host__ void d24::GuessTruck80Par(unsigned int li,          // tire load index
+__host__ void d24GPU::GuessTruck80Par(unsigned int li,          // tire load index
                                    double tireWidth,         // [m]
                                    double ratio,             // [] = use 0.75 meaning 75%
                                    double rimDia,            // rim diameter [m]
@@ -2090,7 +2090,7 @@ __host__ void d24::GuessTruck80Par(unsigned int li,          // tire load index
     double tireLoad = GetTireMaxLoad(li);
     GuessTruck80Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
 }
-__host__ void d24::GuessTruck80Par(double tireLoad,   // tire load index
+__host__ void d24GPU::GuessTruck80Par(double tireLoad,   // tire load index
                                    double tireWidth,  // [m]
                                    double ratio,      // [] = use 0.75 meaning 75%
                                    double rimDia,     // rim diameter [m]
@@ -2136,7 +2136,7 @@ __host__ void d24::GuessTruck80Par(double tireLoad,   // tire load index
 }
 
 // Guessing tire parameters for a passenger car
-__host__ void d24::GuessPassCar70Par(unsigned int li,          // tire load index
+__host__ void d24GPU::GuessPassCar70Par(unsigned int li,          // tire load index
                                      double tireWidth,         // [m]
                                      double ratio,             // [] = use 0.75 meaning 75%
                                      double rimDia,            // rim diameter [m]
@@ -2147,7 +2147,7 @@ __host__ void d24::GuessPassCar70Par(unsigned int li,          // tire load inde
     double tireLoad = GetTireMaxLoad(li);
     GuessPassCar70Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
 }
-__host__ void d24::GuessPassCar70Par(double tireLoad,            // tire load index
+__host__ void d24GPU::GuessPassCar70Par(double tireLoad,            // tire load index
                                      double tireWidth,           // [m]
                                      double ratio,               // [] = use 0.75 meaning 75%
                                      double rimDia,              // rim diameter [m]
@@ -2194,7 +2194,7 @@ __host__ void d24::GuessPassCar70Par(double tireLoad,            // tire load in
 // Suspension
 // ----------
 // setting Tire parameters using a JSON file
-__host__ void d24::setSuspensionParamsJSON(SuspensionParam& sus_params, const char* fileName) {
+__host__ void d24GPU::setSuspensionParamsJSON(SuspensionParam& sus_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
@@ -2219,7 +2219,7 @@ __host__ void d24::setSuspensionParamsJSON(SuspensionParam& sus_params, const ch
 // Vehicle
 // ----------
 // setting Vehicle parameters using a JSON file
-__host__ void d24::setVehParamsJSON(VehicleParam& v_params, const char* fileName) {
+__host__ void d24GPU::setVehParamsJSON(VehicleParam& v_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 

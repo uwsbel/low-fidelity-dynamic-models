@@ -9,10 +9,10 @@
 #include "rapidjson/document.h"
 #include "rapidjson/filereadstream.h"
 
-using namespace d18;
+using namespace d18GPU;
 
 // Returns drive torque at a given omega
-__device__ double d18::driveTorque(const VehicleParam* v_params, const double throttle, const double motor_speed) {
+__device__ double d18GPU::driveTorque(const VehicleParam* v_params, const double throttle, const double motor_speed) {
     double motor_torque = 0.;
     // If we have throttle modulation like in a motor
     if (v_params->_throttleMod) {
@@ -39,12 +39,12 @@ __device__ double d18::driveTorque(const VehicleParam* v_params, const double th
 
 // Function that calculates the torque split to each tire based on the
 // differential max bias Exactly the same as Chrono implementation
-__device__ void d18::differentialSplit(double torque,
-                                       double max_bias,
-                                       double speed_left,
-                                       double speed_right,
-                                       double* torque_left,
-                                       double* torque_right) {
+__device__ void d18GPU::differentialSplit(double torque,
+                                          double max_bias,
+                                          double speed_left,
+                                          double speed_right,
+                                          double* torque_left,
+                                          double* torque_right) {
     double diff = abs(speed_left - speed_right);
 
     // The bias grows from 1 at diff=0.25 to max_bias at diff=0.5
@@ -68,14 +68,14 @@ __device__ void d18::differentialSplit(double torque,
     }
 }
 
-__device__ void d18::vehToTireTransform(TMeasyState* tirelf_st,
-                                        TMeasyState* tirerf_st,
-                                        TMeasyState* tirelr_st,
-                                        TMeasyState* tirerr_st,
-                                        const VehicleState* v_states,
-                                        const double* loads,
-                                        const VehicleParam* v_params,
-                                        double steering) {
+__device__ void d18GPU::vehToTireTransform(TMeasyState* tirelf_st,
+                                           TMeasyState* tirerf_st,
+                                           TMeasyState* tirelr_st,
+                                           TMeasyState* tirerr_st,
+                                           const VehicleState* v_states,
+                                           const double* loads,
+                                           const VehicleParam* v_params,
+                                           double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
     if (v_params->_nonLinearSteer) {
@@ -109,14 +109,14 @@ __device__ void d18::vehToTireTransform(TMeasyState* tirelf_st,
 }
 
 // Vehicle to tire transform overload for TMeasy tire without relaxation
-__device__ void d18::vehToTireTransform(TMeasyNrState* tirelf_st,
-                                        TMeasyNrState* tirerf_st,
-                                        TMeasyNrState* tirelr_st,
-                                        TMeasyNrState* tirerr_st,
-                                        const VehicleState* v_states,
-                                        const double* loads,
-                                        const VehicleParam* v_params,
-                                        double steering) {
+__device__ void d18GPU::vehToTireTransform(TMeasyNrState* tirelf_st,
+                                           TMeasyNrState* tirerf_st,
+                                           TMeasyNrState* tirelr_st,
+                                           TMeasyNrState* tirerr_st,
+                                           const VehicleState* v_states,
+                                           const double* loads,
+                                           const VehicleParam* v_params,
+                                           double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
     if (v_params->_nonLinearSteer) {
@@ -149,13 +149,13 @@ __device__ void d18::vehToTireTransform(TMeasyNrState* tirelf_st,
     tirerr_st->_vsx = v_states->_u + (v_states->_wz * v_params->_cr) / 2.;
 }
 
-__device__ void d18::tireToVehTransform(TMeasyState* tirelf_st,
-                                        TMeasyState* tirerf_st,
-                                        TMeasyState* tirelr_st,
-                                        TMeasyState* tirerr_st,
-                                        const VehicleState* v_states,
-                                        const VehicleParam* v_params,
-                                        double steering) {
+__device__ void d18GPU::tireToVehTransform(TMeasyState* tirelf_st,
+                                           TMeasyState* tirerf_st,
+                                           TMeasyState* tirelr_st,
+                                           TMeasyState* tirerr_st,
+                                           const VehicleState* v_states,
+                                           const VehicleParam* v_params,
+                                           double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
     if (v_params->_nonLinearSteer) {
@@ -184,13 +184,13 @@ __device__ void d18::tireToVehTransform(TMeasyState* tirelf_st,
     // rear tires - No steer so no need to transform
 }
 
-__device__ void d18::tireToVehTransform(TMeasyNrState* tirelf_st,
-                                        TMeasyNrState* tirerf_st,
-                                        TMeasyNrState* tirelr_st,
-                                        TMeasyNrState* tirerr_st,
-                                        const VehicleState* v_states,
-                                        const VehicleParam* v_params,
-                                        double steering) {
+__device__ void d18GPU::tireToVehTransform(TMeasyNrState* tirelf_st,
+                                           TMeasyNrState* tirerf_st,
+                                           TMeasyNrState* tirelr_st,
+                                           TMeasyNrState* tirerr_st,
+                                           const VehicleState* v_states,
+                                           const VehicleParam* v_params,
+                                           double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
     if (v_params->_nonLinearSteer) {
@@ -224,7 +224,7 @@ __device__ void d18::tireToVehTransform(TMeasyNrState* tirelf_st,
 // -----------------------------------------------------------
 
 // Code for the TM easy tire model implemented with the 8DOF model
-__device__ __host__ void d18::tireInit(TMeasyParam* t_params) {
+__device__ __host__ void d18GPU::tireInit(TMeasyParam* t_params) {
     // calculates some critical values that are needed
     t_params->_fzRdynco = (t_params->_pn * (t_params->_rdyncoP2n - 2.0 * t_params->_rdyncoPn + 1.)) /
                           (2. * (t_params->_rdyncoP2n - t_params->_rdyncoPn));
@@ -232,7 +232,7 @@ __device__ __host__ void d18::tireInit(TMeasyParam* t_params) {
     t_params->_rdyncoCrit = InterpL(t_params->_fzRdynco, t_params->_rdyncoPn, t_params->_rdyncoP2n, t_params->_pn);
 }
 
-__device__ __host__ void d18::tireInit(TMeasyNrParam* t_params) {
+__device__ __host__ void d18GPU::tireInit(TMeasyNrParam* t_params) {
     // calculates some critical values that are needed
     t_params->_fzRdynco = (t_params->_pn * (t_params->_rdyncoP2n - 2.0 * t_params->_rdyncoPn + 1.)) /
                           (2. * (t_params->_rdyncoP2n - t_params->_rdyncoPn));
@@ -241,7 +241,7 @@ __device__ __host__ void d18::tireInit(TMeasyNrParam* t_params) {
 }
 
 __device__ void
-d18::tmxy_combined(double* f, double* fos, double s, double df0, double sm, double fm, double ss, double fs) {
+d18GPU::tmxy_combined(double* f, double* fos, double s, double df0, double sm, double fm, double ss, double fs) {
     double df0loc = 0.0;
     if (sm > 0.0) {
         df0loc = max(2.0 * fm / sm, df0);
@@ -284,8 +284,13 @@ d18::tmxy_combined(double* f, double* fos, double s, double df0, double sm, doub
     }
 }
 
-__device__ void
-d18::computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb) {
+__device__ void d18GPU::computeCombinedColumbForce(double* fx,
+                                                   double* fy,
+                                                   double mu,
+                                                   double vsx,
+                                                   double vsy,
+                                                   double fz,
+                                                   double vcoulomb) {
     *fx = tanh(-2.0 * vsx / vcoulomb) * fz * mu;
     *fy = tanh(-2.0 * vsy / vcoulomb) * fz * mu;
 
@@ -297,10 +302,10 @@ d18::computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, d
     }
 }
 
-__device__ void d18::computeTireLoads(double* loads,
-                                      const VehicleState* v_states,
-                                      const VehicleParam* v_params,
-                                      const TMeasyParam* t_params) {
+__device__ void d18GPU::computeTireLoads(double* loads,
+                                         const VehicleState* v_states,
+                                         const VehicleParam* v_params,
+                                         const TMeasyParam* t_params) {
     double huf = t_params->_r0;
     double hur = t_params->_r0;
 
@@ -334,10 +339,10 @@ __device__ void d18::computeTireLoads(double* loads,
     loads[3] = (Z1 + Z2 + Z3 + Z4) > 0. ? (Z1 + Z2 + Z3 + Z4) : 0.;  // rr
 }
 
-__device__ void d18::computeTireLoads(double* loads,
-                                      const VehicleState* v_states,
-                                      const VehicleParam* v_params,
-                                      const TMeasyNrParam* t_params) {
+__device__ void d18GPU::computeTireLoads(double* loads,
+                                         const VehicleState* v_states,
+                                         const VehicleParam* v_params,
+                                         const TMeasyNrParam* t_params) {
     double huf = t_params->_r0;
     double hur = t_params->_r0;
 
@@ -371,10 +376,10 @@ __device__ void d18::computeTireLoads(double* loads,
     loads[3] = (Z1 + Z2 + Z3 + Z4) > 0. ? (Z1 + Z2 + Z3 + Z4) : 0.;  // rr
 }
 
-__device__ void d18::computeTireRHS(TMeasyState* t_states,
-                                    const TMeasyParam* t_params,
-                                    const VehicleParam* v_params,
-                                    double steering) {
+__device__ void d18GPU::computeTireRHS(TMeasyState* t_states,
+                                       const TMeasyParam* t_params,
+                                       const VehicleParam* v_params,
+                                       double steering) {
     double delta = 0;
     if (v_params->_nonLinearSteer) {
         // Extract steer map
@@ -524,10 +529,10 @@ __device__ void d18::computeTireRHS(TMeasyState* t_states,
     t_states->_fy = weighty * fystr + (1. - weighty) * fydyn;
 }
 
-__device__ void d18::computeTireRHS(TMeasyNrState* t_states,
-                                    const TMeasyNrParam* t_params,
-                                    const VehicleParam* v_params,
-                                    double steering) {
+__device__ void d18GPU::computeTireRHS(TMeasyNrState* t_states,
+                                       const TMeasyNrParam* t_params,
+                                       const VehicleParam* v_params,
+                                       double steering) {
     double delta = 0;
     if (v_params->_nonLinearSteer) {
         // Extract steer map
@@ -656,14 +661,14 @@ __device__ void d18::computeTireRHS(TMeasyNrState* t_states,
     t_states->_fy = Fy;
 }
 
-__device__ void d18::computePowertrainRHS(VehicleState* v_states,
-                                          TMeasyState* tirelf_st,
-                                          TMeasyState* tirerf_st,
-                                          TMeasyState* tirelr_st,
-                                          TMeasyState* tirerr_st,
-                                          const VehicleParam* v_params,
-                                          const TMeasyParam* t_params,
-                                          const DriverInput* controls) {
+__device__ void d18GPU::computePowertrainRHS(VehicleState* v_states,
+                                             TMeasyState* tirelf_st,
+                                             TMeasyState* tirerf_st,
+                                             TMeasyState* tirelr_st,
+                                             TMeasyState* tirerr_st,
+                                             const VehicleParam* v_params,
+                                             const TMeasyParam* t_params,
+                                             const DriverInput* controls) {
     // some variables needed outside
     double torque_t = 0;
     double max_bias = 2;
@@ -833,14 +838,14 @@ __device__ void d18::computePowertrainRHS(VehicleState* v_states,
                                                 tirerr_st->_fx * tirerr_st->_rStat);
 }
 
-__device__ void d18::computePowertrainRHS(VehicleState* v_states,
-                                          TMeasyNrState* tirelf_st,
-                                          TMeasyNrState* tirerf_st,
-                                          TMeasyNrState* tirelr_st,
-                                          TMeasyNrState* tirerr_st,
-                                          const VehicleParam* v_params,
-                                          const TMeasyNrParam* t_params,
-                                          const DriverInput* controls) {
+__device__ void d18GPU::computePowertrainRHS(VehicleState* v_states,
+                                             TMeasyNrState* tirelf_st,
+                                             TMeasyNrState* tirerf_st,
+                                             TMeasyNrState* tirelr_st,
+                                             TMeasyNrState* tirerr_st,
+                                             const VehicleParam* v_params,
+                                             const TMeasyNrParam* t_params,
+                                             const DriverInput* controls) {
     // some variables needed outside
     double torque_t = 0;
     double max_bias = 2;
@@ -1009,10 +1014,10 @@ __device__ void d18::computePowertrainRHS(VehicleState* v_states,
                                                 tirerr_st->_fx * tirerr_st->_rStat);
 }
 
-__device__ void d18::computeVehRHS(VehicleState* v_states,
-                                   const VehicleParam* v_params,
-                                   const double* fx,
-                                   const double* fy) {
+__device__ void d18GPU::computeVehRHS(VehicleState* v_states,
+                                      const VehicleParam* v_params,
+                                      const double* fx,
+                                      const double* fy) {
     // get the total mass of the vehicle and the vertical distance from the
     // sprung mass C.M. to the vehicle
     double mt = v_params->_m + 2 * (v_params->_muf + v_params->_mur);
@@ -1075,7 +1080,7 @@ __device__ void d18::computeVehRHS(VehicleState* v_states,
 // ---------------------------------------------------------
 
 // setting Vehicle parameters using a JSON file
-__host__ void d18::setVehParamsJSON(VehicleParam& v_params, const char* fileName) {
+__host__ void d18GPU::setVehParamsJSON(VehicleParam& v_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
@@ -1222,7 +1227,7 @@ __host__ void d18::setVehParamsJSON(VehicleParam& v_params, const char* fileName
 }
 
 // setting Tire parameters using a JSON file
-__host__ void d18::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
+__host__ void d18GPU::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
@@ -1279,7 +1284,7 @@ __host__ void d18::setTireParamsJSON(TMeasyParam& t_params, const char* fileName
 }
 
 // setting Tire parameters using a JSON file for a TMeasyNr
-__host__ void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
+__host__ void d18GPU::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
     // Open the file
     FILE* fp = fopen(fileName, "r");
 
@@ -1471,7 +1476,7 @@ __host__ void d18::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileNa
 // can get from a spec sheet These functions are directly copy pasted from Chrono with minor modifications
 
 // Function to compute the max tire load from the load index specified by the user
-__host__ double d18::GetTireMaxLoad(unsigned int li) {
+__host__ double d18GPU::GetTireMaxLoad(unsigned int li) {
     double Weight_per_Tire[] = {
         45,    46.5,  47.5,   48.7,   50,     51.5,   53,     54.5,   56,     58,     60,     61.5,   63,     65,
         67,    69,    71,     73,     75,     77.5,   80.0,   82.5,   85.0,   87.5,   90.0,   92.5,   95.0,   97.5,
@@ -1506,24 +1511,24 @@ __host__ double d18::GetTireMaxLoad(unsigned int li) {
 }
 
 // Guessing tire parameters for a truck tire
-__host__ void d18::GuessTruck80Par(unsigned int li,          // tire load index
-                                   double tireWidth,         // [m]
-                                   double ratio,             // [] = use 0.75 meaning 75%
-                                   double rimDia,            // rim diameter [m]
-                                   double pinfl_li,          // inflation pressure at load index
-                                   double pinfl_use,         // inflation pressure in this configuration
-                                   TMeasyNrParam& t_params)  // damping ratio
+__host__ void d18GPU::GuessTruck80Par(unsigned int li,          // tire load index
+                                      double tireWidth,         // [m]
+                                      double ratio,             // [] = use 0.75 meaning 75%
+                                      double rimDia,            // rim diameter [m]
+                                      double pinfl_li,          // inflation pressure at load index
+                                      double pinfl_use,         // inflation pressure in this configuration
+                                      TMeasyNrParam& t_params)  // damping ratio
 {
     double tireLoad = GetTireMaxLoad(li);
     GuessTruck80Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
 }
-__host__ void d18::GuessTruck80Par(double tireLoad,   // tire load index
-                                   double tireWidth,  // [m]
-                                   double ratio,      // [] = use 0.75 meaning 75%
-                                   double rimDia,     // rim diameter [m]
-                                   double pinfl_li,   // inflation pressure at load index
-                                   double pinfl_use,  // inflation pressure in this configuration
-                                   TMeasyNrParam& t_params) {
+__host__ void d18GPU::GuessTruck80Par(double tireLoad,   // tire load index
+                                      double tireWidth,  // [m]
+                                      double ratio,      // [] = use 0.75 meaning 75%
+                                      double rimDia,     // rim diameter [m]
+                                      double pinfl_li,   // inflation pressure at load index
+                                      double pinfl_use,  // inflation pressure in this configuration
+                                      TMeasyNrParam& t_params) {
     // damping ratio{
     double secth = tireWidth * ratio;  // tire section height
     double defl_max = 0.16 * secth;    // deflection at tire payload
@@ -1563,26 +1568,26 @@ __host__ void d18::GuessTruck80Par(double tireLoad,   // tire load index
 }
 
 // Guessing tire parameters for a passenger car
-__host__ void d18::GuessPassCar70Par(unsigned int li,          // tire load index
-                                     double tireWidth,         // [m]
-                                     double ratio,             // [] = use 0.75 meaning 75%
-                                     double rimDia,            // rim diameter [m]
-                                     double pinfl_li,          // inflation pressure at load index
-                                     double pinfl_use,         // inflation pressure in this configuration
-                                     TMeasyNrParam& t_params)  // damping ratio
+__host__ void d18GPU::GuessPassCar70Par(unsigned int li,          // tire load index
+                                        double tireWidth,         // [m]
+                                        double ratio,             // [] = use 0.75 meaning 75%
+                                        double rimDia,            // rim diameter [m]
+                                        double pinfl_li,          // inflation pressure at load index
+                                        double pinfl_use,         // inflation pressure in this configuration
+                                        TMeasyNrParam& t_params)  // damping ratio
 {
     double tireLoad = GetTireMaxLoad(li);
     GuessPassCar70Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
 }
-__host__ void d18::GuessPassCar70Par(double tireLoad,            // tire load index
-                                     double tireWidth,           // [m]
-                                     double ratio,               // [] = use 0.75 meaning 75%
-                                     double rimDia,              // rim diameter [m]
-                                     double pinfl_li,            // inflation pressure at load index
-                                     double pinfl_use,           // inflation pressure in this configuration
-                                     TMeasyNrParam& t_params) {  // damping ratio
-    double secth = tireWidth * ratio;                            // tire section height
-    double defl_max = 0.16 * secth;                              // deflection at tire payload
+__host__ void d18GPU::GuessPassCar70Par(double tireLoad,            // tire load index
+                                        double tireWidth,           // [m]
+                                        double ratio,               // [] = use 0.75 meaning 75%
+                                        double rimDia,              // rim diameter [m]
+                                        double pinfl_li,            // inflation pressure at load index
+                                        double pinfl_use,           // inflation pressure in this configuration
+                                        TMeasyNrParam& t_params) {  // damping ratio
+    double secth = tireWidth * ratio;                               // tire section height
+    double defl_max = 0.16 * secth;                                 // deflection at tire payload
 
     t_params._pn = 0.5 * tireLoad * pow(pinfl_use / pinfl_li, 0.8);
     t_params._pnmax = 3.5 * t_params._pn;

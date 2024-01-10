@@ -9,7 +9,7 @@
 #include "dof11_gpu.cuh"
 #include "dof11_halfImplicit_gpu.cuh"
 
-using namespace d11;
+using namespace d11GPU;
 // ======================================================================================================================
 __host__ d11SolverHalfImplicitGPU::d11SolverHalfImplicitGPU(unsigned int total_num_vehicles)
     : m_step(0.001),
@@ -23,10 +23,10 @@ __host__ d11SolverHalfImplicitGPU::d11SolverHalfImplicitGPU(unsigned int total_n
     m_total_num_vehicles = total_num_vehicles;
 
     // Allocate memory for the simData and simStates
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data, sizeof(d11::SimData) * m_total_num_vehicles));
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data_nr, sizeof(d11::SimDataNr) * m_total_num_vehicles));
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states, sizeof(d11::SimState) * m_total_num_vehicles));
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states_nr, sizeof(d11::SimStateNr) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data, sizeof(d11GPU::SimData) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data_nr, sizeof(d11GPU::SimDataNr) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states, sizeof(d11GPU::SimState) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states_nr, sizeof(d11GPU::SimStateNr) * m_total_num_vehicles));
 
     // Set device and host arrays to nullptrs in case SetOutput is not called by the user
     m_device_response = nullptr;
@@ -68,8 +68,8 @@ __host__ void d11SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
     // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them up
     // and then copy them over to the simData structs
-    d11::VehicleParam veh_param;
-    d11::TMeasyParam tire_param;
+    d11GPU::VehicleParam veh_param;
+    d11GPU::TMeasyParam tire_param;
 
     setVehParamsJSON(veh_param, vehicle_params_file.c_str());
     setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -117,8 +117,8 @@ __host__ void d11SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d11::VehicleParam veh_param;
-        d11::TMeasyParam tire_param;
+        d11GPU::VehicleParam veh_param;
+        d11GPU::TMeasyParam tire_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -153,8 +153,8 @@ __host__ void d11SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d11::VehicleParam veh_param;
-        d11::TMeasyNrParam tire_param;
+        d11GPU::VehicleParam veh_param;
+        d11GPU::TMeasyNrParam tire_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -200,8 +200,8 @@ __host__ void d11SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
     // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them up
     // and then copy them over to the simData structs
-    d11::VehicleParam veh_param;
-    d11::TMeasyParam tire_param;
+    d11GPU::VehicleParam veh_param;
+    d11GPU::TMeasyParam tire_param;
 
     setVehParamsJSON(veh_param, vehicle_params_file.c_str());
     setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -238,8 +238,8 @@ __host__ void d11SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d11::VehicleParam veh_param;
-        d11::TMeasyParam tire_param;
+        d11GPU::VehicleParam veh_param;
+        d11GPU::TMeasyParam tire_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -265,8 +265,8 @@ __host__ void d11SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d11::VehicleParam veh_param;
-        d11::TMeasyNrParam tire_param;
+        d11GPU::VehicleParam veh_param;
+        d11GPU::TMeasyNrParam tire_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -287,9 +287,9 @@ __host__ void d11SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
 // ======================================================================================================================
 
-void d11SolverHalfImplicitGPU::Initialize(d11::VehicleState& vehicle_states,
-                                          d11::TMeasyState& tire_states_F,
-                                          d11::TMeasyState& tire_states_R,
+void d11SolverHalfImplicitGPU::Initialize(d11GPU::VehicleState& vehicle_states,
+                                          d11GPU::TMeasyState& tire_states_F,
+                                          d11GPU::TMeasyState& tire_states_R,
                                           unsigned int num_vehicles) {
     // Esnure that construct was called with TMeasy tire type
     assert((m_tire_type == TireType::TMeasy) &&
@@ -308,9 +308,9 @@ void d11SolverHalfImplicitGPU::Initialize(d11::VehicleState& vehicle_states,
                                           0));  // move the simState onto the GPU
 }
 
-void d11SolverHalfImplicitGPU::Initialize(d11::VehicleState& vehicle_states,
-                                          d11::TMeasyNrState& tire_states_F,
-                                          d11::TMeasyNrState& tire_states_R,
+void d11SolverHalfImplicitGPU::Initialize(d11GPU::VehicleState& vehicle_states,
+                                          d11GPU::TMeasyNrState& tire_states_F,
+                                          d11GPU::TMeasyNrState& tire_states_R,
                                           unsigned int num_vehicles) {
     // Esnure that construct was called with TMeasyNr tire type
     assert((m_tire_type == TireType::TMeasyNr) &&
@@ -701,8 +701,8 @@ __device__ void rhsFun(double t, unsigned int total_num_vehicles, SimData* sim_d
 //======================================================================================================================
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d11::SimData* sim_data,
-                       d11::SimState* sim_states,
+                       d11GPU::SimData* sim_data,
+                       d11GPU::SimState* sim_states,
                        double steering,
                        double throttle,
                        double braking) {
@@ -749,8 +749,8 @@ __device__ void rhsFun(double t,
 
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d11::SimDataNr* sim_data_nr,
-                       d11::SimStateNr* sim_states_nr) {  // Get the vehicle index
+                       d11GPU::SimDataNr* sim_data_nr,
+                       d11GPU::SimStateNr* sim_states_nr) {  // Get the vehicle index
     unsigned int vehicle_index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (vehicle_index < total_num_vehicles) {
@@ -790,8 +790,8 @@ __device__ void rhsFun(double t,
 
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d11::SimDataNr* sim_data_nr,
-                       d11::SimStateNr* sim_states_nr,
+                       d11GPU::SimDataNr* sim_data_nr,
+                       d11GPU::SimStateNr* sim_states_nr,
                        double steering,
                        double throttle,
                        double braking) {  // Get the vehicle index
@@ -842,8 +842,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d11::SimData* sim_data,
-                          d11::SimState* sim_states) {
+                          d11GPU::SimData* sim_data,
+                          d11GPU::SimState* sim_states) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -858,10 +858,10 @@ __global__ void Integrate(double current_time,
             // Integrate according to explicit method for first order states
 
             // Extract the states of the vehicle and the tires
-            d11::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
-            d11::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
-            d11::TMeasyState& tiref_st = sim_states[vehicle_id]._tiref_state;
-            d11::TMeasyState& tirer_st = sim_states[vehicle_id]._tirer_state;
+            d11GPU::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
+            d11GPU::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
+            d11GPU::TMeasyState& tiref_st = sim_states[vehicle_id]._tiref_state;
+            d11GPU::TMeasyState& tirer_st = sim_states[vehicle_id]._tirer_state;
 
             // First the tire states
             // F
@@ -926,8 +926,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d11::SimData* sim_data,
-                          d11::SimState* sim_states) {
+                          d11GPU::SimData* sim_data,
+                          d11GPU::SimState* sim_states) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -942,10 +942,10 @@ __global__ void Integrate(double current_time,
             // Integrate according to explicit method for first order states
 
             // Extract the states of the vehicle and the tires
-            d11::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
-            d11::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
-            d11::TMeasyState& tiref_st = sim_states[vehicle_id]._tiref_state;
-            d11::TMeasyState& tirer_st = sim_states[vehicle_id]._tirer_state;
+            d11GPU::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
+            d11GPU::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
+            d11GPU::TMeasyState& tiref_st = sim_states[vehicle_id]._tiref_state;
+            d11GPU::TMeasyState& tirer_st = sim_states[vehicle_id]._tirer_state;
 
             // First the tire states
             // F
@@ -1008,8 +1008,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d11::SimDataNr* sim_data,
-                          d11::SimStateNr* sim_states) {
+                          d11GPU::SimDataNr* sim_data,
+                          d11GPU::SimStateNr* sim_states) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -1024,10 +1024,10 @@ __global__ void Integrate(double current_time,
             // Integrate according to explicit method for first order states
 
             // Extract the states of the vehicle and the tires
-            d11::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
-            d11::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
-            d11::TMeasyNrState& tiref_st = sim_states[vehicle_id]._tiref_state;
-            d11::TMeasyNrState& tirer_st = sim_states[vehicle_id]._tirer_state;
+            d11GPU::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
+            d11GPU::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
+            d11GPU::TMeasyNrState& tiref_st = sim_states[vehicle_id]._tiref_state;
+            d11GPU::TMeasyNrState& tirer_st = sim_states[vehicle_id]._tirer_state;
 
             // First the tire states
             // F
@@ -1088,8 +1088,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d11::SimDataNr* sim_data,
-                          d11::SimStateNr* sim_states) {
+                          d11GPU::SimDataNr* sim_data,
+                          d11GPU::SimStateNr* sim_states) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -1104,10 +1104,10 @@ __global__ void Integrate(double current_time,
             // Integrate according to explicit method for first order states
 
             // Extract the states of the vehicle and the tires
-            d11::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
-            d11::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
-            d11::TMeasyNrState& tiref_st = sim_states[vehicle_id]._tiref_state;
-            d11::TMeasyNrState& tirer_st = sim_states[vehicle_id]._tirer_state;
+            d11GPU::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
+            d11GPU::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
+            d11GPU::TMeasyNrState& tiref_st = sim_states[vehicle_id]._tiref_state;
+            d11GPU::TMeasyNrState& tirer_st = sim_states[vehicle_id]._tirer_state;
 
             // First the tire states
             // F

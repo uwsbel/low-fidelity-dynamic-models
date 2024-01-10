@@ -8,7 +8,7 @@
 #include "utils_gpu.cuh"
 // enum to decide what type of tire we have
 enum class TireType { TMeasy, TMeasyNr };
-namespace d11 {
+namespace d11GPU {
 
 // TMeasy parameter structure
 struct TMeasyParam {
@@ -783,6 +783,6 @@ __host__ void GuessPassCar70Par(double tireLoad,
                                 double pinfl_use,
                                 TMeasyNrParam& t_params);
 
-}  // namespace d11
+}  // namespace d11GPU
 
 #endif

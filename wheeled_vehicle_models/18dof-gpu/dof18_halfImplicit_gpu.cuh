@@ -112,11 +112,11 @@ class d18SolverHalfImplicitGPU {
     /// @param tire_states_LR Left Rear (LR) TMeasy tire states
     /// @param tire_states_RR Right Rear (RR) TMeasy tire states
     /// @param num_vehicles Number of vehicles to be simulated with the specified states
-    __host__ void Initialize(d18::VehicleState& vehicle_states,
-                             d18::TMeasyState& tire_states_LF,
-                             d18::TMeasyState& tire_states_RF,
-                             d18::TMeasyState& tire_states_LR,
-                             d18::TMeasyState& tire_states_RR,
+    __host__ void Initialize(d18GPU::VehicleState& vehicle_states,
+                             d18GPU::TMeasyState& tire_states_LF,
+                             d18GPU::TMeasyState& tire_states_RF,
+                             d18GPU::TMeasyState& tire_states_LR,
+                             d18GPU::TMeasyState& tire_states_RR,
                              unsigned int num_vehicles);
     /// @brief Initialize vehicle and tire states. This function has to be called before solve and after construct.
     /// Although it is possible to provide non-zero intial states, this is untested and it is recommended to use the
@@ -127,11 +127,11 @@ class d18SolverHalfImplicitGPU {
     /// @param tire_states_LR Left Rear (LR) TMeasyNr tire states
     /// @param tire_states_RR Right Rear (RR) TMeasyNr tire states
     /// @param num_vehicles Number of vehicles to be simulated with the specified states
-    __host__ void Initialize(d18::VehicleState& vehicle_states,
-                             d18::TMeasyNrState& tire_states_LF,
-                             d18::TMeasyNrState& tire_states_RF,
-                             d18::TMeasyNrState& tire_states_LR,
-                             d18::TMeasyNrState& tire_states_RR,
+    __host__ void Initialize(d18GPU::VehicleState& vehicle_states,
+                             d18GPU::TMeasyNrState& tire_states_LF,
+                             d18GPU::TMeasyNrState& tire_states_RF,
+                             d18GPU::TMeasyNrState& tire_states_LR,
+                             d18GPU::TMeasyNrState& tire_states_RR,
                              unsigned int num_vehicles);
 
     /// @brief When using the IntegrateStep, once the integration is complete, this function can be used to Write the
@@ -141,15 +141,15 @@ class d18SolverHalfImplicitGPU {
     /// @brief Get a SimState object for a particular vehicle
     /// @param vehicle_index Index of the vehicle
     /// @return SimState object for the vehicle
-    __host__ d18::SimState GetSimState(unsigned int vehicle_index);
+    __host__ d18GPU::SimState GetSimState(unsigned int vehicle_index);
     /// @brief Get Tire type
     /// @return Tire type used in the solver
     TireType GetTireType() const { return m_tire_type; }
 
-    d18::SimData* m_sim_data;          ///< Simulation data for all the vehicles
-    d18::SimDataNr* m_sim_data_nr;     ///< Simulation data but with the TMeasyNr tire for all the vehicles
-    d18::SimState* m_sim_states;       ///< Simulation states for all the vehicles
-    d18::SimStateNr* m_sim_states_nr;  ///< Simulation states but with the TMeasyNr tire for all the vehicles
+    d18GPU::SimData* m_sim_data;          ///< Simulation data for all the vehicles
+    d18GPU::SimDataNr* m_sim_data_nr;     ///< Simulation data but with the TMeasyNr tire for all the vehicles
+    d18GPU::SimState* m_sim_states;       ///< Simulation states for all the vehicles
+    d18GPU::SimStateNr* m_sim_states_nr;  ///< Simulation states but with the TMeasyNr tire for all the vehicles
 
     double m_kernel_sim_time;  ///< The maximum time a kernel launch simulates a vehicle. This is set for memory
                                // constraints as we are required to store the states of the vehicle in device array
@@ -289,8 +289,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d18::SimDataNr* sim_data_nr,
-                          d18::SimStateNr* sim_states_nr);
+                          d18GPU::SimDataNr* sim_data_nr,
+                          d18GPU::SimStateNr* sim_states_nr);
 // For the case where the dirver inputs are provided at each time step
 __global__ void Integrate(double current_time,
                           double steering,
@@ -303,8 +303,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d18::SimDataNr* sim_data_nr,
-                          d18::SimStateNr* sim_states_nr);
+                          d18GPU::SimDataNr* sim_data_nr,
+                          d18GPU::SimStateNr* sim_states_nr);
 __global__ void Integrate(double current_time,
                           double kernel_sim_time,
                           double step,
@@ -313,8 +313,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d18::SimData* sim_data,
-                          d18::SimState* sim_states);
+                          d18GPU::SimData* sim_data,
+                          d18GPU::SimState* sim_states);
 __global__ void Integrate(double current_time,
                           double steering,
                           double throttle,
@@ -326,29 +326,32 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d18::SimData* sim_data,
-                          d18::SimState* sim_states);
+                          d18GPU::SimData* sim_data,
+                          d18GPU::SimState* sim_states);
 //===================================================================================================================
 // Integrate calss rhsFun so this also cannot be a class member function
 /// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations)
 /// @param t Current time
-__device__ void rhsFun(double t, unsigned int total_num_vehicles, d18::SimData* sim_data, d18::SimState* sim_states);
+__device__ void rhsFun(double t,
+                       unsigned int total_num_vehicles,
+                       d18GPU::SimData* sim_data,
+                       d18GPU::SimState* sim_states);
 // For the case where the dirver inputs are provided at each time step
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d18::SimData* sim_data,
-                       d18::SimState* sim_states,
+                       d18GPU::SimData* sim_data,
+                       d18GPU::SimState* sim_states,
                        double steering,
                        double throttle,
                        double braking);
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d18::SimDataNr* sim_data_nr,
-                       d18::SimStateNr* sim_states_nr);
+                       d18GPU::SimDataNr* sim_data_nr,
+                       d18GPU::SimStateNr* sim_states_nr);
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d18::SimDataNr* sim_data_nr,
-                       d18::SimStateNr* sim_states_nr,
+                       d18GPU::SimDataNr* sim_data_nr,
+                       d18GPU::SimStateNr* sim_states_nr,
                        double steering,
                        double throttle,
                        double braking);
@@ -364,8 +367,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d18::SimData* sim_data,
-                          d18::SimState* sim_states) {
+                          d18GPU::SimData* sim_data,
+                          d18GPU::SimState* sim_states) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -380,12 +383,12 @@ __global__ void Integrate(double current_time,
             // Integrate according to explicit method for first order states
 
             // Extract the states of the vehicle and the tires
-            d18::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
-            d18::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
-            d18::TMeasyState& tirelf_st = sim_states[vehicle_id]._tirelf_state;
-            d18::TMeasyState& tirerf_st = sim_states[vehicle_id]._tirerf_state;
-            d18::TMeasyState& tirelr_st = sim_states[vehicle_id]._tirelr_state;
-            d18::TMeasyState& tirerr_st = sim_states[vehicle_id]._tirerr_state;
+            d18GPU::VehicleState& v_states = sim_states[vehicle_id]._veh_state;
+            d18GPU::VehicleParam& veh_param = sim_data[vehicle_id]._veh_param;
+            d18GPU::TMeasyState& tirelf_st = sim_states[vehicle_id]._tirelf_state;
+            d18GPU::TMeasyState& tirerf_st = sim_states[vehicle_id]._tirerf_state;
+            d18GPU::TMeasyState& tirelr_st = sim_states[vehicle_id]._tirelr_state;
+            d18GPU::TMeasyState& tirerr_st = sim_states[vehicle_id]._tirerr_state;
 
             // First the tire states
             // LF
@@ -463,8 +466,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d18::SimDataNr* sim_data_nr,
-                          d18::SimStateNr* sim_states_nr) {
+                          d18GPU::SimDataNr* sim_data_nr,
+                          d18GPU::SimStateNr* sim_states_nr) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -476,12 +479,12 @@ __global__ void Integrate(double current_time,
             // Call the RHS to get accelerations for all the vehicles
             rhsFun(t, total_num_vehicles, sim_data_nr, sim_states_nr, func);
             // Extract the states of the vehicle and the tires
-            d18::VehicleState& v_states = sim_states_nr[vehicle_id]._veh_state;
-            d18::VehicleParam& veh_param = sim_data_nr[vehicle_id]._veh_param;
-            d18::TMeasyNrState& tirelf_st = sim_states_nr[vehicle_id]._tirelf_state;
-            d18::TMeasyNrState& tirerf_st = sim_states_nr[vehicle_id]._tirerf_state;
-            d18::TMeasyNrState& tirelr_st = sim_states_nr[vehicle_id]._tirelr_state;
-            d18::TMeasyNrState& tirerr_st = sim_states_nr[vehicle_id]._tirerr_state;
+            d18GPU::VehicleState& v_states = sim_states_nr[vehicle_id]._veh_state;
+            d18GPU::VehicleParam& veh_param = sim_data_nr[vehicle_id]._veh_param;
+            d18GPU::TMeasyNrState& tirelf_st = sim_states_nr[vehicle_id]._tirelf_state;
+            d18GPU::TMeasyNrState& tirerf_st = sim_states_nr[vehicle_id]._tirerf_state;
+            d18GPU::TMeasyNrState& tirelr_st = sim_states_nr[vehicle_id]._tirelr_state;
+            d18GPU::TMeasyNrState& tirerr_st = sim_states_nr[vehicle_id]._tirerr_state;
 
             // First the tire states
             // LF
@@ -544,21 +547,21 @@ __global__ void Integrate(double current_time,
 template <typename Func>
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d18::SimData* sim_data,
-                       d18::SimState* sim_states,
+                       d18GPU::SimData* sim_data,
+                       d18GPU::SimState* sim_states,
                        Func func) {
     // Get the vehicle index
     unsigned int vehicle_index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (vehicle_index < total_num_vehicles) {
         // All vehicles have one or the other tire type and thus no thread divergence
-        d18::VehicleParam& veh_param = sim_data[vehicle_index]._veh_param;
-        d18::VehicleState& veh_state = sim_states[vehicle_index]._veh_state;
-        d18::TMeasyParam& tireTM_param = sim_data[vehicle_index]._tireTM_param;
-        d18::TMeasyState& tireTMlf_state = sim_states[vehicle_index]._tirelf_state;
-        d18::TMeasyState& tireTMrf_state = sim_states[vehicle_index]._tirerf_state;
-        d18::TMeasyState& tireTMlr_state = sim_states[vehicle_index]._tirelr_state;
-        d18::TMeasyState& tireTMrr_state = sim_states[vehicle_index]._tirerr_state;
+        d18GPU::VehicleParam& veh_param = sim_data[vehicle_index]._veh_param;
+        d18GPU::VehicleState& veh_state = sim_states[vehicle_index]._veh_state;
+        d18GPU::TMeasyParam& tireTM_param = sim_data[vehicle_index]._tireTM_param;
+        d18GPU::TMeasyState& tireTMlf_state = sim_states[vehicle_index]._tirelf_state;
+        d18GPU::TMeasyState& tireTMrf_state = sim_states[vehicle_index]._tirerf_state;
+        d18GPU::TMeasyState& tireTMlr_state = sim_states[vehicle_index]._tirelr_state;
+        d18GPU::TMeasyState& tireTMrr_state = sim_states[vehicle_index]._tirerr_state;
 
         // Get controls at the current timeStep
         DriverInput controls;
@@ -594,20 +597,20 @@ __device__ void rhsFun(double t,
 template <typename Func>
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d18::SimDataNr* sim_data_nr,
-                       d18::SimStateNr* sim_states_nr,
+                       d18GPU::SimDataNr* sim_data_nr,
+                       d18GPU::SimStateNr* sim_states_nr,
                        Func func) {
     // Get the vehicle index
     unsigned int vehicle_index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (vehicle_index < total_num_vehicles) {
-        d18::VehicleParam& veh_param = sim_data_nr[vehicle_index]._veh_param;
-        d18::VehicleState& veh_state = sim_states_nr[vehicle_index]._veh_state;
-        d18::TMeasyNrParam& tireTMNr_param = sim_data_nr[vehicle_index]._tireTMNr_param;
-        d18::TMeasyNrState& tireTMNrlf_state = sim_states_nr[vehicle_index]._tirelf_state;
-        d18::TMeasyNrState& tireTMNrrf_state = sim_states_nr[vehicle_index]._tirerf_state;
-        d18::TMeasyNrState& tireTMNrlr_state = sim_states_nr[vehicle_index]._tirelr_state;
-        d18::TMeasyNrState& tireTMNrrr_state = sim_states_nr[vehicle_index]._tirerr_state;
+        d18GPU::VehicleParam& veh_param = sim_data_nr[vehicle_index]._veh_param;
+        d18GPU::VehicleState& veh_state = sim_states_nr[vehicle_index]._veh_state;
+        d18GPU::TMeasyNrParam& tireTMNr_param = sim_data_nr[vehicle_index]._tireTMNr_param;
+        d18GPU::TMeasyNrState& tireTMNrlf_state = sim_states_nr[vehicle_index]._tirelf_state;
+        d18GPU::TMeasyNrState& tireTMNrrf_state = sim_states_nr[vehicle_index]._tirerf_state;
+        d18GPU::TMeasyNrState& tireTMNrlr_state = sim_states_nr[vehicle_index]._tirelr_state;
+        d18GPU::TMeasyNrState& tireTMNrrr_state = sim_states_nr[vehicle_index]._tirerr_state;
 
         // Use the functor to get the controls for this time step
         DriverInput controls;

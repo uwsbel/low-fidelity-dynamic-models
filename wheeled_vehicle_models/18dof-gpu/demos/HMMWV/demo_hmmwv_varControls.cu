@@ -12,7 +12,7 @@
 
 // Use ./executable_name <threads_per_block>
 
-using namespace d18;
+using namespace d18GPU;
 int main(int argc, char** argv) {
     // Set the total number of vehicles
     unsigned int num_vehicles = 1000;

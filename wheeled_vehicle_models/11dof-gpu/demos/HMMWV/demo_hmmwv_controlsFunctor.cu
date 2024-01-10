@@ -29,7 +29,7 @@ struct MyFunctor {
 
 // Use ./executable_name <total_number_of_vehicles> <threads_per_block>
 
-using namespace d11;
+using namespace d11GPU;
 int main(int argc, char** argv) {
     // Get total number of vehicles from command line
     unsigned int num_vehicles = std::stoul(argv[1]);

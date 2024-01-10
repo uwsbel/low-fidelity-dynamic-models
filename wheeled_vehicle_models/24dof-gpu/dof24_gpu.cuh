@@ -8,7 +8,7 @@
 #include "utils_gpu.cuh"
 // enum to decide what type of tire we have
 enum class TireType { TMeasy, TMeasyNr };
-namespace d24 {
+namespace d24GPU {
 
 // -----------------------------------------------------------------------------
 // Tire Structs
@@ -1157,6 +1157,6 @@ __host__ void setSuspensionParamsJSON(SuspensionParam& sus_params, const char* f
 // Vehicle
 // --------
 __host__ void setVehParamsJSON(VehicleParam& v_params, const char* fileName);
-}  // namespace d24
+}  // namespace d24GPU
 
 #endif
