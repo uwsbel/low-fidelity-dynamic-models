@@ -1,5 +1,5 @@
-#ifndef DOF18_HALFIMPLICIT_H
-#define DOF18_HALFIMPLICIT_H
+#ifndef DOF18_HALFIMPLICIT_GPU_CUH
+#define DOF18_HALFIMPLICIT_GPU_CUH
 
 #include <math.h>
 #include <stdint.h>

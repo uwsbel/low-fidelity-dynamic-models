@@ -1098,8 +1098,6 @@ __host__ void d11GPU::setTireParamsJSON(TMeasyParam& t_params, const char* fileN
     t_params._symP2n = d["symP2n"].GetDouble();
     t_params._sysPn = d["sysPn"].GetDouble();
     t_params._sysP2n = d["sysP2n"].GetDouble();
-
-    t_params._step = d["step"].GetDouble();
 }
 
 // setting Tire parameters using a JSON file for a TMeasyNr

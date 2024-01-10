@@ -48,9 +48,7 @@ struct TMeasyParam {
           _symPn(0.38786),
           _symP2n(0.38786),
           _sysPn(0.82534),
-          _sysP2n(0.91309),
-          _step(1e-2) {}
-
+          _sysP2n(0.91309) {}
     // copy constructorother->_
     __device__ __host__ TMeasyParam(const TMeasyParam* other)
         : _jw(other->_jw),
@@ -120,8 +118,6 @@ struct TMeasyParam {
     double _fysPn, _fysP2n;    // Lateral load at sliding [N]
     double _symPn, _symP2n;    // slip sx at maximum lateral load Fx
     double _sysPn, _sysP2n;    // slip sx where sliding begins
-
-    double _step;  // integration time step
 };
 
 // Tm easy state structure - actual states + things that we need to keep track
