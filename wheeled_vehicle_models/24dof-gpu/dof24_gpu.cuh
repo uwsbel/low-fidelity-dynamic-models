@@ -6,7 +6,9 @@
 #include <stdlib.h>
 
 #include "utils_gpu.cuh"
-// enum to decide what type of tire we have
+/// @brief enum to decide what type of tire is being used. You will need to set this in case you wish to use the TMeasy
+/// tire without relaxation (TMeasyNr where Nr stands for no relaxation). See the HalfImplicit and Sundials solver
+/// documentation for more details
 enum class TireType { TMeasy, TMeasyNr };
 namespace d24GPU {
 
@@ -14,9 +16,16 @@ namespace d24GPU {
 // Tire Structs
 // -----------------------------------------------------------------------------
 
-// TMeasy parameter structure
+/// @brief This tire model is an implementation of the TMeasy tire model developed by Prof. Dr. Georg Rill.
+
+/// The TMeasyParam struct holds all the parameters that are required to define a TMeasy tire. See here for more details
+/// http://www.tmeasy.de/. It is important to note that this implementation within the d24GPU namespace is exactly
+/// the same as the implementation in the d24 namespace. The only difference is that the d24GPU namespace is meant
+/// to be used on the GPU where standard library functions are not available.
 struct TMeasyParam {
-    // constructor that takes default values of HMMWV
+    /// @brief This constructor sets default values for all the parameters in the TMeasyParam struct. The values are an
+    /// okay proxy for a truck tire. It is highly recommended that you set the parameters yourself using the
+    /// SetTireParamsJSON function that is available within this name space.
     __device__ __host__ TMeasyParam()
         : _jw(6.69),
           _rr(0.015),
@@ -54,7 +63,9 @@ struct TMeasyParam {
           _sysPn(0.82534),
           _sysP2n(0.91309) {}
 
-    // copy constructor
+    /// @brief Copy constructor that takes in a pointer to another TMeasyParam struct and copies all the values into the
+    /// new struct
+    /// @param other TMeasyParam struct that is copied into the new struct
     __device__ __host__ TMeasyParam(const TMeasyParam* other)
         : _jw(other->_jw),
           _rr(other->_rr),
@@ -93,41 +104,65 @@ struct TMeasyParam {
           _sysP2n(other->_sysP2n) {}
 
     // basic tire parameters
-    double _jw;  // wheel inertia
-    double _rr;  // rolling resistance of tire
-    double _mu;  // friction constant
-    double _r0;  // unloaded tire radius
+    double _jw;  //!< Wheel inertia
+    double _rr;  //!< Rolling resistance of tire
+    double _mu;  //!< Friction constant
+    double _r0;  //!< Unloaded tire radius
 
     // TM easy specific tire params
-    double _pn, _pnmax;    // nominal and max vertical force
-    double _cx, _cy, _kt;  // longitudinal, lateral and vertical stiffness
-    double _dx, _dy;       // longitudinal and lateral damping coeffs. No vertical damping
+    double _pn;     //!< Nominal vertical force
+    double _pnmax;  //!< Max vertical force
+    double _cx;     //!< Longitudinal tire stiffness
+    double _cy;     //!< Lateral tire stiffness
+    double _kt;     //!< Vertical tire stiffness
+    double _dx;     //!< Longitudinal tire damping coefficient
+    double _dy;     //!< Lateral damping coeffs
 
     // TM easy force characteristic params
     // 2 values - one at nominal load and one at max load
 
     // dynamic radius weighting coefficient and a critical value for the
     // vertical force
-    double _rdyncoPn, _rdyncoP2n, _fzRdynco, _rdyncoCrit;
+    double _rdyncoPn;    //!< Dynamic radius weighting coefficient at nominal load
+    double _rdyncoP2n;   //!< Dynamic radius weighting coefficient at max load
+    double _fzRdynco;    //!< Nominal value the vertical force
+    double _rdyncoCrit;  //!< Critical value for the vertical force
 
     // Longitudinal
-    double _dfx0Pn, _dfx0P2n;  // intial longitudinal slopes dFx/dsx [N]
-    double _fxmPn, _fxmP2n;    // maximum longituidnal force [N]
-    double _fxsPn, _fxsP2n;    // Longitudinal load at sliding [N]
-    double _sxmPn, _sxmP2n;    // slip sx at maximum longitudinal load Fx
-    double _sxsPn, _sxsP2n;    // slip sx where sliding begins
+    double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
+    double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
+    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
+    double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
+    double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
+    double _sxmP2n;   //!< Slip sx at maximum longitudinal load Fx at max load
+    double _sxsPn;    //!< Slip sx where sliding begins at nominal load
+    double _sxsP2n;   //!< Slip sx where sliding begins at max load
     // Lateral
-    double _dfy0Pn, _dfy0P2n;  // intial lateral slopes dFx/dsx [N]
-    double _fymPn, _fymP2n;    // maximum lateral force [N]
-    double _fysPn, _fysP2n;    // Lateral load at sliding [N]
-    double _symPn, _symP2n;    // slip sx at maximum lateral load Fx
-    double _sysPn, _sysP2n;    // slip sx where sliding begins
+    double _dfy0Pn;   //!< Intial lateral slopes dFx/dsx [N] at nominal load
+    double _dfy0P2n;  //!< Intial lateral slopes dFx/dsx [N] at max load
+    double _fymPn;    //!< Maximum lateral force [N] at nominal load
+    double _fymP2n;   //!< Maximum lateral force [N] at max load
+    double _fysPn;    //!< Lateral load at sliding [N] at nominal load
+    double _fysP2n;   //!< Lateral load at sliding [N] at max load
+    double _symPn;    //!< Slip sx at maximum lateral load Fx at nominal load
+    double _symP2n;   //!< Slip sx at maximum lateral load Fx at max load
+    double _sysPn;    //!< Slip sx where sliding begins at nominal load
+    double _sysP2n;   //!< Slip sx where sliding begins at max load
 };
 
-// Tm easy state structure - actual states + things that we need to keep track
-// of
+/// @brief This tire model is an implementation of the TMeasy tire model developed by Prof. Dr. Georg Rill.
+
+/// The TMeasyState struct holds all the states that are updates with time-integration of the TMeasy tire model. Apart
+/// from the states that are updated by time integration, this struct also holds states that are updated without time
+/// integration. Also, the "tire" and the "wheel" in these models are considered a single entity. Thus we also have the
+/// angular velocity states as part of this struct. See here for more details about the tire model
+/// http://www.tmeasy.de/. It is important to note that this implementation within the d24GPU namespace is exactly the
+/// same as the implementation in the d24 namespace. The only difference is that the d24GPU namespace is meant to be
+/// used on the GPU where standard library functions are not available.
 struct TMeasyState {
-    // default contructor to 0's
+    /// @brief Default constructor that sets all the states to zero
     __device__ __host__ TMeasyState()
         : _xe(0.),
           _ye(0.),
@@ -153,7 +188,10 @@ struct TMeasyState {
           _My(0.),
           _engTor(0.) {}
 
-    // Constructor that takes in all the states
+    /// @brief Constructor that takes in all the states and sets them to the values that are passed in. Note, its
+    /// usually very difficult to set all the states to physical meaningful values while ensuring that the tire is in
+    /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
+    /// constructor below
     __device__ __host__ TMeasyState(double xe,
                                     double ye,
                                     double xedot,
@@ -201,7 +239,9 @@ struct TMeasyState {
           _My(My),
           _engTor(engTor) {}
 
-    // Copy constructor
+    /// @brief Copy constructor that takes in a pointer to another TMeasyState struct and copies all the values into the
+    /// new struct
+    /// @param other TMeasyState struct that is copied into the new struct
     __device__ __host__ TMeasyState(const TMeasyState* other)
         : _xe(other->_xe),
           _ye(other->_ye),
@@ -227,34 +267,52 @@ struct TMeasyState {
           _My(other->_My),
           _engTor(other->_engTor) {}
 
-    // States that are integrated
-    double _xe, _ye;        // long and lat tire deflection
-    double _xedot, _yedot;  // long and lat tire deflection velocity
-    double _omega;          // angular velocity of wheel
-    double _dOmega;         // angular velocity dot
-    double _xt;             // vertical tire compression
-    double _dxt;            // vertical tire compression velocity
+    // States that are to be integrated
+    double _xe;      //!< Longitudinal tire deflection
+    double _ye;      //!< Lateral tire deflection
+    double _xedot;   //!< Longitudinal tire deflection velocity
+    double _yedot;   //!< Lateral tire deflection velocity
+    double _omega;   //!< Angular velocity of wheel
+    double _dOmega;  //!< Angular acceleration of wheel
+    double _xt;      //!< Vertical tire compression
+    double _dxt;     //!< Vertical tire compression velocity
 
     // States that we keep track off
-    double _rStat;  // loaded tire radius
+    double _rStat;  //!< Loaded tire radius
     // long, lateral and vertical force in tire contact patch frame/ tire frame (after applying steer angle)
-    double _fx, _fy, _fz;
-    double _fxg, _fyg, _fzg;  // long, lateral and vertical force in global frame
+    double _fx;   //!< Longitudinal force in tire contact patch frame
+    double _fy;   //!< Lateral force in tire contact patch frame
+    double _fz;   //!< Vertical force in tire contact patch frame
+    double _fxg;  //!< Longitudinal force in tire frame
+    double _fyg;  //!< Lateral force in tire frame
+    double _fzg;  //!< Vertical force in tire frame
 
     // velocites in the tire frame (transformed to tire contact path using steer angle)
     // These are obtained from the bond diagram (defines how the vehicle velocities are transformed to tire frame)
-    double _vgx, _vgy, _vgz;
+    double _vgx;  //!< Longitudinal velocity in tire frame
+    double _vgy;  //!< Lateral velocity in tire frame
+    double _vgz;  //!< Vertical velocity in tire frame
     // velocites in the tire contact patch frame - used in slip calculations
-    double _vsx, _vsy, _vsz;
-
-    double _My;  // Rolling resistance moment (negetive)
-
-    // torque from engine that we keep track of
-    double _engTor;
+    double _vsx;     //!< Longitudinal velocity in tire contact patch frame
+    double _vsy;     //!< Lateral velocity in tire contact patch frame
+    double _vsz;     //!< Vertical velocity in tire contact patch frame
+    double _My;      //!< Rolling resistance moment (negative)
+    double _engTor;  //!< Torque from engine that we keep track of
 };
 
+/// @brief This tire model is an implementation of the TMeasy tire model developed by Prof. Dr. Georg Rill but without
+/// relaxation.
+
+/// The TMeasyNrParam (Nr stands for No relaxaation) struct holds all the parameters that are required to
+/// define a TMeasyNr tire. The implementation is largely inspired by a similar model in Project Chrono (see code at
+/// https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h). It is
+/// important to note that this implementation within the d24GPU namespace is exactly the same as the implementation in
+/// the d24 namespace. The only difference is that the d24GPU namespace is meant to be used on the GPU where standard
+/// library functions are not available.
 struct TMeasyNrParam {
-    // default constructor just assigns zero to all members
+    /// @brief This constructor sets default values for all the parameters in the TMeasyNrParam struct. The values are
+    /// an okay proxy for a truck tire. It is highly recommended that you set the parameters yourself using the
+    /// SetTireParamsJSON function that is available within this name space.
     __device__ __host__ TMeasyNrParam()
         : _jw(6.69),
           _rr(0.015),
@@ -296,7 +354,9 @@ struct TMeasyNrParam {
           _li(90),
           _p_li(1.),
           _p_use(1.) {}
-    // copy constructor
+    /// @brief Copy constructor that takes in a pointer to another TMeasyNrParam struct and copies all the values into
+    /// the new struct
+    /// @param other TMeasyNrParam struct that is copied into the new struct
     __device__ __host__ TMeasyNrParam(const TMeasyNrParam* other)
         : _jw(other->_jw),
           _rr(other->_rr),
@@ -339,41 +399,69 @@ struct TMeasyNrParam {
           _p_li(other->_p_li),
           _p_use(other->_p_use) {}
 
-    double _jw;          // wheel inertia
-    double _rr;          // Rolling Resistance
-    double _mu;          // Local friction coefficient between tire and road
-    double _r0;          // unloaded tire radius
-    double _width;       // tire width
-    double _rim_radius;  // rim radius
-    double _pn;          // nominal vertical force
-    double _pnmax;       // max vertical force
-    double _kt;          // vertical tire stiffness
-    double _rdyncoPn;    // dynamic radius weighting coefficient at nominal load
-    double _rdyncoP2n;   // dynamic radius weighting coefficient at max load
-    double _fzRdynco;    // critical value for the vertical force
-    double _rdyncoCrit;
+    double _jw;  //!< Wheel inertia
+    double _rr;  //!< Rolling resistance of tire
+    double _mu;  //!< Friction constant
+    double _r0;  //!< Unloaded tire radius
+
+    double _width;       //!< Tire width
+    double _rim_radius;  //!< Rim radius
+    double _pn;          //!< Nominal vertical force
+    double _pnmax;       //!< Max vertical force
+    double _kt;          //!< Vertical tire stiffness
+    double _rdyncoPn;    //!< Dynamic radius weighting coefficient at nominal load
+    double _rdyncoP2n;   //!< Dynamic radius weighting coefficient at max load
+    double _fzRdynco;    //!< Nominal value the vertical force
+    double _rdyncoCrit;  //!< Critical value for the vertical force
     // Longitudinal
-    double _dfx0Pn, _dfx0P2n;  // Initial longitudinal slopes dFx/dsx [N]
-    double _fxmPn, _fxmP2n;    // Maximum longituidnal force [N]
-    double _fxsPn, _fxsP2n;    // Longitudinal load at sliding [N]
-    double _sxmPn, _sxmP2n;    // slip sx at maximum longitudinal load Fx
-    double _sxsPn, _sxsP2n;    // slip sx where sliding begins
+    double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
+    double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
+    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
+    double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
+    double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
+    double _sxmP2n;   //!< Slip sx at maximum longitudinal load Fx at max load
+    double _sxsPn;    //!< Slip sx where sliding begins at nominal load
+    double _sxsP2n;   //!< Slip sx where sliding begins at max load
     // Lateral
-    double _dfy0Pn, _dfy0P2n;  // intial lateral slopes dFx/dsx [N]
-    double _fymPn, _fymP2n;    // maximum lateral force [N]
-    double _fysPn, _fysP2n;    // Lateral load at sliding [N]
-    double _symPn, _symP2n;    // slip sx at maximum lateral load Fx
-    double _sysPn, _sysP2n;    // slip sx where sliding begins
-    double _vcoulomb;          // Velocity below which we care about static friction
-    double _frblend_begin;     // Beginning of friction blending
-    double _frblend_end;       // End of friction blending
-    double _bearingCapacity;   // High level tire parameters that define all other parameters that the user can set
-    double _li;                // Load index
-    double _p_li;              // Pressure at load index
-    double _p_use;             // Pressure at which the tire is used
+    double _dfy0Pn;    //!< Intial lateral slopes dFx/dsx [N] at nominal load
+    double _dfy0P2n;   //!< Intial lateral slopes dFx/dsx [N] at max load
+    double _fymPn;     //!< Maximum lateral force [N] at nominal load
+    double _fymP2n;    //!< Maximum lateral force [N] at max load
+    double _fysPn;     //!< Lateral load at sliding [N] at nominal load
+    double _fysP2n;    //!< Lateral load at sliding [N] at max load
+    double _symPn;     //!< Slip sx at maximum lateral load Fx at nominal load
+    double _symP2n;    //!< Slip sx at maximum lateral load Fx at max load
+    double _sysPn;     //!< Slip sx where sliding begins at nominal load
+    double _sysP2n;    //!< Slip sx where sliding begins at max load
+    double _vcoulomb;  //!< Velocity below which we care about static friction -> Defaults to 1 if user does not provide
+                       //!< this
+    double _frblend_begin;  //!< Beginning of friction blending used instead of relexation -> Defaults to 1 if the user
+                            //!< does not provide this
+    double _frblend_end;  //!< End of friction blending used instead of relexation -> Defaults to 1 if the user does not
+                          //!< provide this
+    double _bearingCapacity;  //!< In case bearing capacity of the tire is known, it can be provided. If not, the
+                              //!< "loadIndex" is used to calculate the bearing capacity
+    double _li;               // Load index
+    double _p_li;             // Pressure at load index -> Defaults to 0 if the user does not provide this
+    double _p_use;            // Pressure at which the tire is used -> Defaults to 0 if the user does not provide this
 };
 
+/// @brief This tire model is an implementation of the TMeasy tire model developed by Prof. Dr. Georg Rill but without
+/// relaxation.
+
+/// The TMeasyNrState (Nr stands for No relaxaation) struct holds all the states that are updates with
+/// time-integration of the TMeasy tire model. Apart from the states that are updated by time integration, this struct
+/// also holds states that are updated without time integration. Also, the "tire" and the "wheel" in these models are
+/// considered a single entity. Thus we also have the angular velocity states as part of this struct. The implementation
+/// is largely inspired by a similar model in Project Chrono (see code at
+/// https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h). It is
+/// important to note that this implementation within the d24GPU namespace is exactly the same as the implementation in
+/// the d24 namespace. The only difference is that the d24GPU namespace is meant to be used on the GPU where standard
+/// library functions are not available.
 struct TMeasyNrState {
+    /// @brief Default constructor that sets all the states to zero
     __device__ __host__ TMeasyNrState()
         : _omega(0.),
           _dOmega(0),
@@ -394,7 +482,10 @@ struct TMeasyNrState {
           _vsz(0.),
           _My(0.),
           _engTor(0.) {}
-
+    /// @brief Constructor that takes in all the states and sets them to the values that are passed in. Note, its
+    /// usually very difficult to set all the states to physical meaningful values while ensuring that the tire is in
+    /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
+    /// constructor below
     __device__ __host__ TMeasyNrState(double omega,
                                       double dOmega,
                                       double xt,
@@ -434,7 +525,9 @@ struct TMeasyNrState {
           _My(My),
           _engTor(engTor) {}
 
-    // Copy constructor
+    /// @brief Copy constructor that takes in a pointer to another TMeasyNrState struct and copies all the values into
+    /// the new struct
+    /// @param other TMeasyNrState struct that is copied into the new struct
     __device__ __host__ TMeasyNrState(const TMeasyNrState* other)
         : _omega(other->_omega),
           _dOmega(other->_dOmega),
@@ -457,35 +550,50 @@ struct TMeasyNrState {
           _engTor(other->_engTor) {}
 
     // Sates that are integrated - these are actually wheel states but we don't use that abstraction
-    double _omega;   // angular velocity of wheel
-    double _dOmega;  // angular velocity dot
-    double _xt;      // vertical tire compression
-    double _dxt;     // vertical tire compression velocity
+    double _omega;   //!< Angular velocity of wheel
+    double _dOmega;  //!< Angular acceleration of wheel
+    double _xt;      //!< Vertical tire compression
+    double _dxt;     //!< Vertical tire compression velocity
 
     // States that we keep track off
-    double _rStat;  // loaded tire radius
+    double _rStat;  //!< Loaded tire radius
     // long, lateral and vertical force in tire contact patch frame/ tire frame (after applying steer angle)
-    double _fx, _fy, _fz;
-    double _fxg, _fyg, _fzg;  // long, lateral and vertical force in global frame
-
+    double _fx;   //!< Longitudinal force in tire contact patch frame
+    double _fy;   //!< Lateral force in tire contact patch frame
+    double _fz;   //!< Vertical force in tire contact patch frame
+    double _fxg;  //!< Longitudinal force in tire frame
+    double _fyg;  //!< Lateral force in tire frame
+    double _fzg;  //!< Vertical force in tire frame
     // velocites in the tire frame (transformed to tire contact path using steer angle)
     // These are obtained from the bond diagram (defines how the vehicle velocities are transformed to tire frame)
-    double _vgx, _vgy, _vgz;
+    double _vgx;  //!< Longitudinal velocity in tire frame
+    double _vgy;  //!< Lateral velocity in tire frame
+    double _vgz;  //!< Vertical velocity in tire frame
     // velocites in the tire contact patch frame - used in slip calculations
-    double _vsx, _vsy, _vsz;
-
-    double _My;  // Rolling resistance moment (negetive)
-
-    // Torque from engine that we keep track of
-    double _engTor;
+    double _vsx;     //!< Longitudinal velocity in tire contact patch frame
+    double _vsy;     //!< Lateral velocity in tire contact patch frame
+    double _vsz;     //!< Vertical velocity in tire contact patch frame
+    double _My;      //!< Rolling resistance moment (negative)
+    double _engTor;  //!< Torque from engine that we keep track of
 };
 
 // -----------------------------------------------------------------------------
 // Vehicle Structs
 // -----------------------------------------------------------------------------
+/// @brief Defined here are chassis, engine/motor, powertrain, driveline and steering parameters required for the
+/// simualtion of a 24 DOF model.
 
+/// The 24 DOF model, which considers the suspension at each corner, offers the same
+/// benefits as the 18 DOF model, but it can also predict vehicle heave and pitch motions.
+/// Additionally, it provides flexibility in modeling linear springs and dampers. See chapter 2 here for
+/// more details https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. It is important to note that this
+/// implementation within the d24GPU namespace is exactly the same as the implementation in the d24 namespace. The only
+/// difference is that the d24GPU namespace is meant to be used on the GPU where standard library functions are not
+/// available.
 struct VehicleParam {
-    // default constructor
+    /// @brief This constructor sets default values for all the parameters in the VehicleParam struct. The values are an
+    /// okay proxy for a truck (namely the HMMWV model).  It is highly recommended that you set the parameters yourself
+    /// using the setVehParamsJSON function that is available within this name space.
     __device__ __host__ VehicleParam()
         : _a(1.6889),
           _b(1.6889),
@@ -508,7 +616,9 @@ struct VehicleParam {
           _throttleMod(0),
           _driveType(1),
           _whichWheels(1) {}
-    // Copy constructor
+    /// @brief Copy constructor that takes in a pointer to another VehicleParam struct and copies all the values into
+    /// the new struct
+    /// @param other VehicleParam struct that is copied into the new struct
     __device__ __host__ VehicleParam(const VehicleParam* other)
         : _a(other->_a),
           _b(other->_b),
@@ -546,83 +656,151 @@ struct VehicleParam {
           _shiftMap(other->_shiftMap) {}
 
     // Declaration of all the 14 DOF vehicle parameters pretty much the same as the 8DOF model
-    double _a, _b;        // distance c.g. - front axle & distance c.g. - rear axle (m)
-    double _h;            // height of c.g
-    double _m;            // total vehicle mass (kg)
-    double _jz;           // yaw moment inertia (kg.m^2)
-    double _jx;           // roll inertia
-    double _jy;           // pitch inertia
-    double _cf, _cr;      // front and rear track width
-    double _muf, _mur;    // front and rear unsprung mass
-    double _hrcf, _hrcr;  // front and rear roll centre height below C.G
+    double _a;     //!< Distance of C.G to front axle (m)
+    double _b;     //!< Distance of C.G to rear axle (m)
+    double _h;     //!< Height of C.G
+    double _m;     //!< Total vehicle mass (kg)
+    double _jz;    //!< Yaw moment of inertia (kg.m^2)
+    double _jx;    //!< Roll inertia (kg.m^2)
+    double _jy;    //!< Pitch inertia (kg.m^2)
+    double _cf;    //!< Front track width (m)
+    double _cr;    //!< Rear track width (m)
+    double _muf;   //!< Front unsprung mass (kg)
+    double _mur;   //!< Rear unsprung mass (kg)
+    double _hrcf;  //!< Front roll centre height below C.G (m)
+    double _hrcr;  //!< Rear roll centre height below C.G (m)
 
-    // Bool that checks if the steering is non linea ---> Need to depricate
-    // this, can always define a steer map 1 -> Steering is non linear, requires
-    // a steering map defined - example in json 0 -> Steering is linear. Need
-    // only a max steer defined. The normalized sterring then just multiplies
-    // against this value to give a wheel angle
+    /**
+     * @brief Bool that checks if the steering is non linear. A non-linear map can be defined in a json file and read
+     * using setVehParamsJSON.
+     *
+     * 1 -> Steering is non linear, requires a steering map defined
+     * 0 -> Steering is linear. Need only a _maxSteer defined.
+     */
     bool _nonLinearSteer;
-    // Non linear steering map in case the steering mechanism is not linear
+
+    /**
+     * @brief _steerMap stores the non-linear steering map (in case required by the user) and can be set using the JSON
+     * file.
+     *
+     *  _steerMap points to a array of MapEntry's where the x component of the MapEntry is the normalized steering input
+     * (between -1 and 1 where negative implies a left turn) and the y component is the wheel angle. For steerng inputs
+     * between the values specified by the MapEntry's, the wheel angle is linearly interpolated. Set using the
+     * "steerMap" key in the JSON file.
+     */
     MapEntry* _steerMap;
-    int _steerMapSize;
+    int _steerMapSize;  //!< Size of the steering map - this variable is unique to the GPU implementation as we need to
+                        //!< know the size of the map to allocate memory for it.
 
-    // max steer angle parameters of the vehicle
-    double _maxSteer;
+    double _maxSteer;  //!< In case _nonLinearSteer is set to 0, this is the maximum wheel angle that can be achieved
+                       //!< (in radians). Values at other steering wheel inputs are then linearly interpolated.
 
-    // crank shaft inertia
-    double _crankInertia;
+    double _crankInertia;  //!< Inertia of the engine/motor crankshaft
     // some gear parameters
-    double* _gearRatios;  // gear ratio's
-    int _noGears;         // number of gears
+    double* _gearRatios;  //!< Pointer to an array of gear ratios
+    int _noGears;         //!< No. of gears in the vehicle -> Set automatically when the gear ratios are set
 
-    // Additionally we have a shift map that needs to always be filled,
-    // This can either be filled by setting the same upshift and downshift RPM
-    // for all the gears or by setting upshift and downshift RPM for each of the
-    // gears - please see the demo JSON file for an example
+    /**
+     * @brief A shift map defines the RPMs at which the various gears shift.
+     *
+     * _shiftMap points to a array of MapEntry's where the x component of the MapEntry is the down shift RPM and the y
+     * component is the upshift RPM. The user can either specify the shift map for all the gears or can specify an
+     * "upshiftRPM" and a "downshiftRPM". These two values are then applied for all the gears (see json files for
+     * examples)
+     */
     MapEntry* _shiftMap;
 
-    // boolean for torque converter presense
-    bool _tcbool;
+    bool _tcbool;  //!< Boolean that checks for the presence of a torque converter. Can be set using "tcBool" in the
+                   //!< JSON file. Defaults to 0 if not specified.
 
-    // double _maxTorque; // Max torque
-    double _maxBrakeTorque;  // max brake torque
+    double _maxBrakeTorque;  //!< The maximum braking torque (Nm) that the brakes applu to the wheels. Can be set using
+                             //!< "maxBrakeTorque" in the JSON file. Based on the normalized brake input between 0 and
+                             //!< 1, a torque input*_maxBrakeTorque is applied to the wheel.
 
-    // Bool that defines how the throttle modulates the maps
-    // 1 -> Modulates like in a motor -> Modifies the entire torque and RPM map
-    // 0 -> Modulates like in an engine -> multiplies only against the torque -
-    // > Default
+    /**
+     * @brief Bool that defines how the throttle modulates the Torque map of the motor
+     * 1 -> Modulates like in a motor -> Modifies the entire torque and RPM map
+     * 0 -> Modulates like in an engine -> multiplies only against the torque -> Default
+     * Can be set using "throttleMod" in the JSON file.
+     * For more details see implementation of function driveTorque.
+     */
     bool _throttleMod;
-    // We will always define the powertrain with a map
+
+    /**
+     * @brief _powertrainMap stores the powertrain map.
+     *
+     * _powertrainMap points to a array of MapEntry's where the x component of the MapEntry is the engine crankshaft RPM
+     and the y
+     * component is the torque. For RPMs between the values specified by the MapEntry's, the torque is linearly
+     interpolated. Set using the "torqueMap" key in the JSON file.
+     */
     MapEntry* _powertrainMap;
-    int _powertrainMapSize;
+    int _powertrainMapSize;  //!< Size of the powertrain map - set automatically when the powertrain map is set
+    /**
+     * @brief _lossesMap stores the powertrain losses map and can be set using the JSON file using the "lossesMap" key.
+     * _lossesMap points to a array of MapEntry's where the x component of the MapEntry is the engine crankshaft RPM and
+     * the y component is the losses in Nm. For RPMs between the values specified by the MapEntry's, the losses are
+     * linearly interpolated. The losses are subtracted from the torque obtained from the powertrain map after throttle
+     * is applied. See function driveTorque for more details.
+     * Set using the "lossesMap" key in the JSON file.
+     */
     MapEntry* _lossesMap;
-    int _lossesMapSize;
+    int _lossesMapSize;  //!< Size of the losses map - set automatically when the losses map is set
+    /**
+     * @brief In case a torque converter is part of the model, the capacity map needs to be defined.
+     *
+     * _CFmap points to a array of MapEntry's where the x component of the MapEntry is the speed ratio between the
+     * driven and driving shafts (whether the engine crank is driven or driving depends on if there is a throttle
+     * applied) and the y component is the capacity factor. For speed ratios between the values specified by the
+     * MapEntry's, the capacity factor is linearly interpolated.
+     * Set using the "capacityFactorMap" key in the JSON file.
+     */
+    MapEntry* _CFmap;
+    int _CFmapSize;  //!< Size of the capacity factor map - set automatically when the capacity factor map is set
 
-    // torque converter maps
-    MapEntry* _CFmap;  // capacity factor map
-    int _CFmapSize;
-    MapEntry* _TRmap;  // Torque ratio map
-    int _TRmapSize;
-
-    // Flag for wether we have an 4WD or 2WD
-    // 1-> 4WD - This is the default
-    // 0 -> 2WD - To set this, the JSON entry needs to be added.
+    /**
+     * @brief In case a torque converter is part of the model, the torque ratio map needs to be defined.
+     *
+     * _TRmap points to a array of MapEntry's where the x component of the MapEntry is the speed ratio between the
+     * driven and driving shafts (whether the engine crank is driven or driving depends on if there is a throttle
+     * applied) and the y component is the torque ratio. For speed ratios between the values specified by the
+     * MapEntry's, the torque ratio is linearly interpolated. Set using the "torqueRatioMap" key in the JSON file.
+     */
+    MapEntry* _TRmap;
+    int _TRmapSize;  //!< Size of the torque ratio map - set automatically when the torque ratio map is set
+    /**
+     * @brief This boolean specifies whether the vehicle has a 4WD or a 2WD drivetrain.
+     *
+     * 1 -> 4WD - This is the default
+     * 0 -> 2WD - To set this, the JSON entry needs to be added.
+     * This can be set using the "4wd" key in the JSON file.
+     */
     bool _driveType;
 
-    // If we have a 2WD vehicle this bool specifies which of the 2 wheels are
-    // powered 1 -> Rear wheels are powered 0 -> Front wheels are powered
+    /**
+     * @brief This boolean specifies whether the vehicle is front wheel drive or rear wheel drive in case its a 2WD
+     *
+     * 1 -> Rear wheel drive
+     * 0 -> Front wheel drive
+     * This can be set using the "rearWheels" key in the JSON file.
+     */
     bool _whichWheels;
 };
 
-// Vehicle state structure for the 14dof model. Here we migth have alot of new values
+/// @brief The VehicleState struct holds the chassis, engine/motor, powertrain, driveline and steering states required
+/// for the simualtion.
+
+/// Apart from the states that are updated by time integration, this struct also holds "non-states"
+///  such as accelerations, forces and torques that are not updated by time integration. See here for more details
+///  https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. important to note that this implementation within the
+///  d24GPU namespace is exactly the same as the implementation in the d24 namespace. The only difference is that the
+///  d24GPU namespace is meant to be used on the GPU where standard library functions are not available.
 struct VehicleState {
-    // default constructor
+    /// @brief Default constructor that sets all the states to zero
     __device__ __host__ VehicleState()
         : _x(0.),
           _y(0.),
           _z(0.),
-          _dx(0.),
-          _dy(0.),
           _u(0.),
           _v(0.),
           _w(0.),
@@ -641,17 +819,17 @@ struct VehicleState {
           _dtheta(0.),
           _dphi(0.),
           _dpsi(0.),
-          _tor(0.),
           _crankOmega(0.),
           _dOmega_crank(0.),
           _current_gr(0) {}
 
-    // Constructor that takes in all the states
+    /// @brief Constructor that takes in all the states and sets them to the values that are passed in. Note, its
+    /// usually very difficult to set all the states to physical meaningful values while ensuring that the tire is in
+    /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
+    /// constructor below
     __device__ __host__ VehicleState(double x,
                                      double y,
                                      double z,
-                                     double dx,
-                                     double dy,
                                      double u,
                                      double v,
                                      double w,
@@ -670,15 +848,12 @@ struct VehicleState {
                                      double dtheta,
                                      double dphi,
                                      double dpsi,
-                                     double tor,
                                      double crankOmega,
                                      double dOmega_crank,
                                      int current_gr)
         : _x(x),
           _y(y),
           _z(z),
-          _dx(dx),
-          _dy(dy),
           _u(u),
           _v(v),
           _w(w),
@@ -697,16 +872,15 @@ struct VehicleState {
           _dtheta(dtheta),
           _dphi(dphi),
           _dpsi(dpsi),
-          _tor(tor),
           _crankOmega(crankOmega),
           _dOmega_crank(dOmega_crank),
           _current_gr(current_gr) {}
-    // Copy constructor
+    /// @brief Copy constructor that takes in a pointer to another VehicleState struct and copies all the values into
+    /// the new struct
+    /// @param other VehicleState struct that is copied into the new struct
     __device__ __host__ VehicleState(const VehicleState* other)
         : _x(other->_x),
           _y(other->_y),
-          _dx(other->_dx),
-          _dy(other->_dy),
           _z(other->_z),
           _u(other->_u),
           _v(other->_v),
@@ -726,49 +900,71 @@ struct VehicleState {
           _dtheta(other->_dtheta),
           _dphi(other->_dphi),
           _dpsi(other->_dpsi),
-          _tor(other->_tor),
           _crankOmega(other->_crankOmega),
           _dOmega_crank(other->_dOmega_crank),
           _current_gr(other->_current_gr) {}
     // States
-    double _x, _y, _z;  // Global x, y and z posiiton
-    double _dx, _dy;
-    double _u, _v, _w;   // Chassis velocities in G-RF
-    double _psi, _wz;    // Yaw angle and yaw rate
-    double _phi, _wx;    // roll angle and roll rate
-    double _theta, _wy;  // Pitch angle and pitch rate
+    double _x;    //!< Global x position
+    double _y;    //!< Global y position
+    double _z;    //!< Global z posiiton
+    double _u;    //!< Chassis x velocity in G-RF
+    double _v;    //!< Chassis y velocity in G-RF
+    double _w;    //!< Chassis z velocity in G-RF
+    double _psi;  //!< Yaw angle of chassis (rotation about z axis of G-RF) - this is the angle that is used to rotate
+                  //!< the chassis frame to the global frame
+    double _wz;   //!< Yaw rate of chassis
+    double _phi;  //!< Roll angle of chassis (rotation about x axis of G-RF) - this is the angle that is used to rotate
+                  //!< the chassis frame to the global frame
+    double _wx;   //!< Roll rate of chassis
+    double _theta;  //!< Pitch angle of chassis (rotation about y axis of G-RF) - this is the angle that is used to
+                    //!< rotate the chassis frame to the global frame
+    double _wy;     //!< Pitch rate of chassis
 
     // acceleration states
-    double _udot, _vdot, _wdot;     // All three directions
-    double _wxdot, _wydot, _wzdot;  // All three rotation directions
-    double _dtheta, _dphi, _dpsi;   // Equations that we integrate for the cardan angles
+    double _udot;    //!< Chassis x acceleration in G-RF
+    double _vdot;    //!< Chassis y acceleration in G-RF
+    double _wdot;    //!< Chassis z acceleration in G-RF
+    double _wxdot;   //!< Roll acceleration of chassis
+    double _wydot;   //!< Pitch acceleration of chassis
+    double _wzdot;   //!< Yaw acceleration of chassis
+    double _dtheta;  //!< Change in pitch angle of chassis after frame transformation
+    double _dphi;    //!< Change in roll angle of chassis after frame transformation
+    double _dpsi;    //!< Change in yaw angle of chassis after frame transformation
 
     // Powertrain states
-    double _tor;
-    double _crankOmega;
-    double _dOmega_crank;
-    int _current_gr;
+    double _crankOmega;    //!< Crankshaft angular velocity
+    double _dOmega_crank;  //!< Crankshaft angular acceleration
+    int _current_gr;       //!< Current gear
 };
 
 // -----------------------------------------------------------------------------
 // Suspension Structs
 // -----------------------------------------------------------------------------
 
-// Suspension parameters Only 2 parameters for now, but can be easily expanded
+/// @brief The SuspensionParam struct holds the spring stiffness and damper coefficients for the suspension.
 struct SuspensionParam {
-    // default constructor
+    /// @brief Default constructor that sets the parameters to the default values of a stiff suspension system
     __device__ __host__ SuspensionParam() : _ks(150062), _bs(19068) {}
-
-    // Copy Constructor
+    /// @brief Copy constructor that takes in a pointer to another SuspensionParam struct and copies all the values into
+    /// the new struct
+    /// @param other SuspensionParam struct that is copied into the new struct
     __device__ __host__ SuspensionParam(const SuspensionParam* other) : _ks(other->_ks), _bs(other->_bs) {}
     // Parameters - Maybe later we can add map functionality
     double _ks;  // suspension stiffness
     double _bs;  // suspension damping coefficient
 };
 
-// States is why this is even a seperate struct
+/// @brief The SuspensionState are all the states and the corresponding accelerations, forces and moments that are part
+/// of a broad "suspension" model.
+
+/// This includes variables such as the unsprung mass velocities and accelerations, the
+/// instantaneous spring deflections and velocities, the link load transfer forces and the moments transferred to the
+/// sprung mass. For more details about the implementation of the suspension model, see chapter 2 here
+/// https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. It is important to note that this implementation
+/// within the d24GPU namespace is exactly the same as the implementation in the d24 namespace. The only difference is
+/// that the d24GPU namespace is meant to be used on the GPU where standard library functions are not available.
 struct SuspensionState {
-    // default constructor
+    /// @brief Default constructor that sets all the states to zero
     __device__ __host__ SuspensionState()
         : _xs(0.),
           _xsi(0.),
@@ -794,7 +990,10 @@ struct SuspensionState {
           _mx(0.),
           _my(0.),
           _mz(0.) {}
-    // Constructor that takes in all the states
+    /// @brief Constructor that takes in all the states and sets them to the values that are passed in. Note, its
+    /// usually very difficult to set all the states to physical meaningful values while ensuring that the tire is in
+    /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
+    /// constructor below
     __device__ __host__ SuspensionState(double xs,
                                         double xsi,
                                         double dxs,
@@ -843,7 +1042,9 @@ struct SuspensionState {
           _mx(mx),
           _my(my),
           _mz(mz) {}
-    // Copy constructor
+    /// @brief Copy constructor that takes in a pointer to another SuspensionState struct and copies all the values into
+    /// the new struct
+    /// @param other SuspensionState struct that is copied into the new struct
     __device__ __host__ SuspensionState(const SuspensionState* other)
         : _xs(other->_xs),
           _xsi(other->_xsi),
@@ -871,25 +1072,45 @@ struct SuspensionState {
           _mz(other->_mz) {}
 
     // States
-    double _xs, _xsi;  // spring compression and initial spring compression
-    double _dxs;       // struct compression accelerations
-    double _ls, _lsi;  // struct length and initial struct length
+    double _xs;   //!< Instantaneous spring compression
+    double _xsi;  //!< Initial spring compression
+    double _dxs;  //!< Instantaneous sping compression accelerations
+    double _ls;   //!< Instantaneous struct length
+    double _lsi;  //!< Initial struct length
 
-    double _us, _vs, _ws;     // Struct velocities in three directions (G-RF)
-    double _dus, _dvs, _dws;  // Struct accelerations in the three directions (G-RF)
-    double _uu, _vu, _wu;     // Unsprung velocity velocities (G-RF)
-    double _duu, _dvu, _dwu;  // Unsprung  accelerations (G-RF)
+    double _us;   //!< Struct velocity in the x direction (G-RF)
+    double _vs;   //!< Struct velocity in the y direction (G-RF)
+    double _ws;   //!< Struct velocity in the z direction (G-RF)
+    double _dus;  //!< Struct acceleration in the x direction (G-RF)
+    double _dvs;  //!< Struct acceleration in the y direction (G-RF)
+    double _dws;  //!< Struct acceleration in the z direction (G-RF)
+    double _uu;   //!< Unsprung velocity in the x direction (G-RF)
+    double _vu;   //!< Unsprung velocity in the y direction (G-RF)
+    double _wu;   //!< Unsprung velocity in the z direction (G-RF)
+    double _duu;  //!< Unsprung acceleration in the x direction (G-RF)
+    double _dvu;  //!< Unsprung acceleration in the y direction (G-RF)
+    double _dwu;  //!< Unsprung acceleration in the z direction (G-RF)
 
     // Forces and moments
-    double _fxs, _fys, _fzs;  // Forces transferred to sprung mass (G-RF)
-    double _fzd;              // Link load transfer forces in the z directions (jacking forces)
-    double _mx, _my, _mz;     // Moments transferred to sprung mass (G-RF)
+    double _fxs;  //!< Forces transferred to sprung mass in the x direction (G-RF)
+    double _fys;  //!< Forces transferred to sprung mass in the y direction (G-RF)
+    double _fzs;  //!< Forces transferred to sprung mass in the z direction (G-RF)
+    double _fzd;  //!< Link load transfer forces in the z directions (jacking forces)
+    double _mx;   //!< Moment transferred to sprung mass in the x direction (G-RF)
+    double _my;   //!< Moment transferred to sprung mass in the y direction (G-RF)
+    double _mz;   //!< Moment transferred to sprung mass in the z direction (G-RF)
 };
 
 // -----------------------------------------------------------------------------
 // Data structures that help handing multiple vehicles as needed in GPU version
 // -----------------------------------------------------------------------------
-// Store the parameters of the vehicle, tire and suspension needed in kernel
+
+/// @brief The SimData struct holds the parameters of the vehicle, tire and suspension needed in kernel along with the
+/// driver inputs (steering, throttle, brake) in case specified at the beginning of the simulation.
+
+/// In essence, this
+/// stores all the "data" required to simulate 1 vehicle on the GPU. This is something largely the user does not have to
+/// worrry about.
 struct SimData {
     SimData() : _driver_data(nullptr), _driver_data_len(0) {}
 
@@ -903,13 +1124,14 @@ struct SimData {
     ~SimData() {
         cudaFree(_driver_data);  // Assumes _driver_data was allocated with new[]
     }
-    VehicleParam _veh_params;
-    TMeasyParam _tireTM_params;
-    SuspensionParam _sus_params;
-    DriverInput* _driver_data;
-    unsigned int _driver_data_len;
+    VehicleParam _veh_params;       //!< Vehicle parameters
+    TMeasyParam _tireTM_params;     //!< Tire parameters (TMeasy)
+    SuspensionParam _sus_params;    //!< Suspension parameters
+    DriverInput* _driver_data;      //!< Driver inputs
+    unsigned int _driver_data_len;  //!< Length of driver inputs
 };
-// Same but for the TmeasyNr tire
+/// @brief  The SimDataNr is identical to SimData except that it uses the TMeasyNr tire model instead of the TMeasy tire
+/// model.
 struct SimDataNr {
     SimDataNr() : _driver_data(nullptr), _driver_data_len(0) {}
 
@@ -929,14 +1151,18 @@ struct SimDataNr {
     ~SimDataNr() {
         cudaFree(_driver_data);  // Assumes _driver_data was allocated with new[]
     }
-    VehicleParam _veh_params;
-    TMeasyNrParam _tireTMNr_params;
-    SuspensionParam _sus_params;
-    DriverInput* _driver_data;
-    unsigned int _driver_data_len;
+    VehicleParam _veh_params;        //!< Vehicle parameters
+    TMeasyNrParam _tireTMNr_params;  //!< Tire parameters (TMeasyNr)
+    SuspensionParam _sus_params;     //!< Suspension parameters
+    DriverInput* _driver_data;       //!< Driver inputs
+    unsigned int _driver_data_len;   //!< Length of driver inputs
 };
 
-// Store the states of the vehicle, tire and suspension needed in kernel
+/// @brief The SimState struct holds the states of the vehicle, tire and suspension needed in kernel.
+
+/// In essence, this
+/// stores all the "states" of 1 vehicle simulated on the GPU. The user can use this to get the states of the vehicle at
+/// any point in time during the simulation through the solver (see d24SolverHalfImplicitGPU class)
 struct SimState {
     SimState() {}
 
@@ -959,17 +1185,18 @@ struct SimState {
           _suslr_st(suslr_st),
           _susrr_st(susrr_st) {}
 
-    VehicleState _v_states;
-    TMeasyState _tirelf_st;
-    TMeasyState _tirerf_st;
-    TMeasyState _tirelr_st;
-    TMeasyState _tirerr_st;
-    SuspensionState _suslf_st;
-    SuspensionState _susrf_st;
-    SuspensionState _suslr_st;
-    SuspensionState _susrr_st;
+    VehicleState _v_states;     //!< Vehicle states
+    TMeasyState _tirelf_st;     //!< Tire states (TMeasy Left Front (LF))
+    TMeasyState _tirerf_st;     //!< Tire states (TMeasy Right Front (RF))
+    TMeasyState _tirelr_st;     //!< Tire states (TMeasy Left Rear (LR))
+    TMeasyState _tirerr_st;     //!< Tire states (TMeasy Right Rear (RR))
+    SuspensionState _suslf_st;  //!< Suspension states (Left Front (LF))
+    SuspensionState _susrf_st;  //!< Suspension states (Right Front (RF))
+    SuspensionState _suslr_st;  //!< Suspension states (Left Rear (LR))
+    SuspensionState _susrr_st;  //!< Suspension states (Right Rear (RR))
 };
-// Same but for the TMeasyNr tire
+/// @brief The SimStateNr struct is identical to SimState except that it uses the TMeasyNr tire model instead of the
+/// TMeasy tire model.
 struct SimStateNr {
     SimStateNr() {}
 
@@ -992,15 +1219,15 @@ struct SimStateNr {
           _suslr_st(suslr_st),
           _susrr_st(susrr_st) {}
 
-    VehicleState _v_states;
-    TMeasyNrState _tirelf_st;
-    TMeasyNrState _tirerf_st;
-    TMeasyNrState _tirelr_st;
-    TMeasyNrState _tirerr_st;
-    SuspensionState _suslf_st;
-    SuspensionState _susrf_st;
-    SuspensionState _suslr_st;
-    SuspensionState _susrr_st;
+    VehicleState _v_states;     //!< Vehicle states
+    TMeasyNrState _tirelf_st;   //!< Tire states (TMeasyNr Left Front (LF))
+    TMeasyNrState _tirerf_st;   //!< Tire states (TMeasyNr Right Front (RF))
+    TMeasyNrState _tirelr_st;   //!< Tire states (TMeasyNr Left Rear (LR))
+    TMeasyNrState _tirerr_st;   //!< Tire states (TMeasyNr Right Rear (RR))
+    SuspensionState _suslf_st;  //!< Suspension states (Left Front (LF))
+    SuspensionState _susrf_st;  //!< Suspension states (Right Front (RF))
+    SuspensionState _suslr_st;  //!< Suspension states (Left Rear (LR))
+    SuspensionState _susrr_st;  //!< Suspension states (Right Rear (RR))
 };
 
 // -----------------------------------------------------------------------------

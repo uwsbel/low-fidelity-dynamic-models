@@ -32,17 +32,17 @@ __host__ void d24GPU::tireInit(TMeasyNrParam* t_params) {
 }
 
 __host__ void d24GPU::initializeTireSus(const VehicleState* v_states,
-                                     TMeasyState* tirelf_st,
-                                     TMeasyState* tirerf_st,
-                                     TMeasyState* tirelr_st,
-                                     TMeasyState* tirerr_st,
-                                     SuspensionState* suslf_st,
-                                     SuspensionState* susrf_st,
-                                     SuspensionState* suslr_st,
-                                     SuspensionState* susrr_st,
-                                     const VehicleParam* v_params,
-                                     const TMeasyParam* t_params,
-                                     const SuspensionParam* sus_params) {
+                                        TMeasyState* tirelf_st,
+                                        TMeasyState* tirerf_st,
+                                        TMeasyState* tirelr_st,
+                                        TMeasyState* tirerr_st,
+                                        SuspensionState* suslf_st,
+                                        SuspensionState* susrf_st,
+                                        SuspensionState* suslr_st,
+                                        SuspensionState* susrr_st,
+                                        const VehicleParam* v_params,
+                                        const TMeasyParam* t_params,
+                                        const SuspensionParam* sus_params) {
     // Compute the tire loads based on static loads at rest
     // Initialize the vertical forces based on the vehicle weight
     double weight_split =
@@ -89,17 +89,17 @@ __host__ void d24GPU::initializeTireSus(const VehicleState* v_states,
 }
 
 __host__ void d24GPU::initializeTireSus(const VehicleState* v_states,
-                                     TMeasyNrState* tirelf_st,
-                                     TMeasyNrState* tirerf_st,
-                                     TMeasyNrState* tirelr_st,
-                                     TMeasyNrState* tirerr_st,
-                                     SuspensionState* suslf_st,
-                                     SuspensionState* susrf_st,
-                                     SuspensionState* suslr_st,
-                                     SuspensionState* susrr_st,
-                                     const VehicleParam* v_params,
-                                     const TMeasyNrParam* t_params,
-                                     const SuspensionParam* sus_params) {
+                                        TMeasyNrState* tirelf_st,
+                                        TMeasyNrState* tirerf_st,
+                                        TMeasyNrState* tirelr_st,
+                                        TMeasyNrState* tirerr_st,
+                                        SuspensionState* suslf_st,
+                                        SuspensionState* susrf_st,
+                                        SuspensionState* suslr_st,
+                                        SuspensionState* susrr_st,
+                                        const VehicleParam* v_params,
+                                        const TMeasyNrParam* t_params,
+                                        const SuspensionParam* sus_params) {
     // Compute the tire loads based on static loads at rest
     // Initialize the vertical forces based on the vehicle weight
     double weight_split =
@@ -148,16 +148,16 @@ __host__ void d24GPU::initializeTireSus(const VehicleState* v_states,
 // Frame Transformation functions
 // -----------------------------------------------------------------------------
 __device__ void d24GPU::vehToSusTransform(const VehicleState* v_states,
-                                       const TMeasyState* tirelf_st,
-                                       const TMeasyState* tirerf_st,
-                                       const TMeasyState* tirelr_st,
-                                       const TMeasyState* tirerr_st,
-                                       SuspensionState* suslf_st,
-                                       SuspensionState* susrf_st,
-                                       SuspensionState* suslr_st,
-                                       SuspensionState* susrr_st,
-                                       const VehicleParam* v_params,
-                                       double steering) {
+                                          const TMeasyState* tirelf_st,
+                                          const TMeasyState* tirerf_st,
+                                          const TMeasyState* tirelr_st,
+                                          const TMeasyState* tirerr_st,
+                                          SuspensionState* suslf_st,
+                                          SuspensionState* susrf_st,
+                                          SuspensionState* suslr_st,
+                                          SuspensionState* susrr_st,
+                                          const VehicleParam* v_params,
+                                          double steering) {
     // Struct velocities transformed from the vehicle velocities
     suslf_st->_us = (-v_params->_cf * v_states->_wz / 2.) + v_states->_u;  // x direction struct velocity in G-RF
     suslf_st->_vs = v_params->_a * v_states->_wz + v_states->_v;           // y direction
@@ -234,16 +234,16 @@ __device__ void d24GPU::vehToSusTransform(const VehicleState* v_states,
 }
 
 __device__ void d24GPU::vehToSusTransform(const VehicleState* v_states,
-                                       const TMeasyNrState* tirelf_st,
-                                       const TMeasyNrState* tirerf_st,
-                                       const TMeasyNrState* tirelr_st,
-                                       const TMeasyNrState* tirerr_st,
-                                       SuspensionState* suslf_st,
-                                       SuspensionState* susrf_st,
-                                       SuspensionState* suslr_st,
-                                       SuspensionState* susrr_st,
-                                       const VehicleParam* v_params,
-                                       double steering) {
+                                          const TMeasyNrState* tirelf_st,
+                                          const TMeasyNrState* tirerf_st,
+                                          const TMeasyNrState* tirelr_st,
+                                          const TMeasyNrState* tirerr_st,
+                                          SuspensionState* suslf_st,
+                                          SuspensionState* susrf_st,
+                                          SuspensionState* suslr_st,
+                                          SuspensionState* susrr_st,
+                                          const VehicleParam* v_params,
+                                          double steering) {
     // Struct velocities transformed from the vehicle velocities
     suslf_st->_us = (-v_params->_cf * v_states->_wz / 2.) + v_states->_u;  // x direction struct velocity in G-RF
     suslf_st->_vs = v_params->_a * v_states->_wz + v_states->_v;           // y direction
@@ -319,16 +319,16 @@ __device__ void d24GPU::vehToSusTransform(const VehicleState* v_states,
     susrr_st->_dvu = susrr_st->_dvs + (-susrr_st->_dxs * v_states->_wx + susrr_st->_ls * v_states->_wxdot);
 }
 __device__ void d24GPU::vehToTireTransform(const VehicleState* v_states,
-                                        TMeasyState* tirelf_st,
-                                        TMeasyState* tirerf_st,
-                                        TMeasyState* tirelr_st,
-                                        TMeasyState* tirerr_st,
-                                        const SuspensionState* suslf_st,
-                                        const SuspensionState* susrf_st,
-                                        const SuspensionState* suslr_st,
-                                        const SuspensionState* susrr_st,
-                                        const VehicleParam* v_params,
-                                        double steering) {
+                                           TMeasyState* tirelf_st,
+                                           TMeasyState* tirerf_st,
+                                           TMeasyState* tirelr_st,
+                                           TMeasyState* tirerr_st,
+                                           const SuspensionState* suslf_st,
+                                           const SuspensionState* susrf_st,
+                                           const SuspensionState* suslr_st,
+                                           const SuspensionState* susrr_st,
+                                           const VehicleParam* v_params,
+                                           double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
     if (v_params->_nonLinearSteer) {
@@ -393,16 +393,16 @@ __device__ void d24GPU::vehToTireTransform(const VehicleState* v_states,
 }
 
 __device__ void d24GPU::vehToTireTransform(const VehicleState* v_states,
-                                        TMeasyNrState* tirelf_st,
-                                        TMeasyNrState* tirerf_st,
-                                        TMeasyNrState* tirelr_st,
-                                        TMeasyNrState* tirerr_st,
-                                        const SuspensionState* suslf_st,
-                                        const SuspensionState* susrf_st,
-                                        const SuspensionState* suslr_st,
-                                        const SuspensionState* susrr_st,
-                                        const VehicleParam* v_params,
-                                        double steering) {
+                                           TMeasyNrState* tirelf_st,
+                                           TMeasyNrState* tirerf_st,
+                                           TMeasyNrState* tirelr_st,
+                                           TMeasyNrState* tirerr_st,
+                                           const SuspensionState* suslf_st,
+                                           const SuspensionState* susrf_st,
+                                           const SuspensionState* suslr_st,
+                                           const SuspensionState* susrr_st,
+                                           const VehicleParam* v_params,
+                                           double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
     if (v_params->_nonLinearSteer) {
@@ -467,12 +467,12 @@ __device__ void d24GPU::vehToTireTransform(const VehicleState* v_states,
 }
 
 __device__ void d24GPU::tireToVehTransform(const VehicleState* v_states,
-                                        TMeasyState* tirelf_st,
-                                        TMeasyState* tirerf_st,
-                                        TMeasyState* tirelr_st,
-                                        TMeasyState* tirerr_st,
-                                        const VehicleParam* v_params,
-                                        double steering) {
+                                           TMeasyState* tirelf_st,
+                                           TMeasyState* tirerf_st,
+                                           TMeasyState* tirelr_st,
+                                           TMeasyState* tirerr_st,
+                                           const VehicleParam* v_params,
+                                           double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
     if (v_params->_nonLinearSteer) {
@@ -538,12 +538,12 @@ __device__ void d24GPU::tireToVehTransform(const VehicleState* v_states,
 }
 
 __device__ void d24GPU::tireToVehTransform(const VehicleState* v_states,
-                                        TMeasyNrState* tirelf_st,
-                                        TMeasyNrState* tirerf_st,
-                                        TMeasyNrState* tirelr_st,
-                                        TMeasyNrState* tirerr_st,
-                                        const VehicleParam* v_params,
-                                        double steering) {
+                                           TMeasyNrState* tirelf_st,
+                                           TMeasyNrState* tirerf_st,
+                                           TMeasyNrState* tirelr_st,
+                                           TMeasyNrState* tirerr_st,
+                                           const VehicleParam* v_params,
+                                           double steering) {
     // Get the steering considering the mapping might be non linear
     double delta = 0;
     if (v_params->_nonLinearSteer) {
@@ -609,17 +609,17 @@ __device__ void d24GPU::tireToVehTransform(const VehicleState* v_states,
 }
 
 __device__ void d24GPU::computeForcesThroughSus(const VehicleState* v_states,
-                                             const TMeasyState* tirelf_st,
-                                             const TMeasyState* tirerf_st,
-                                             const TMeasyState* tirelr_st,
-                                             const TMeasyState* tirerr_st,
-                                             SuspensionState* suslf_st,
-                                             SuspensionState* susrf_st,
-                                             SuspensionState* suslr_st,
-                                             SuspensionState* susrr_st,
-                                             const VehicleParam* v_params,
-                                             const TMeasyParam* t_params,
-                                             const SuspensionParam* sus_params) {
+                                                const TMeasyState* tirelf_st,
+                                                const TMeasyState* tirerf_st,
+                                                const TMeasyState* tirelr_st,
+                                                const TMeasyState* tirerr_st,
+                                                SuspensionState* suslf_st,
+                                                SuspensionState* susrf_st,
+                                                SuspensionState* suslr_st,
+                                                SuspensionState* susrr_st,
+                                                const VehicleParam* v_params,
+                                                const TMeasyParam* t_params,
+                                                const SuspensionParam* sus_params) {
     // Forces to be transformed to the chassis through the suspension struct points
     // LF
     suslf_st->_fxs = tirelf_st->_fxg + v_params->_muf * G * sin(v_states->_theta) - v_params->_muf * suslf_st->_duu +
@@ -691,17 +691,17 @@ __device__ void d24GPU::computeForcesThroughSus(const VehicleState* v_states,
 }
 
 __device__ void d24GPU::computeForcesThroughSus(const VehicleState* v_states,
-                                             const TMeasyNrState* tirelf_st,
-                                             const TMeasyNrState* tirerf_st,
-                                             const TMeasyNrState* tirelr_st,
-                                             const TMeasyNrState* tirerr_st,
-                                             SuspensionState* suslf_st,
-                                             SuspensionState* susrf_st,
-                                             SuspensionState* suslr_st,
-                                             SuspensionState* susrr_st,
-                                             const VehicleParam* v_params,
-                                             const TMeasyNrParam* t_params,
-                                             const SuspensionParam* sus_params) {
+                                                const TMeasyNrState* tirelf_st,
+                                                const TMeasyNrState* tirerf_st,
+                                                const TMeasyNrState* tirelr_st,
+                                                const TMeasyNrState* tirerr_st,
+                                                SuspensionState* suslf_st,
+                                                SuspensionState* susrf_st,
+                                                SuspensionState* suslr_st,
+                                                SuspensionState* susrr_st,
+                                                const VehicleParam* v_params,
+                                                const TMeasyNrParam* t_params,
+                                                const SuspensionParam* sus_params) {
     // Forces to be transformed to the chassis through the suspension struct points
     // LF
     suslf_st->_fxs = tirelf_st->_fxg + v_params->_muf * G * sin(v_states->_theta) - v_params->_muf * suslf_st->_duu +
@@ -819,8 +819,13 @@ d24GPU::tmxy_combined(double* f, double* fos, double s, double df0, double sm, d
     }
 }
 
-__device__ void
-d24GPU::computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb) {
+__device__ void d24GPU::computeCombinedColumbForce(double* fx,
+                                                   double* fy,
+                                                   double mu,
+                                                   double vsx,
+                                                   double vsy,
+                                                   double fz,
+                                                   double vcoulomb) {
     *fx = tanh(-2.0 * vsx / vcoulomb) * fz * mu;
     *fy = tanh(-2.0 * vsy / vcoulomb) * fz * mu;
 
@@ -832,10 +837,10 @@ d24GPU::computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx
     }
 }
 __device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
-                                    TMeasyState* t_states,
-                                    const VehicleParam* v_params,
-                                    const TMeasyParam* t_params,
-                                    double steering) {
+                                       TMeasyState* t_states,
+                                       const VehicleParam* v_params,
+                                       const TMeasyParam* t_params,
+                                       double steering) {
     double delta = 0;
     if (v_params->_nonLinearSteer) {
         // Extract steer map
@@ -985,10 +990,10 @@ __device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
 }
 
 __device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
-                                    TMeasyNrState* t_states,
-                                    const VehicleParam* v_params,
-                                    const TMeasyNrParam* t_params,
-                                    double steering) {
+                                       TMeasyNrState* t_states,
+                                       const VehicleParam* v_params,
+                                       const TMeasyNrParam* t_params,
+                                       double steering) {
     double delta = 0;
     if (v_params->_nonLinearSteer) {
         // Extract steer map
@@ -1116,14 +1121,14 @@ __device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
     t_states->_fy = Fy;
 }
 __device__ void d24GPU::computeTireCompressionVelocity(const VehicleState* v_states,
-                                                    TMeasyState* tirelf_st,
-                                                    TMeasyState* tirerf_st,
-                                                    TMeasyState* tirelr_st,
-                                                    TMeasyState* tirerr_st,
-                                                    const SuspensionState* suslf_st,
-                                                    const SuspensionState* susrf_st,
-                                                    const SuspensionState* suslr_st,
-                                                    const SuspensionState* susrr_st) {
+                                                       TMeasyState* tirelf_st,
+                                                       TMeasyState* tirerf_st,
+                                                       TMeasyState* tirelr_st,
+                                                       TMeasyState* tirerr_st,
+                                                       const SuspensionState* suslf_st,
+                                                       const SuspensionState* susrf_st,
+                                                       const SuspensionState* suslr_st,
+                                                       const SuspensionState* susrr_st) {
     tirelf_st->_dxt =
         tirelf_st->_vsz - (cos(v_states->_theta) * (suslf_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
                                                     + suslf_st->_vu * sin(v_states->_phi)) -
@@ -1146,14 +1151,14 @@ __device__ void d24GPU::computeTireCompressionVelocity(const VehicleState* v_sta
 }
 
 __device__ void d24GPU::computeTireCompressionVelocity(const VehicleState* v_states,
-                                                    TMeasyNrState* tirelf_st,
-                                                    TMeasyNrState* tirerf_st,
-                                                    TMeasyNrState* tirelr_st,
-                                                    TMeasyNrState* tirerr_st,
-                                                    const SuspensionState* suslf_st,
-                                                    const SuspensionState* susrf_st,
-                                                    const SuspensionState* suslr_st,
-                                                    const SuspensionState* susrr_st) {
+                                                       TMeasyNrState* tirelf_st,
+                                                       TMeasyNrState* tirerf_st,
+                                                       TMeasyNrState* tirelr_st,
+                                                       TMeasyNrState* tirerr_st,
+                                                       const SuspensionState* suslf_st,
+                                                       const SuspensionState* susrf_st,
+                                                       const SuspensionState* suslr_st,
+                                                       const SuspensionState* susrr_st) {
     tirelf_st->_dxt =
         tirelf_st->_vsz - (cos(v_states->_theta) * (suslf_st->_wu * cos(v_states->_phi)  // vsz is 0 for a smooth road
                                                     + suslf_st->_vu * sin(v_states->_phi)) -
@@ -1176,16 +1181,16 @@ __device__ void d24GPU::computeTireCompressionVelocity(const VehicleState* v_sta
 }
 
 __device__ void d24GPU::computeSusRHS(const VehicleState* v_states,
-                                   const TMeasyState* tirelf_st,
-                                   const TMeasyState* tirerf_st,
-                                   const TMeasyState* tirelr_st,
-                                   const TMeasyState* tirerr_st,
-                                   SuspensionState* suslf_st,
-                                   SuspensionState* susrf_st,
-                                   SuspensionState* suslr_st,
-                                   SuspensionState* susrr_st,
-                                   const VehicleParam* v_params,
-                                   const SuspensionParam* sus_params) {
+                                      const TMeasyState* tirelf_st,
+                                      const TMeasyState* tirerf_st,
+                                      const TMeasyState* tirelr_st,
+                                      const TMeasyState* tirerr_st,
+                                      SuspensionState* suslf_st,
+                                      SuspensionState* susrf_st,
+                                      SuspensionState* suslr_st,
+                                      SuspensionState* susrr_st,
+                                      const VehicleParam* v_params,
+                                      const SuspensionParam* sus_params) {
     // Lets extract the cardan angles as they are a pain to type
     double theta = v_states->_theta;
     double phi = v_states->_phi;
@@ -1223,16 +1228,16 @@ __device__ void d24GPU::computeSusRHS(const VehicleState* v_states,
 }
 
 __device__ void d24GPU::computeSusRHS(const VehicleState* v_states,
-                                   const TMeasyNrState* tirelf_st,
-                                   const TMeasyNrState* tirerf_st,
-                                   const TMeasyNrState* tirelr_st,
-                                   const TMeasyNrState* tirerr_st,
-                                   SuspensionState* suslf_st,
-                                   SuspensionState* susrf_st,
-                                   SuspensionState* suslr_st,
-                                   SuspensionState* susrr_st,
-                                   const VehicleParam* v_params,
-                                   const SuspensionParam* sus_params) {
+                                      const TMeasyNrState* tirelf_st,
+                                      const TMeasyNrState* tirerf_st,
+                                      const TMeasyNrState* tirelr_st,
+                                      const TMeasyNrState* tirerr_st,
+                                      SuspensionState* suslf_st,
+                                      SuspensionState* susrf_st,
+                                      SuspensionState* suslr_st,
+                                      SuspensionState* susrr_st,
+                                      const VehicleParam* v_params,
+                                      const SuspensionParam* sus_params) {
     // Lets extract the cardan angles as they are a pain to type
     double theta = v_states->_theta;
     double phi = v_states->_phi;
@@ -1301,11 +1306,11 @@ __device__ double d24GPU::driveTorque(const VehicleParam* v_params, const double
 // Function that calculates the torque split to each tire based on the
 // differential max bias Exactly the same as Chrono implementation
 __device__ void d24GPU::differentialSplit(double torque,
-                                       double max_bias,
-                                       double speed_left,
-                                       double speed_right,
-                                       double* torque_left,
-                                       double* torque_right) {
+                                          double max_bias,
+                                          double speed_left,
+                                          double speed_right,
+                                          double* torque_left,
+                                          double* torque_right) {
     double diff = abs(speed_left - speed_right);
 
     // The bias grows from 1 at diff=0.25 to max_bias at diff=0.5
@@ -1330,13 +1335,13 @@ __device__ void d24GPU::differentialSplit(double torque,
 }
 // Computes the powertrain and produces the wheel angular veloocity differential equations
 __device__ void d24GPU::computePowertrainRHS(VehicleState* v_states,
-                                          TMeasyState* tirelf_st,
-                                          TMeasyState* tirerf_st,
-                                          TMeasyState* tirelr_st,
-                                          TMeasyState* tirerr_st,
-                                          const VehicleParam* v_params,
-                                          const TMeasyParam* t_params,
-                                          const DriverInput* controls) {
+                                             TMeasyState* tirelf_st,
+                                             TMeasyState* tirerf_st,
+                                             TMeasyState* tirelr_st,
+                                             TMeasyState* tirerr_st,
+                                             const VehicleParam* v_params,
+                                             const TMeasyParam* t_params,
+                                             const DriverInput* controls) {
     // some variables needed outside
     double torque_t = 0;
     double max_bias = 2;
@@ -1507,13 +1512,13 @@ __device__ void d24GPU::computePowertrainRHS(VehicleState* v_states,
 }
 
 __device__ void d24GPU::computePowertrainRHS(VehicleState* v_states,
-                                          TMeasyNrState* tirelf_st,
-                                          TMeasyNrState* tirerf_st,
-                                          TMeasyNrState* tirelr_st,
-                                          TMeasyNrState* tirerr_st,
-                                          const VehicleParam* v_params,
-                                          const TMeasyNrParam* t_params,
-                                          const DriverInput* controls) {
+                                             TMeasyNrState* tirelf_st,
+                                             TMeasyNrState* tirerf_st,
+                                             TMeasyNrState* tirelr_st,
+                                             TMeasyNrState* tirerr_st,
+                                             const VehicleParam* v_params,
+                                             const TMeasyNrParam* t_params,
+                                             const DriverInput* controls) {
     // some variables needed outside
     double torque_t = 0;
     double max_bias = 2;
@@ -1683,17 +1688,17 @@ __device__ void d24GPU::computePowertrainRHS(VehicleState* v_states,
 }
 
 __device__ void d24GPU::computeVehicleRHS(VehicleState* v_states,
-                                       const TMeasyState* tirelf_st,
-                                       const TMeasyState* tirerf_st,
-                                       const TMeasyState* tirelr_st,
-                                       const TMeasyState* tirerr_st,
-                                       const SuspensionState* suslf_st,
-                                       const SuspensionState* susrf_st,
-                                       const SuspensionState* suslr_st,
-                                       const SuspensionState* susrr_st,
-                                       const VehicleParam* v_params,
-                                       const TMeasyParam* t_params,
-                                       const SuspensionParam* sus_params) {
+                                          const TMeasyState* tirelf_st,
+                                          const TMeasyState* tirerf_st,
+                                          const TMeasyState* tirelr_st,
+                                          const TMeasyState* tirerr_st,
+                                          const SuspensionState* suslf_st,
+                                          const SuspensionState* susrf_st,
+                                          const SuspensionState* suslr_st,
+                                          const SuspensionState* susrr_st,
+                                          const VehicleParam* v_params,
+                                          const TMeasyParam* t_params,
+                                          const SuspensionParam* sus_params) {
     // Chassis dynamics equations
     v_states->_udot = v_states->_wz * v_states->_v - v_states->_wy * v_states->_w +
                       (1 / v_params->_m) * (suslf_st->_fxs + susrf_st->_fxs + suslr_st->_fxs + susrr_st->_fxs) +
@@ -1727,25 +1732,20 @@ __device__ void d24GPU::computeVehicleRHS(VehicleState* v_states,
                       (v_states->_wz * cos(v_states->_phi) / cos(v_states->_theta));  // Trouble when theta is 90?
     v_states->_dphi = v_states->_wx + v_states->_wy * sin(v_states->_phi) * tan(v_states->_theta) +
                       v_states->_wz * cos(v_states->_phi) * tan(v_states->_theta);
-
-    // Get the global X and Y -> I do not know how to get the global Z
-    v_states->_dx = (v_states->_u * cos(v_states->_psi) - v_states->_v * sin(v_states->_psi));
-
-    v_states->_dy = (v_states->_u * sin(v_states->_psi) + v_states->_v * cos(v_states->_psi));
 }
 
 __device__ void d24GPU::computeVehicleRHS(VehicleState* v_states,
-                                       const TMeasyNrState* tirelf_st,
-                                       const TMeasyNrState* tirerf_st,
-                                       const TMeasyNrState* tirelr_st,
-                                       const TMeasyNrState* tirerr_st,
-                                       const SuspensionState* suslf_st,
-                                       const SuspensionState* susrf_st,
-                                       const SuspensionState* suslr_st,
-                                       const SuspensionState* susrr_st,
-                                       const VehicleParam* v_params,
-                                       const TMeasyNrParam* t_params,
-                                       const SuspensionParam* sus_params) {
+                                          const TMeasyNrState* tirelf_st,
+                                          const TMeasyNrState* tirerf_st,
+                                          const TMeasyNrState* tirelr_st,
+                                          const TMeasyNrState* tirerr_st,
+                                          const SuspensionState* suslf_st,
+                                          const SuspensionState* susrf_st,
+                                          const SuspensionState* suslr_st,
+                                          const SuspensionState* susrr_st,
+                                          const VehicleParam* v_params,
+                                          const TMeasyNrParam* t_params,
+                                          const SuspensionParam* sus_params) {
     // Chassis dynamics equations
     v_states->_udot = v_states->_wz * v_states->_v - v_states->_wy * v_states->_w +
                       (1 / v_params->_m) * (suslf_st->_fxs + susrf_st->_fxs + suslr_st->_fxs + susrr_st->_fxs) +
@@ -1779,11 +1779,6 @@ __device__ void d24GPU::computeVehicleRHS(VehicleState* v_states,
                       (v_states->_wz * cos(v_states->_phi) / cos(v_states->_theta));  // Trouble when theta is 90?
     v_states->_dphi = v_states->_wx + v_states->_wy * sin(v_states->_phi) * tan(v_states->_theta) +
                       v_states->_wz * cos(v_states->_phi) * tan(v_states->_theta);
-
-    // Get the global X and Y -> I do not know how to get the global Z
-    v_states->_dx = (v_states->_u * cos(v_states->_psi) - v_states->_v * sin(v_states->_psi));
-
-    v_states->_dy = (v_states->_u * sin(v_states->_psi) + v_states->_v * cos(v_states->_psi));
 }
 
 // -----------------------------------------------------------------------------
@@ -2080,23 +2075,23 @@ double d24GPU::GetTireMaxLoad(unsigned int li) {
 
 // Guessing tire parameters for a truck tire
 __host__ void d24GPU::GuessTruck80Par(unsigned int li,          // tire load index
-                                   double tireWidth,         // [m]
-                                   double ratio,             // [] = use 0.75 meaning 75%
-                                   double rimDia,            // rim diameter [m]
-                                   double pinfl_li,          // inflation pressure at load index
-                                   double pinfl_use,         // inflation pressure in this configuration
-                                   TMeasyNrParam& t_params)  // damping ratio
+                                      double tireWidth,         // [m]
+                                      double ratio,             // [] = use 0.75 meaning 75%
+                                      double rimDia,            // rim diameter [m]
+                                      double pinfl_li,          // inflation pressure at load index
+                                      double pinfl_use,         // inflation pressure in this configuration
+                                      TMeasyNrParam& t_params)  // damping ratio
 {
     double tireLoad = GetTireMaxLoad(li);
     GuessTruck80Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
 }
 __host__ void d24GPU::GuessTruck80Par(double tireLoad,   // tire load index
-                                   double tireWidth,  // [m]
-                                   double ratio,      // [] = use 0.75 meaning 75%
-                                   double rimDia,     // rim diameter [m]
-                                   double pinfl_li,   // inflation pressure at load index
-                                   double pinfl_use,  // inflation pressure in this configuration
-                                   TMeasyNrParam& t_params) {
+                                      double tireWidth,  // [m]
+                                      double ratio,      // [] = use 0.75 meaning 75%
+                                      double rimDia,     // rim diameter [m]
+                                      double pinfl_li,   // inflation pressure at load index
+                                      double pinfl_use,  // inflation pressure in this configuration
+                                      TMeasyNrParam& t_params) {
     // damping ratio{
     double secth = tireWidth * ratio;  // tire section height
     double defl_max = 0.16 * secth;    // deflection at tire payload
@@ -2137,25 +2132,25 @@ __host__ void d24GPU::GuessTruck80Par(double tireLoad,   // tire load index
 
 // Guessing tire parameters for a passenger car
 __host__ void d24GPU::GuessPassCar70Par(unsigned int li,          // tire load index
-                                     double tireWidth,         // [m]
-                                     double ratio,             // [] = use 0.75 meaning 75%
-                                     double rimDia,            // rim diameter [m]
-                                     double pinfl_li,          // inflation pressure at load index
-                                     double pinfl_use,         // inflation pressure in this configuration
-                                     TMeasyNrParam& t_params)  // damping ratio
+                                        double tireWidth,         // [m]
+                                        double ratio,             // [] = use 0.75 meaning 75%
+                                        double rimDia,            // rim diameter [m]
+                                        double pinfl_li,          // inflation pressure at load index
+                                        double pinfl_use,         // inflation pressure in this configuration
+                                        TMeasyNrParam& t_params)  // damping ratio
 {
     double tireLoad = GetTireMaxLoad(li);
     GuessPassCar70Par(tireLoad, tireWidth, ratio, rimDia, pinfl_li, pinfl_use, t_params);
 }
 __host__ void d24GPU::GuessPassCar70Par(double tireLoad,            // tire load index
-                                     double tireWidth,           // [m]
-                                     double ratio,               // [] = use 0.75 meaning 75%
-                                     double rimDia,              // rim diameter [m]
-                                     double pinfl_li,            // inflation pressure at load index
-                                     double pinfl_use,           // inflation pressure in this configuration
-                                     TMeasyNrParam& t_params) {  // damping ratio
-    double secth = tireWidth * ratio;                            // tire section height
-    double defl_max = 0.16 * secth;                              // deflection at tire payload
+                                        double tireWidth,           // [m]
+                                        double ratio,               // [] = use 0.75 meaning 75%
+                                        double rimDia,              // rim diameter [m]
+                                        double pinfl_li,            // inflation pressure at load index
+                                        double pinfl_use,           // inflation pressure in this configuration
+                                        TMeasyNrParam& t_params) {  // damping ratio
+    double secth = tireWidth * ratio;                               // tire section height
+    double defl_max = 0.16 * secth;                                 // deflection at tire payload
 
     t_params._pn = 0.5 * tireLoad * pow(pinfl_use / pinfl_li, 0.8);
     t_params._pnmax = 3.5 * t_params._pn;

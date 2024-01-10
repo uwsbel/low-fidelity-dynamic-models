@@ -1065,14 +1065,6 @@ __device__ void d18GPU::computeVehRHS(VehicleState* v_states,
     v_states->_wzdot = (pow(A3, 2) * E2 - A1 * A2 * E1 - A1 * A3 * E3 + A3 * E1 * v_params->_jxz - A2 * E2 * mt +
                         E3 * v_params->_jxz * mt) /
                        denom;
-
-    // update the level 0 varaibles using the next time step level 1 varibales
-    // over here still using the old psi and phi.. should we update psi and phi
-    // first and then use those????
-
-    v_states->_dx = (v_states->_u * cos(v_states->_psi) - v_states->_v * sin(v_states->_psi));
-
-    v_states->_dy = (v_states->_u * sin(v_states->_psi) + v_states->_v * cos(v_states->_psi));
 }
 
 // ---------------------------------------------------------

@@ -900,9 +900,6 @@ __device__ void d11GPU::computeVehRHS(VehicleState* v_states,
     v_states->_vdot = -v_states->_u * v_states->_wz + (fy[0] + fy[1]) / mt;
     v_states->_udot = v_states->_v * v_states->_wz + (fx[0] + fx[1]) / mt;
     v_states->_wzdot = (v_params->_a * fy[0] - v_params->_b * fy[1]) / v_params->_jz;
-
-    v_states->_dx = v_states->_u * cos(v_states->_psi) - v_states->_v * sin(v_states->_psi);
-    v_states->_dy = v_states->_u * sin(v_states->_psi) + v_states->_v * cos(v_states->_psi);
 }
 
 // ---------------------------------------------------------
