@@ -874,8 +874,7 @@ void vehToSusTransform(const VehicleState& v_states,
                        SuspensionState& susrf_st,
                        SuspensionState& suslr_st,
                        SuspensionState& susrr_st,
-                       const VehicleParam& v_params,
-                       double steering);
+                       const VehicleParam& v_params);
 
 void vehToSusTransform(const VehicleState& v_states,
                        const TMeasyNrState& tirelf_st,
@@ -886,8 +885,7 @@ void vehToSusTransform(const VehicleState& v_states,
                        SuspensionState& susrf_st,
                        SuspensionState& suslr_st,
                        SuspensionState& susrr_st,
-                       const VehicleParam& v_params,
-                       double steering);
+                       const VehicleParam& v_params);
 // Transform all struct and unsprung mass velocites tire velocities
 void vehToTireTransform(const VehicleState& v_states,
                         TMeasyState& tirelf_st,

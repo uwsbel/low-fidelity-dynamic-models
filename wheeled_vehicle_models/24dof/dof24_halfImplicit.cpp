@@ -631,7 +631,7 @@ void d24SolverHalfImplicit::rhsFun(double t) {
 
     if (m_tire_type == TireType::TMeasy) {
         vehToSusTransform(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
-                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, controls.m_steering);
+                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param);
         vehToTireTransform(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
                            m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param,
                            controls.m_steering);
@@ -684,7 +684,7 @@ void d24SolverHalfImplicit::rhsFun(double t) {
     } else {
         // TMeasy Nr states and structs need to be passed
         vehToSusTransform(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
-                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, controls.m_steering);
+                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param);
         vehToTireTransform(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
                            m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param,
                            controls.m_steering);
@@ -741,7 +741,7 @@ void d24SolverHalfImplicit::rhsFun(double t) {
 void d24SolverHalfImplicit::rhsFun(double t, DriverInput& controls) {
     if (m_tire_type == TireType::TMeasy) {
         vehToSusTransform(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
-                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, controls.m_steering);
+                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param);
         vehToTireTransform(m_veh_state, m_tireTMlf_state, m_tireTMrf_state, m_tireTMlr_state, m_tireTMrr_state,
                            m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param,
                            controls.m_steering);
@@ -779,7 +779,7 @@ void d24SolverHalfImplicit::rhsFun(double t, DriverInput& controls) {
     } else {
         // TMeasy Nr states and structs need to be passed
         vehToSusTransform(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
-                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param, controls.m_steering);
+                          m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param);
         vehToTireTransform(m_veh_state, m_tireTMNrlf_state, m_tireTMNrrf_state, m_tireTMNrlr_state, m_tireTMNrrr_state,
                            m_suslf_state, m_susrf_state, m_suslr_state, m_susrr_state, m_veh_param,
                            controls.m_steering);
@@ -834,7 +834,7 @@ void d24SolverHalfImplicit::PerturbRhsFun(std::vector<double>& y, DriverInput& c
                 suslr_st, susrr_st);
 
         vehToSusTransform(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, suslf_st, susrf_st, suslr_st, susrr_st,
-                          m_veh_param, controls.m_steering);
+                          m_veh_param);
         vehToTireTransform(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, suslf_st, susrf_st, suslr_st, susrr_st,
                            m_veh_param, controls.m_steering);
         // Tire velocities
@@ -875,7 +875,7 @@ void d24SolverHalfImplicit::PerturbRhsFun(std::vector<double>& y, DriverInput& c
         TMeasyNrState tirerr_st;
         // TMeasy Nr states and structs need to be passed
         vehToSusTransform(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, suslf_st, susrf_st, suslr_st, susrr_st,
-                          m_veh_param, controls.m_steering);
+                          m_veh_param);
         vehToTireTransform(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, suslf_st, susrf_st, suslr_st, susrr_st,
                            m_veh_param, controls.m_steering);
         // Tire velocities

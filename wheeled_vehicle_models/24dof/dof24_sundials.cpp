@@ -807,7 +807,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
 
         // Standard RHS function calls
         vehToSusTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
-                          susrf_state, suslr_state, susrr_state, veh_param, controls.m_steering);
+                          susrf_state, suslr_state, susrr_state, veh_param);
 
         vehToTireTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
                            susrf_state, suslr_state, susrr_state, veh_param, controls.m_steering);
@@ -867,7 +867,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
         auto controls = GetDriverInput(t, udata->GetDriverData());
         // Standard RHS function calls
         vehToSusTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
-                          susrf_state, suslr_state, susrr_state, veh_param, controls.m_steering);
+                          susrf_state, suslr_state, susrr_state, veh_param);
 
         vehToTireTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
                            susrf_state, suslr_state, susrr_state, veh_param, controls.m_steering);

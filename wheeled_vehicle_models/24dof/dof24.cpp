@@ -154,8 +154,7 @@ void d24::vehToSusTransform(const VehicleState& v_states,
                             SuspensionState& susrf_st,
                             SuspensionState& suslr_st,
                             SuspensionState& susrr_st,
-                            const VehicleParam& v_params,
-                            double steering) {
+                            const VehicleParam& v_params) {
     // Struct velocities transformed from the vehicle velocities
     suslf_st._us = (-v_params._cf * v_states._wz / 2.) + v_states._u;  // x direction struct velocity in G-RF
     suslf_st._vs = v_params._a * v_states._wz + v_states._v;           // y direction
@@ -238,8 +237,7 @@ void d24::vehToSusTransform(const VehicleState& v_states,
                             SuspensionState& susrf_st,
                             SuspensionState& suslr_st,
                             SuspensionState& susrr_st,
-                            const VehicleParam& v_params,
-                            double steering) {
+                            const VehicleParam& v_params) {
     // Struct velocities transformed from the vehicle velocities
     suslf_st._us = (-v_params._cf * v_states._wz / 2.) + v_states._u;  // x direction struct velocity in G-RF
     suslf_st._vs = v_params._a * v_states._wz + v_states._v;           // y direction
