@@ -777,7 +777,6 @@ void d24SolverSundials::Write(CSV_writer& csv, realtype t, N_Vector y, N_Vector*
 
 // =============================================================================
 
-// Function to evaluate f(t, y, ydot) to be used by Sundials ODE solver
 int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
     // Unpack user data
     UserData* udata = (UserData*)user_data;
@@ -958,7 +957,6 @@ int rhsQuadSens(int Ns,
 }
 
 // =============================================================================
-// Utility functions for finite differencing
 void packY(const d24::VehicleState& v_states,
            const d24::TMeasyState& tirelf_st,
            const d24::TMeasyState& tirerf_st,

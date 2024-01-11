@@ -131,7 +131,7 @@ class d24SolverHalfImplicitGPU {
     /// @brief Getter function for simulation time step
     __host__ __device__ double GetStep() { return m_step; }
 
-    /// @brief Getter function for the sim,ulation end time
+    /// @brief Getter function for the simulation end time
     __host__ __device__ double GetEndTime() { return m_tend; }
 
     /// @brief Switch on output to a csv file at the specified frequency.
@@ -148,7 +148,7 @@ class d24SolverHalfImplicitGPU {
                             bool store_all = false,
                             unsigned int no_outs = 50);
 
-    /// @brief Solve the system of equations and run the simulation
+    /// @brief Solve the system of equations and run the simulation untill m_tend
 
     /// This will run the simulation for all the vehicles upto the end time specified by the user. The user can then use
     /// the GetSimState function to query the states of the vehicles. If the user has set the output to a csv file, then

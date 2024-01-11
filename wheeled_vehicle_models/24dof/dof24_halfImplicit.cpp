@@ -20,11 +20,6 @@ d24SolverHalfImplicit::d24SolverHalfImplicit() : m_tend(0), m_step(0.001), m_out
 }
 d24SolverHalfImplicit::~d24SolverHalfImplicit() {}
 // ======================================================================================================================
-/// @brief Construct the the solver using path to vehicle parameters, tire parameters, and driver inputs
-/// @param vehicle_params_file Path to the vehicle parameter json file
-/// @param tire_params_file Path to the tire parameter json file
-/// @param sus_params_file Path to the suspension parameter json file
-/// @param driver_inputs_file Path to the driver inputs text file
 void d24SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
                                       const std::string& tire_params_file,
                                       const std::string& sus_params_file,
@@ -44,11 +39,6 @@ void d24SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
     // Set the final integration time
     m_tend = m_driver_data.back().m_time;
 }
-/// @brief Construct the the solver using path to vehicle parameters, tire parameters, and driver inputs
-/// @param vehicle_params_file Path to the vehicle parameter json file
-/// @param tire_params_file Path to the tire parameter json file
-/// @param driver_inputs_file Path to the driver inputs text file
-/// @param type Tire type to use - TMeasy or TMeasyNR
 void d24SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
                                       const std::string& tire_params_file,
                                       const std::string& sus_params_file,
@@ -180,8 +170,6 @@ void d24SolverHalfImplicit::Initialize(d24::VehicleState& vehicle_states,
 }
 
 // ======================================================================================================================
-/// @brief Sets the path for the output file
-/// @param output_file string with full path with extension
 void d24SolverHalfImplicit::SetOutput(const std::string& output_file, double output_freq) {
     m_output = true;
     m_output_file = output_file;
@@ -190,7 +178,6 @@ void d24SolverHalfImplicit::SetOutput(const std::string& output_file, double out
 }
 
 // ======================================================================================================================
-/// @brief Solve the system of equations by calling the integrate function
 void d24SolverHalfImplicit::Solve() {
     assert(!m_driver_data.empty() && "No controls provided, please use construct to pass path to driver inputs");
 
@@ -198,8 +185,6 @@ void d24SolverHalfImplicit::Solve() {
     Integrate();
 }
 // ======================================================================================================================
-
-/// @brief Integrate the system of equations using the half implicit method - Calls the RHS function at each time step
 void d24SolverHalfImplicit::Integrate() {
     double t = 0;
 
@@ -311,13 +296,6 @@ void d24SolverHalfImplicit::Integrate() {
 }
 
 // ======================================================================================================================
-/// @brief Function call to integrate by just a single time step. This function will always integrate to the t + m_step
-/// where m_step is set using the SetTimeStep function.
-/// @param t current time
-/// @param throttle throttle input
-/// @param steering steering input
-/// @param braking braking input
-/// @return t + m_step
 double d24SolverHalfImplicit::IntegrateStep(double t, double throttle, double steering, double braking) {
     if (m_output && (t < m_step)) {
         Write(t);
@@ -419,15 +397,6 @@ double d24SolverHalfImplicit::IntegrateStep(double t, double throttle, double st
 
     return new_time;
 }
-// ======================================================================================================================
-/// @brief Function call to integrate by just a single time step with jacobian computation. The order of the states in
-// For order of states in the jacobian matrix, see function "packY" in dof24_halfImplicit
-/// @param t current time
-/// @param throttle throttle input
-/// @param steering steering input
-/// @param braking braking input
-/// @param on boolean to turn on jacobian computation
-/// @return t + m_step
 
 //======================================================================================================================
 double d24SolverHalfImplicit::IntegrateStepWithJacobian(double t,
@@ -622,9 +591,6 @@ double d24SolverHalfImplicit::IntegrateStepWithJacobian(double t,
 }
 // ======================================================================================================================
 
-/// @brief Computes the RHS of all the ODEs (tire velocities, suspension velocities and accelerations chassis
-/// accelerations)
-/// @param t Current time
 void d24SolverHalfImplicit::rhsFun(double t) {
     // Get controls at the current timeStep
     auto controls = GetDriverInput(t, m_driver_data);
