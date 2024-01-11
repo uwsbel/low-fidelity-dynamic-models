@@ -1233,9 +1233,27 @@ struct SimStateNr {
 // -----------------------------------------------------------------------------
 // Initalize functions
 // -----------------------------------------------------------------------------
+/// @brief Initializes the nominal and critical value for the vertical force based on tire parameters
+/// @param t_params Pointer to the TMeasytire parameters
 __host__ void tireInit(TMeasyParam* t_params);
+/// @brief Overload of tireInit for TMeasyNr tire model
+/// @param t_params Pointer to the TMeasyNr tire parameters
 __host__ void tireInit(TMeasyNrParam* t_params);
 
+/// @brief Based on the static loads, this function initializes the tire compression, spring compression and the length
+/// of the struct
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasy tire states (Left Front (LF))
+/// @param tirerf_st TMeasy tire states (Left Front (RF))
+/// @param tirelr_st TMeasy tire states (Left Front (LR))
+/// @param tirerr_st TMeasy tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param t_params TMeasy tire parameters
+/// @param sus_params Suspension parameters
 __host__ void initializeTireSus(const VehicleState* v_states,
                                 TMeasyState* tirelf_st,
                                 TMeasyState* tirerf_st,
@@ -1248,7 +1266,19 @@ __host__ void initializeTireSus(const VehicleState* v_states,
                                 const VehicleParam* v_params,
                                 const TMeasyParam* t_params,
                                 const SuspensionParam* sus_params);
-
+/// @brief Overload of initializeTireSus for TMeasyNr tire model
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasyNr tire states (Left Front (LF))
+/// @param tirerf_st TMeasyNr tire states (Left Front (RF))
+/// @param tirelr_st TMeasyNr tire states (Left Front (LR))
+/// @param tirerr_st TMeasyNr tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param t_params TMeasy tire parameters
+/// @param sus_params Suspension parameters
 __host__ void initializeTireSus(const VehicleState* v_states,
                                 TMeasyNrState* tirelf_st,
                                 TMeasyNrState* tirerf_st,
@@ -1264,7 +1294,17 @@ __host__ void initializeTireSus(const VehicleState* v_states,
 // -----------------------------------------------------------------------------
 // Frame Transform functions
 // -----------------------------------------------------------------------------
-// Transform all vehicle velocites and acclerations to struct and unsprung mass velocites
+/// @brief Transform all vehicle velocites and acclerations to struct and unsprung mass velocites
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasy tire states (Left Front (LF))
+/// @param tirerf_st TMeasy tire states (Left Front (RF))
+/// @param tirelr_st TMeasy tire states (Left Front (LR))
+/// @param tirerr_st TMeasy tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
 __device__ void vehToSusTransform(const VehicleState* v_states,
                                   const TMeasyState* tirelf_st,
                                   const TMeasyState* tirerf_st,
@@ -1274,9 +1314,18 @@ __device__ void vehToSusTransform(const VehicleState* v_states,
                                   SuspensionState* susrf_st,
                                   SuspensionState* suslr_st,
                                   SuspensionState* susrr_st,
-                                  const VehicleParam* v_params,
-                                  double steering);
-
+                                  const VehicleParam* v_params);
+/// @brief Overload of vehToSusTransform for TMeasyNr tire model
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasyNr tire states (Left Front (LF))
+/// @param tirerf_st TMeasyNr tire states (Left Front (RF))
+/// @param tirelr_st TMeasyNr tire states (Left Front (LR))
+/// @param tirerr_st TMeasyNr tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
 __device__ void vehToSusTransform(const VehicleState* v_states,
                                   const TMeasyNrState* tirelf_st,
                                   const TMeasyNrState* tirerf_st,
@@ -1286,9 +1335,19 @@ __device__ void vehToSusTransform(const VehicleState* v_states,
                                   SuspensionState* susrf_st,
                                   SuspensionState* suslr_st,
                                   SuspensionState* susrr_st,
-                                  const VehicleParam* v_params,
-                                  double steering);
-// Transform all struct and unsprung mass velocites tire velocities
+                                  const VehicleParam* v_params);
+/// @brief Transform all struct and unsprung mass velocites tire velocities
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasy tire states (Left Front (LF))
+/// @param tirerf_st TMeasy tire states (Left Front (RF))
+/// @param tirelr_st TMeasy tire states (Left Front (LR))
+/// @param tirerr_st TMeasy tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
 __device__ void vehToTireTransform(const VehicleState* v_states,
                                    TMeasyState* tirelf_st,
                                    TMeasyState* tirerf_st,
@@ -1300,7 +1359,18 @@ __device__ void vehToTireTransform(const VehicleState* v_states,
                                    const SuspensionState* susrr_st,
                                    const VehicleParam* v_params,
                                    double steering);
-
+/// @brief Overload of vehToTireTransform for TMeasyNr tire model
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasyNr tire states (Left Front (LF))
+/// @param tirerf_st TMeasyNr tire states (Left Front (RF))
+/// @param tirelr_st TMeasyNr tire states (Left Front (LR))
+/// @param tirerr_st TMeasyNr tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
 __device__ void vehToTireTransform(const VehicleState* v_states,
                                    TMeasyNrState* tirelf_st,
                                    TMeasyNrState* tirerf_st,
@@ -1312,7 +1382,14 @@ __device__ void vehToTireTransform(const VehicleState* v_states,
                                    const SuspensionState* susrr_st,
                                    const VehicleParam* v_params,
                                    double steering);
-// Transform forces generated in the contact patch to forces in inertial frame (G-RF)
+/// @brief Transform forces generated in the contact patch to forces in inertial frame (G-RF)
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasy tire states (Left Front (LF))
+/// @param tirerf_st TMeasy tire states (Left Front (RF))
+/// @param tirelr_st TMeasy tire states (Left Front (LR))
+/// @param tirerr_st TMeasy tire states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
 __device__ void tireToVehTransform(const VehicleState* v_states,
                                    TMeasyState* tirelf_st,
                                    TMeasyState* tirerf_st,
@@ -1320,7 +1397,14 @@ __device__ void tireToVehTransform(const VehicleState* v_states,
                                    TMeasyState* tirerr_st,
                                    const VehicleParam* v_params,
                                    double steering);
-
+/// @brief Overload of tireToVehTransform for TMeasyNr tire model
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasyNr tire states (Left Front (LF))
+/// @param tirerf_st TMeasyNr tire states (Left Front (RF))
+/// @param tirelr_st TMeasyNr tire states (Left Front (LR))
+/// @param tirerr_st TMeasyNr tire states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
 __device__ void tireToVehTransform(const VehicleState* v_states,
                                    TMeasyNrState* tirelf_st,
                                    TMeasyNrState* tirerf_st,
@@ -1328,8 +1412,20 @@ __device__ void tireToVehTransform(const VehicleState* v_states,
                                    TMeasyNrState* tirerr_st,
                                    const VehicleParam* v_params,
                                    double steering);
-// Transform the forces from the tire to the struct in the inertial frame(G-RF) this then acts on the Chassis body
-// and moves the vehicle
+/// @brief The forces from the tire to the struct in the inertial frame (G-RF) this then acts on the Chassis body and
+/// moves the vehicle
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasy tire states (Left Front (LF))
+/// @param tirerf_st TMeasy tire states (Left Front (RF))
+/// @param tirelr_st TMeasy tire states (Left Front (LR))
+/// @param tirerr_st TMeasy tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param t_params TMeasy tire parameters
+/// @param sus_params Suspension parameters
 __device__ void computeForcesThroughSus(const VehicleState* v_states,
                                         const TMeasyState* tirelf_st,
                                         const TMeasyState* tirerf_st,
@@ -1342,7 +1438,19 @@ __device__ void computeForcesThroughSus(const VehicleState* v_states,
                                         const VehicleParam* v_params,
                                         const TMeasyParam* t_params,
                                         const SuspensionParam* sus_params);
-
+/// @brief Overload of computeForcesThroughSus for TMeasyNr tire model
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasyNr tire states (Left Front (LF))
+/// @param tirerf_st TMeasyNr tire states (Left Front (RF))
+/// @param tirelr_st TMeasyNr tire states (Left Front (LR))
+/// @param tirerr_st TMeasyNr tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param t_params TMeasyNr tire parameters
+/// @param sus_params Suspension parameters
 __device__ void computeForcesThroughSus(const VehicleState* v_states,
                                         const TMeasyNrState* tirelf_st,
                                         const TMeasyNrState* tirerf_st,
@@ -1358,23 +1466,62 @@ __device__ void computeForcesThroughSus(const VehicleState* v_states,
 // -----------------------------------------------------------------------------
 // Tire RHS functions and helper functions
 // -----------------------------------------------------------------------------
+/// @brief Helper function to provide the tire force (f) and tire force / combined slip (fos) for the combined slip
+/// model of the TMeasy and TMeasyNr tire models.
+
+/// See page 78 of book Road Vehicle Dynamics: Fundamentals and Modeling by Georg Rill for more details about other
+/// input parameters
 __device__ void tmxy_combined(double* f, double* fos, double s, double df0, double sm, double fm, double ss, double fs);
 
-// Force function required by the TMeasy tire with no relaxation
+/// @brief Computes the combined columnb force for the TMeasyNr tire model
+
+/// This force provides the stability at low speeds and is belnded with the slip force provided by the tmxy_combined
+/// function.
 __device__ void
 computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 
+/// @brief Computes the tire forces for the TMeasy tire model in the tire contact patch frame (T-RF)
+
+/// The tire slip force produces a lateral and longitudinal tire deflection which produces the forces. A lot more detail
+/// of the formulation can be found in the book Road Vehicle Dynamics: Fundamentals and Modeling by Georg Rill
+/// @param v_states Vehicle States
+/// @param t_states TMeasy tire states
+/// @param v_params Vehicle Parameters
+/// @param t_params TMeasy tire parameters
+/// @param steering Steering input used to calculate the lateral tire slip
 __device__ void computeTireRHS(const VehicleState* v_states,
                                TMeasyState* t_states,
                                const VehicleParam* v_params,
                                const TMeasyParam* t_params,
                                double steering);
+/// @brief Computes the tire forces for the TMeasyNr tire model in the tire contact patch frame (T-RF)
+
+/// For the TMeasyNr tire model, since there is no relaxation, the tire forces from slip are blended with the tire
+/// forces from columb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
+/// is an approximation of the original TMeasy tire model and is inspired by the Project Chrono implementation (see code
+/// at https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h).
+/// @param v_states Vehicle States
+/// @param t_states TMeasyNr tire states
+/// @param v_params Vehicle Parameters
+/// @param t_params TMeasyNr tire parameter
+/// @param steering Steering input used to calculate the lateral tire slip
 __device__ void computeTireRHS(const VehicleState* v_states,
                                TMeasyNrState* t_states,
                                const VehicleParam* v_params,
                                const TMeasyNrParam* t_params,
                                double steering);
-// Computes the compress RHS that is to be integrated
+/// @brief Computes the tire compression RHS that is to be integrated. This function is just an extension of
+/// computeTireRHS but also requires the suspension states.
+
+/// @param v_states Vehicle States
+/// @param tirelf_st TMesay tire states (Left Front (LF))
+/// @param tirerf_st TMesay tire states (Left Front (RF))
+/// @param tirelr_st TMesay tire states (Left Front (LR))
+/// @param tirerr_st TMeasy tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
 __device__ void computeTireCompressionVelocity(const VehicleState* v_states,
                                                TMeasyState* tirelf_st,
                                                TMeasyState* tirerf_st,
@@ -1385,6 +1532,16 @@ __device__ void computeTireCompressionVelocity(const VehicleState* v_states,
                                                const SuspensionState* suslr_st,
                                                const SuspensionState* susrr_st);
 
+/// @brief Overload of computeTireCompressionVelocity for TMeasyNr tire model
+/// @param v_states Vehicle States
+/// @param tirelf_st TMesayNr tire states (Left Front (LF))
+/// @param tirerf_st TMesayNr tire states (Left Front (RF))
+/// @param tirelr_st TMesayNr tire states (Left Front (LR))
+/// @param tirerr_st TMeasyNr tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
 __device__ void computeTireCompressionVelocity(const VehicleState* v_states,
                                                TMeasyNrState* tirelf_st,
                                                TMeasyNrState* tirerf_st,
@@ -1398,7 +1555,18 @@ __device__ void computeTireCompressionVelocity(const VehicleState* v_states,
 // -----------------------------------------------------------------------------
 // Suspension RHS functions and helper functions
 // -----------------------------------------------------------------------------
-// Computes the suspension deflection RHS that are to be integrated
+/// @brief Computes the suspension deflection RHS that are to be integrated
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasy tire states (Left Front (LF))
+/// @param tirerf_st TMeasy tire states (Left Front (RF))
+/// @param tirelr_st TMeasy tire states (Left Front (LR))
+/// @param tirerr_st TMeasy tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param sus_params Suspension Parameters
 __device__ void computeSusRHS(const VehicleState* v_states,
                               const TMeasyState* tirelf_st,
                               const TMeasyState* tirerf_st,
@@ -1410,7 +1578,18 @@ __device__ void computeSusRHS(const VehicleState* v_states,
                               SuspensionState* susrr_st,
                               const VehicleParam* v_params,
                               const SuspensionParam* sus_params);
-
+/// @brief Overload of computeSusRHS for TMeasyNr tire model
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasyNr tire states (Left Front (LF))
+/// @param tirerf_st TMeasyNr tire states (Left Front (RF))
+/// @param tirelr_st TMeasyNr tire states (Left Front (LR))
+/// @param tirerr_st TMeasyNr tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param sus_params Suspension Parameters
 __device__ void computeSusRHS(const VehicleState* v_states,
                               const TMeasyNrState* tirelf_st,
                               const TMeasyNrState* tirerf_st,
@@ -1426,17 +1605,48 @@ __device__ void computeSusRHS(const VehicleState* v_states,
 // -----------------------------------------------------------------------------
 // Powertrain RHS and helper functions
 // -----------------------------------------------------------------------------
+/// @brief Computes the Engine drive torque based on throttle input, engine omega _throttleMod, the _powertrainMap and
+/// the _lossesMap.
+/// @param v_params Vehicle Parameters
+/// @param throttle Throttle input [0-1]
+/// @param omega Engine angular velocity (rad/s)
 __device__ double driveTorque(const VehicleParam* v_params, const double throttle, const double omega);
 
+/// @brief Computes the Engine braking torque based on brake input and _maxBrakeTorque
+/// @param v_params Vehicle Parameters
+/// @param brake Brake input [0-1]
 __device__ inline double brakeTorque(const VehicleParam* v_params, const double brake) {
     return v_params->_maxBrakeTorque * brake;
 }
+/// @brief  Helper function that calculates the torque split to each tire based on the differential max bias and the
+/// tires relative angular velocity
+/// @param torque Torque to differential
+/// @param max_bias Bias that determines the impact of relative angular velocity on torque split
+/// @param speed_left Angular velocity of left tire
+/// @param speed_right Angular velocity of right tire
+/// @param torque_left Torque provided to the left tire
+/// @param torque_right Torque provided to the right tire
 __device__ void differentialSplit(double torque,
                                   double max_bias,
                                   double speed_left,
                                   double speed_right,
                                   double* torque_left,
                                   double* torque_right);
+/// @brief Computes the Crank-Shaft angular acceleration (if there is a torque converter) as well as the angular wheel
+/// accelerations that are integrated to provide the wheel angular velocities.
+
+/// In case there is no torque converter, the crank-shaft angular velocity is calculated solely based on the wheel
+/// angular velocities (not integrated). This function is also where the velocities go from the wheel to the engine
+/// (through the differential, gear box, torque converter (optional)) and the torques go from the engine to the wheel
+/// (through the differential, gear box, torque converter (optional)).
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasy tire states (Left Front (LF))
+/// @param tirerf_st TMeasy tire states (Left Front (RF))
+/// @param tirelr_st TMesay tire states (Left Front (LR))
+/// @param tirerr_st TMesay tire states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param t_params TMesay tire parameters
+/// @param controls Vehicle controls (throttle, brake, steering)
 __device__ void computePowertrainRHS(VehicleState* v_states,
                                      TMeasyState* tirelf_st,
                                      TMeasyState* tirerf_st,
@@ -1445,7 +1655,15 @@ __device__ void computePowertrainRHS(VehicleState* v_states,
                                      const VehicleParam* v_params,
                                      const TMeasyParam* t_params,
                                      const DriverInput* controls);
-
+/// @brief computePowertrainRHS overload for TMeasyNr tire model
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasyNr tire states (Left Front (LF))
+/// @param tirerf_st TMeasyNr tire states (Left Front (RF))
+/// @param tirelr_st TMesayNr tire states (Left Front (LR))
+/// @param tirerr_st TMesayNr tire states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param t_params TMeasyNr tire parameters
+/// @param controls Vehicle controls (throttle, brake, steering)
 __device__ void computePowertrainRHS(VehicleState* v_states,
                                      TMeasyNrState* tirelf_st,
                                      TMeasyNrState* tirerf_st,
@@ -1458,6 +1676,19 @@ __device__ void computePowertrainRHS(VehicleState* v_states,
 // -----------------------------------------------------------------------------
 // Vehicle RHS and helper functions
 // -----------------------------------------------------------------------------
+/// @brief Computes the vehicle linear and angular accelerations that are to be integrated
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasy tire states (Left Front (LF))
+/// @param tirerf_st TMeasy tire states (Left Front (RF))
+/// @param tirelr_st TMeasy tire states (Left Front (LR))
+/// @param tirerr_st TMeasy tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param t_params TMeasy tire parameters
+/// @param sus_params Suspension parameters
 __device__ void computeVehicleRHS(VehicleState* v_states,
                                   const TMeasyState* tirelf_st,
                                   const TMeasyState* tirerf_st,
@@ -1470,7 +1701,19 @@ __device__ void computeVehicleRHS(VehicleState* v_states,
                                   const VehicleParam* v_params,
                                   const TMeasyParam* t_params,
                                   const SuspensionParam* sus_params);
-
+/// @brief computeVehicleRHS overload for TMeasyNr tire model
+/// @param v_states Vehicle States
+/// @param tirelf_st TMeasyNr tire states (Left Front (LF))
+/// @param tirerf_st TMeasyNr tire states (Left Front (RF))
+/// @param tirelr_st TMeasyNr tire states (Left Front (LR))
+/// @param tirerr_st TMeasyNr tire states (Left Front (RR))
+/// @param suslf_st Suspension states (Left Front (LF))
+/// @param susrf_st Suspension states (Left Front (RF))
+/// @param suslr_st Suspension states (Left Front (LR))
+/// @param susrr_st Suspension states (Left Front (RR))
+/// @param v_params Vehicle Parameters
+/// @param t_params TMeasyNr tire parameters
+/// @param sus_params Suspension parameters
 __device__ void computeVehicleRHS(VehicleState* v_states,
                                   const TMeasyNrState* tirelf_st,
                                   const TMeasyNrState* tirerf_st,
@@ -1491,12 +1734,36 @@ __device__ void computeVehicleRHS(VehicleState* v_states,
 // --------
 // Tire
 // --------
+/// @brief Parses the tire parameters from a JSON file for the TMeasy tire model. Please see implementation and/or
+/// example json files for appropriate keys and format.
+/// @param t_params TMeasy tire parameters
+/// @param fileName Path to JSON file (see demo for example)
 __host__ void setTireParamsJSON(TMeasyParam& t_params, const char* fileName);
-// setting tire parameters using a JSON file for the TMeasy NR tire
+
+/// @brief Parses the tire parameters from a JSON file for the TMeasyNr tire model. Please see implementation and/or
+/// example json files for appropriate keys and format.
+
+/// The TMeasyNr follows a different approach to setting tire parameters as it only requires high level tire parameters
+/// to be set by the user. However, the user can still set the tire parameters directly if they wish to do so by setting
+/// the "highLevelParams" key to false.
+/// @param t_params TMeasyNr tire parameters
+/// @param fileName Path to JSON file (see demo for example)
 __host__ void setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName);
-// Additional tire functions to compute model required parameters from general parameters
+
+/// @brief Helper function to compute the max tire load from the load index
+/// @param li Load index
 __host__ double GetTireMaxLoad(unsigned int li);
-// Functions to guess tire parameters from general tire specs
+/// @brief Functions to guess tire parameters from general truck tire. The ability to do this is one of the major
+/// advanatages of the TMeasy tire models.
+
+/// This function will be called if the user sets the key "vehicleType" to "Truck" in the JSON file
+/// @param li load index
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 __host__ void GuessTruck80Par(unsigned int li,
                               double tireWidth,
                               double ratio,
@@ -1504,7 +1771,14 @@ __host__ void GuessTruck80Par(unsigned int li,
                               double pinfl_li,
                               double pinfl_use,
                               TMeasyNrParam& t_params);
-
+/// @brief Overload of GuessTruck80Par for TMeasyNr tire model when tireload is provided directly instead of load index
+/// @param tireLoad Tire load
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 __host__ void GuessTruck80Par(double tireLoad,
                               double tireWidth,
                               double ratio,
@@ -1513,6 +1787,14 @@ __host__ void GuessTruck80Par(double tireLoad,
                               double pinfl_use,
                               TMeasyNrParam& t_params);
 
+/// @brief For passenger tires. This function is called internally when "vehicleType" is set to "Passenger" in the JSON
+/// @param li load index
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 __host__ void GuessPassCar70Par(unsigned int li,
                                 double tireWidth,
                                 double ratio,
@@ -1521,6 +1803,15 @@ __host__ void GuessPassCar70Par(unsigned int li,
                                 double pinfl_use,
                                 TMeasyNrParam& t_params);
 
+/// @brief Overload of GuessPassCar70Par for TMeasyNr tire model when tireload is provided directly instead of load
+/// index
+/// @param tireLoad Tire load
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 __host__ void GuessPassCar70Par(double tireLoad,
                                 double tireWidth,
                                 double ratio,
@@ -1532,10 +1823,16 @@ __host__ void GuessPassCar70Par(double tireLoad,
 // --------
 // Suspension
 // --------
+/// @brief Parses the suspension parameters from a JSON file for the TMeasy tire model.
+/// @param sus_params Suspension parameters
+/// @param fileName Path to JSON file (see demo for example)
 __host__ void setSuspensionParamsJSON(SuspensionParam& sus_params, const char* fileName);
 // --------
 // Vehicle
 // --------
+/// @brief Parses the vehicle parameters from a JSON file for the TMeasy tire model.
+/// @param v_params Vehicle parameters
+/// @param fileName Path to JSON file (see demo for example)
 __host__ void setVehParamsJSON(VehicleParam& v_params, const char* fileName);
 }  // namespace d24GPU
 

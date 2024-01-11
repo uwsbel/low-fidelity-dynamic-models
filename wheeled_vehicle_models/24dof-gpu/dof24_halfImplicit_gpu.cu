@@ -750,7 +750,7 @@ __device__ void rhsFun(double t, unsigned int total_num_vehicles, SimData* sim_d
         auto controls = GetDriverInput(t, driver_data, len);
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities
@@ -815,7 +815,7 @@ __device__ void rhsFun(double t,
         controls.m_braking = braking;
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities
@@ -878,7 +878,7 @@ __device__ void rhsFun(double t,
         auto controls = GetDriverInput(t, driver_data, len);
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities
@@ -943,7 +943,7 @@ __device__ void rhsFun(double t,
         controls.m_braking = braking;
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities
