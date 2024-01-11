@@ -841,13 +841,165 @@ struct SimStateNr {
     TMeasyNrState _tiref_state;  //!< Tire states (TMeasyNr Front (F))
     TMeasyNrState _tirer_state;  //!< Tire states (TMeasyNr Rear (R))
 };
-// ------------------------------ Vehicle functions
 
+// -----------------------------------------------------------------------------
+// Initalize functions
+// -----------------------------------------------------------------------------
+/// @brief Initializes the nominal and critical value for the vertical force based on tire parameters
+/// @param t_params Pointer to the TMeasytire parameters
+__device__ __host__ void tireInit(TMeasyParam* t_params);
+/// @brief Overload of tireInit for TMeasyNr tire model
+/// @param t_params Pointer to the TMeasyNr tire parameters
+__device__ __host__ void tireInit(TMeasyNrParam* t_params);
+
+// -----------------------------------------------------------------------------
+// Frame Transform functions
+// -----------------------------------------------------------------------------
+/// @brief Transform all vehicle velocites to tire velocities
+/// @param tiref_st TMeasy tire states (Front (F))
+/// @param tirer_st TMeasy tire states (Rear (R))
+/// @param v_states Vehicle states
+/// @param loads Tire vertical loads
+/// @param v_params Vehicle parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
+__device__ void vehToTireTransform(TMeasyState* tiref_st,
+                                   TMeasyState* tirer_st,
+                                   const VehicleState* v_states,
+                                   const double* loads,
+                                   const VehicleParam* v_params,
+                                   double steering);
+/// @brief Overload of vehToTireTransform for TMeasyNr tire model
+/// @param tiref_st TMeasyNr tire states (Front (F))
+/// @param tirer_st TMeasyNr tire states (Rear (R))
+/// @param v_states Vehicle states
+/// @param loads Tire vertical loads
+/// @param v_params Vehicle parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
+__device__ void vehToTireTransform(TMeasyNrState* tiref_st,
+                                   TMeasyNrState* tirer_st,
+                                   const VehicleState* v_states,
+                                   const double* loads,
+                                   const VehicleParam* v_params,
+                                   double steering);
+
+/// @brief Transform forces generated in the contact patch to forces in inertial frame (G-RF)
+/// @param tiref_st TMeasy tire states (Front (F))
+/// @param tirer_st TMeasy tire states (Tear (R))
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
+__device__ void tireToVehTransform(TMeasyState* tiref_st,
+                                   TMeasyState* tirer_st,
+                                   const VehicleState* v_states,
+                                   const VehicleParam* v_params,
+                                   double steering);
+/// @brief Overload of tireToVehTransform for TMeasyNr tire model
+/// @param tiref_st TMeasyNr tire states (Front (F))
+/// @param tirer_st TMeasyNr tire states (Tear (R))
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
+__device__ void tireToVehTransform(TMeasyNrState* tiref_st,
+                                   TMeasyNrState* tirer_st,
+                                   const VehicleState* v_states,
+                                   const VehicleParam* v_params,
+                                   double steering);
+
+// -----------------------------------------------------------------------------
+// Tire RHS functions and helper functions
+// -----------------------------------------------------------------------------
+/// @brief Helper function to provide the tire force (f) and tire force / combined slip (fos) for the combined slip
+/// model of the TMeasy and TMeasyNr tire models.
+
+/// See page 78 of book Road Vehicle Dynamics: Fundamentals and Modeling by Georg Rill for more details about other
+/// input parameters
+__device__ void tmxy_combined(double* f, double* fos, double s, double df0, double sm, double fm, double ss, double fs);
+
+/// @brief Computes the combined columnb force for the TMeasyNr tire model
+
+/// This force provides the stability at low speeds and is belnded with the slip force provided by the tmxy_combined
+/// function.
+__device__ void
+computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
+
+/// @brief Compute the vertical loads on the tire using quasi-static load transfer equations.
+
+/// See chapter 2 here for
+/// more details here for more details https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc
+/// @param loads Computed vertical loads on each tire (F, R)
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param t_params Tire parameters
+__device__ void computeTireLoads(double* loads,
+                                 const VehicleState* v_states,
+                                 const VehicleParam* v_params,
+                                 const TMeasyParam* t_params);
+
+/// @brief computeTireLoads overloaded for TMeasyNr tire model
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param t_params Tire parameters
+__device__ void computeTireLoads(double* loads,
+                                 const VehicleState* v_states,
+                                 const VehicleParam* v_params,
+                                 const TMeasyNrParam* t_params);
+
+/// @brief Computes the tire forces for the TMeasy tire model in the tire contact patch frame (T-RF)
+
+/// The tire slip force produces a lateral and longitudinal tire deflection which produces the forces. A lot more detail
+/// of the formulation can be found in the book Road Vehicle Dynamics: Fundamentals and Modeling by Georg Rill
+/// @param t_states TMeasy tire states
+/// @param t_params TMeasy tire parameters
+/// @param v_params Vehicle Parameters
+/// @param steering Steering input used to calculate the lateral tire slip
+__device__ void computeTireRHS(TMeasyState* t_states,
+                               const TMeasyParam* t_params,
+                               const VehicleParam* v_params,
+                               double steering);
+
+/// @brief Computes the tire forces for the TMeasyNr tire model in the tire contact patch frame (T-RF)
+
+/// For the TMeasyNr tire model, since there is no relaxation, the tire forces from slip are blended with the tire
+/// forces from columb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
+/// is an approximation of the original TMeasy tire model and is inspired by the Project Chrono implementation (see code
+/// at https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h).
+/// @param t_states TMeasyNr tire states
+/// @param t_params TMeasyNr tire parameter
+/// @param v_params Vehicle Parameters
+/// @param steering Steering input used to calculate the lateral tire slip
+__device__ void computeTireRHS(TMeasyNrState* t_states,
+                               const TMeasyNrParam* t_params,
+                               const VehicleParam* v_params,
+                               double steering);
+
+// -----------------------------------------------------------------------------
+// Powertrain RHS and helper functions
+// -----------------------------------------------------------------------------
+
+/// @brief Computes the Engine drive torque based on throttle input, engine omega _throttleMod, the _powertrainMap and
+/// the _lossesMap.
+/// @param v_params Vehicle Parameters
+/// @param throttle Throttle input [0-1]
+/// @param omega Engine angular velocity (rad/s)
 __device__ double driveTorque(const VehicleParam* v_params, const double throttle, const double omega);
 
+/// @brief Computes the Engine braking torque based on brake input and _maxBrakeTorque
+/// @param v_params Vehicle Parameters
+/// @param brake Brake input [0-1]
 __device__ inline double brakeTorque(const VehicleParam* v_params, const double brake) {
     return v_params->_maxBrakeTorque * brake;
 }
+
+/// @brief  Helper function that calculates the torque split between the front and rear tire based on the differential
+/// max bias and the tires relative angular velocity
+/// @param torque Torque to differential
+/// @param max_bias Bias that determines the impact of relative angular velocity on torque split
+/// @param speed_rear Angular velocity of rear tire
+/// @param speed_front Angular velocity of front tire
+/// @param torque_rear Torque applied to rear tire
+/// @param torque_front Torque applied to front tire
+/// @param split Boolean that determines if its 2WD or 1WD
+/// @param whichWheels Boolean that determines if its front or rear wheel drive
 __device__ void differentialSplit(double torque,
                                   double max_bias,
                                   double speed_rear,
@@ -857,86 +1009,88 @@ __device__ void differentialSplit(double torque,
                                   bool split,
                                   bool whichWheels);
 
-// setting vehicle parameters using a JSON file
-__host__ void setVehParamsJSON(VehicleParam& v_params, const char* fileName);
+/// @brief Computes the Crank-Shaft angular acceleration (if there is a torque converter) as well as the angular wheel
+/// accelerations that are integrated to provide the wheel angular velocities.
 
-__device__ void vehToTireTransform(TMeasyState* tiref_st,
-                                   TMeasyState* tirer_st,
-                                   const VehicleState* v_states,
-                                   const double* loads,
-                                   const VehicleParam* v_params,
-                                   double steering);
-
-__device__ void vehToTireTransform(TMeasyNrState* tiref_st,
-                                   TMeasyNrState* tirer_st,
-                                   const VehicleState* v_states,
-                                   const double* loads,
-                                   const VehicleParam* v_params,
-                                   double steering);
-
-__device__ void tireToVehTransform(TMeasyState* tiref_st,
-                                   TMeasyState* tirer_st,
-                                   const VehicleState* v_states,
-                                   const VehicleParam* v_params,
-                                   double steering);
-
-__device__ void tireToVehTransform(TMeasyNrState* tiref_st,
-                                   TMeasyNrState* tirer_st,
-                                   const VehicleState* v_states,
-                                   const VehicleParam* v_params,
-                                   double steering);
-
-// ------------------------------ Tire functions
-
-// sets the vertical tire deflection based on the vehicle weight
-// template based on which tire
-__device__ __host__ void tireInit(TMeasyParam* t_params);
-__device__ __host__ void tireInit(TMeasyNrParam* t_params);
-
-// function to calculate the force from the force charactristics
-// used by tireSync
-__device__ void tmxy_combined(double* f, double* fos, double s, double df0, double sm, double fm, double ss, double fs);
-// Force function required by the TMeasy tire with no relaxation
-__device__ void
-computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
-// setting tire parameters using a JSON file
-__host__ void setTireParamsJSON(TMeasyParam& t_params, const char* fileName);
-__host__ void setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName);
-
-// Functions used in the RHS function for the external solver
-__device__ void computeTireLoads(double* loads,
-                                 const VehicleState* v_states,
-                                 const VehicleParam* v_params,
-                                 const TMeasyParam* t_params);
-__device__ void computeTireLoads(double* loads,
-                                 const VehicleState* v_states,
-                                 const VehicleParam* v_params,
-                                 const TMeasyNrParam* t_params);
-
-__device__ void computeTireRHS(TMeasyState* t_states,
-                               const TMeasyParam* t_params,
-                               const VehicleParam* v_params,
-                               double steering);
-__device__ void computeTireRHS(TMeasyNrState* t_states,
-                               const TMeasyNrParam* t_params,
-                               const VehicleParam* v_params,
-                               double steering);
+/// In case there is no torque converter, the crank-shaft angular velocity is calculated solely based on the wheel
+/// angular velocities (not integrated). This function is also where the velocities go from the wheel to the engine
+/// (through the differential, gear box, torque converter (optional)) and the torques go from the engine to the wheel
+/// (through the differential, gear box, torque converter (optional)).
+/// @param v_states Vehicle states
+/// @param tiref_st TMeasyNr tire states (Front (F))
+/// @param tirer_st TMeasyNr tire states (Tear (R))
+/// @param v_params Vehicle parameters
+/// @param t_params Tire parameters
+/// @param controls Vehicle driver inputs (throttle, brake, steering)
 __device__ void computePowertrainRHS(VehicleState* v_states,
                                      TMeasyState* tiref_st,
                                      TMeasyState* tirer_st,
                                      const VehicleParam* v_params,
                                      const TMeasyParam* t_params,
                                      const DriverInput* controls);
+
+/// @brief computePowertrainRHS overloaded for TMeasyNr tire model
+/// @param v_states Vehicle states
+/// @param tiref_st TMeasyNr tire states (Front (F))
+/// @param tirer_st TMeasyNr tire states (Tear (R))
+/// @param v_params Vehicle parameters
+/// @param t_params Tire parameters
+/// @param controls Vehicle driver inputs (throttle, brake, steering)
 __device__ void computePowertrainRHS(VehicleState* v_states,
                                      TMeasyNrState* tiref_st,
                                      TMeasyNrState* tirer_st,
                                      const VehicleParam* v_params,
                                      const TMeasyNrParam* t_params,
                                      const DriverInput* controls);
+
+// -----------------------------------------------------------------------------
+// Vehicle RHS and helper functions
+// -----------------------------------------------------------------------------
+/// @brief Computes the vehicle linear and angular accelerations that are to be integrated
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param fx Tire longitudinal forces in inertial frame (G-RF) (F, R)
+/// @param fy Tire lateral forces in inertial frame (G-RF) (F, R)
 __device__ void computeVehRHS(VehicleState* v_states, const VehicleParam* v_params, const double* fx, const double* fy);
 
+// -----------------------------------------------------------------------------
+// Json parsing functions
+// -----------------------------------------------------------------------------
+// --------
+// Tire
+// --------
+
+/// @brief Parses the tire parameters from a JSON file for the TMeasy tire model. Please see implementation and/or
+/// example json files for appropriate keys and format.
+/// @param t_params TMeasy tire parameters
+/// @param fileName Path to JSON file (see demo for example)
+__host__ void setTireParamsJSON(TMeasyParam& t_params, const char* fileName);
+
+/// @brief Parses the tire parameters from a JSON file for the TMeasyNr tire model. Please see implementation and/or
+/// example json files for appropriate keys and format.
+
+/// The TMeasyNr follows a different approach to setting tire parameters as it only requires high level tire parameters
+/// to be set by the user. However, the user can still set the tire parameters directly if they wish to do so by setting
+/// the "highLevelParams" key to false.
+/// @param t_params TMeasyNr tire parameters
+/// @param fileName Path to JSON file (see demo for example)
+__host__ void setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName);
+
+/// @brief Helper function to compute the max tire load from the load index
+/// @param li Load index
 __host__ double GetTireMaxLoad(unsigned int li);
-// Functions to guess tire parameters from general tire specs
+
+/// @brief Functions to guess tire parameters from general truck tire. The ability to do this is one of the major
+/// advanatages of the TMeasy tire models.
+
+/// This function will be called if the user sets the key "vehicleType" to "Truck" in the JSON file
+/// @param li load index
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 __host__ void GuessTruck80Par(unsigned int li,
                               double tireWidth,
                               double ratio,
@@ -945,6 +1099,14 @@ __host__ void GuessTruck80Par(unsigned int li,
                               double pinfl_use,
                               TMeasyNrParam& t_params);
 
+/// @brief Overload of GuessTruck80Par for TMeasyNr tire model when tireload is provided directly instead of load index
+/// @param tireLoad Tire load
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 __host__ void GuessTruck80Par(double tireLoad,
                               double tireWidth,
                               double ratio,
@@ -953,6 +1115,14 @@ __host__ void GuessTruck80Par(double tireLoad,
                               double pinfl_use,
                               TMeasyNrParam& t_params);
 
+/// @brief For passenger tires. This function is called internally when "vehicleType" is set to "Passenger" in the JSON
+/// @param li load index
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 __host__ void GuessPassCar70Par(unsigned int li,
                                 double tireWidth,
                                 double ratio,
@@ -961,6 +1131,15 @@ __host__ void GuessPassCar70Par(unsigned int li,
                                 double pinfl_use,
                                 TMeasyNrParam& t_params);
 
+/// @brief Overload of GuessPassCar70Par for TMeasyNr tire model when tireload is provided directly instead of load
+/// index
+/// @param tireLoad Tire load
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 __host__ void GuessPassCar70Par(double tireLoad,
                                 double tireWidth,
                                 double ratio,
@@ -968,6 +1147,14 @@ __host__ void GuessPassCar70Par(double tireLoad,
                                 double pinfl_li,
                                 double pinfl_use,
                                 TMeasyNrParam& t_params);
+
+// --------
+// Vehicle
+// --------
+/// @brief Parses the vehicle parameters from a JSON file for the TMeasy tire model.
+/// @param v_params Vehicle parameters
+/// @param fileName Path to JSON file (see demo for example)
+__host__ void setVehParamsJSON(VehicleParam& v_params, const char* fileName);
 
 }  // namespace d11GPU
 

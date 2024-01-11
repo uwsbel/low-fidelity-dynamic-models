@@ -10,19 +10,24 @@
 #include "dof11_gpu.cuh"
 
 // =============================================================================
-// Define the solver class
+// Solver class
 // =============================================================================
 
 class d11SolverHalfImplicitGPU {
   public:
     /// @brief Initialize the solver with the total number of vehicles to be simulated
+    /// @param num_vehicles Number of vehicles to be simulated
     d11SolverHalfImplicitGPU(unsigned int total_num_vehicles);
     ~d11SolverHalfImplicitGPU();
 
-    /// @brief Construct the solver using path to vehicle parameters, tire parameters, number of vehicles and driver
-    /// inputs. Each of these vehicles will have the specified parameters and driver inputs. To add more vehicles
-    /// (ensuring they are still lesser than the total number of vehicles initally specified in the class constructor)
-    /// with different parameters, call the Construct function again. The tire type defaults to TMeasy
+    /// @brief Construct the solver using path to vehicle parameters, tire parameters, number of
+    /// vehicles and driver inputs.
+
+    /// Each of these vehicles will have the specified parameters and driver inputs. To add
+    /// more vehicles (ensuring they are still lesser than the total number of vehicles initally specified in the class
+    /// constructor) with different parameters, call the Construct function again. The tire type defaults to TMEasy and
+    /// is set for all the vehilces. It is also important to note thet the TireType has to be consistent across all the
+    /// vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param num_vehicles Number of vehicles to be simulated with the specified parameters and driver inputs
@@ -32,9 +37,13 @@ class d11SolverHalfImplicitGPU {
                             unsigned int num_vehicles,
                             const std::string& driver_file);
 
-    /// @brief Construct the the solver using path to vehicle parameters, tire parameters, number of vehicles, driver
-    /// inputs and the TireType (Either TMEasy or TMEasyNr). Each of these vehicles will have the specified parameters
-    /// and driver inputs. To add more vehicles with different parameters, call the Construct function again.
+    /// @brief Construct the the solver using path to vehicle parameters, tire parameters,  number
+    /// of vehicles, driver inputs and the TireType (Either TMEasy or TMEasyNr).
+
+    /// Each of these vehicles will have the
+    /// specified parameters and driver inputs. To add more vehicles with different parameters, call the Construct
+    /// function again. It is also important to note thet the TireType has to be consistent across all the
+    /// vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param num_vehicles Number of vehicles to be simulated with the specified parameters and driver inputs
@@ -46,21 +55,29 @@ class d11SolverHalfImplicitGPU {
                             const std::string& driver_file,
                             TireType type);
 
-    /// @brief Construct the the solver using path to vehicle parameters, tire parameters, number of vehicles. TireType
-    /// defualts to TMEasy tires. Each of these vehicles will have the specified parameters. This is mainly provided for
-    /// cases where the driver inputs are not available at the start of the simulation but rather come from a controller
-    /// during the simualtion. To add more vehicles with different parameters, call the Construct function again.
+    /// @brief Construct the the solver using path to vehicle parameters, tire parameters, number
+    /// of vehicles.
+
+    /// Each of these vehicles will have the specified parameters. This function signature
+    /// is mainly provided for cases where the driver inputs are not available at the start of the simulation but rather
+    /// come from a controller during the simualtion. TireType defualts to TMEasy tires. To add more vehicles with
+    /// different parameters, call the Construct function again. It is also important to note thet the TireType has to
+    /// be consistent across all the vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param num_vehicles Number of vehicles to be simulated with the specified parameters and driver inputs
     __host__ void Construct(const std::string& vehicle_params_file,
                             const std::string& tire_params_file,
                             unsigned int num_vehicles);
-    /// @brief Construct the the solver using path to vehicle parameters, tire parameters, number of vehicles and the
-    /// TireType (Either TMEasy or TMEasyNr). Each of these vehicles will have the specified parameters. This is mainly
-    /// provided for cases where the driver inputs are not available at the start of the simulation but rather come from
-    /// a controller during the simualtion. To add more vehicles with different parameters, call the Construct
-    /// function again.
+
+    /// @brief Construct the the solver using path to vehicle parameters, tire parameters, number
+    /// of vehicles and the TireType (Either TMEasy or TMEasyNr).
+
+    /// Each of these vehicles will have the specified
+    /// parameters. This is mainly provided for cases where the driver inputs are not available at the start of the
+    /// simulation but rather come from a controller during the simualtion and the user wants to specify a TireType. To
+    /// add more vehicles with different parameters, call the Construct function again. It is also important to note
+    /// thet the TireType has to be consistent across all the vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param num_vehicles Number of vehicles to be simulated with the specified parameters and driver inputs
@@ -70,24 +87,49 @@ class d11SolverHalfImplicitGPU {
                             unsigned int num_vehicles,
                             TireType type);
 
-    // Set the solver time step
-    __host__ void SetEndTime(double tend) { m_tend = tend; }
-    __host__ void SetTimeStep(double step) { m_step = step; }
-    __host__ void SetKernelSimTime(double time) { m_kernel_sim_time = time; }
-    __host__ void SetHostDumpTime(double time) { m_host_dump_time = time; }
-    __host__ void SetThreadsPerBlock(unsigned int threads) { m_threads_per_block = threads; }
-    __host__ __device__ double GetStep() { return m_step; }
-    __host__ __device__ double GetEndTime() { return m_tend; }
-    __host__ __device__ DriverData GetDriverData() { return m_driver_data; }
-    /// @brief Get a SimState object for a particular vehicle
-    /// @param vehicle_index Index of the vehicle
-    /// @return SimState object for the vehicle
-    __host__ d11GPU::SimState GetSimState(unsigned int vehicle_index);
-    /// @brief Get Tire type
-    /// @return Tire type used in the solver
-    TireType GetTireType() const { return m_tire_type; }
+    /// @brief  Set the simulation end time.
 
-    /// @brief Switch on output to a csv file at the specified frequency.
+    /// This function has to be called by the user. All vehicles will be simulated to this time.
+    /// @param tend End time to set
+    __host__ void SetEndTime(double tend) { m_tend = tend; }
+
+    /// @brief Set the simulation time step used to integrate all the vehicles using the half implicit solver
+    /// @param step time step to set
+    __host__ void SetTimeStep(double step) { m_step = step; }
+
+    /// @brief Set the time for which the GPU kernel simulates without a sync between the vehicles
+
+    /// The simulation proceeds by multiple launches of the GPU kernel for m_kernel_sim_time duration. This is mainly
+    /// for memory reasons and is discussed in this document
+    /// https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. For the user, this means that in case you use
+    /// SolveStep to solve, control will only be returned to the CPU (or to you) after m_kernel_sim_time. Thus, in a
+    /// control setting, m_kernel_sim_time should be set to the time between two control calls. This is set to 2 seconds
+    /// by default but can be changed by the user using this function.
+    /// @param time Time to set
+    __host__ void SetKernelSimTime(double time) { m_kernel_sim_time = time; }
+
+    /// @brief Set the time interval between data output to a csv file
+
+    /// This is usually not required to be set by the user and defaults to 10 seconds. However, this will impact speed
+    /// of simulation as the host array is written into a csv writer every m_host_dump_time. Thus, setting a low value
+    /// will slow down the simulation. However, based on the users memory constraints, this can be set to a higher value
+    /// to speed up the simulation.
+    /// @param time Time to be set
+    __host__ void SetHostDumpTime(double time) { m_host_dump_time = time; }
+
+    /// @brief Sets the threads per block for the GPU kernel. Defaults to 32
+    /// @param threads Threads per block to be set
+    __host__ void SetThreadsPerBlock(unsigned int threads) { m_threads_per_block = threads; }
+
+    /// @brief Getter function for simulation time step
+    __host__ __device__ double GetStep() { return m_step; }
+
+    /// @brief Getter function for the sim,ulation end time
+    __host__ __device__ double GetEndTime() { return m_tend; }
+
+    /// Note: If the SolveStep is used, no output can be set currently. If the user desires to obtain vehicle state
+    /// information, they can query the states using the GetSimState function. See demo demos/HMMWV/demo_hmmwv_step.cu
+    /// for an example.
     /// @param output_file Path to the output file
     /// @param output_freq Frequency of data output
     /// @param store_all Flag to store data from each vehicle on all the threads or no_outs vehicles
@@ -97,19 +139,27 @@ class d11SolverHalfImplicitGPU {
                             bool store_all = false,
                             unsigned int no_outs = 50);
 
-    /// @brief Solve the system of equations by calling the integrate function
+    /// @brief Solve the system of equations and run the simulation
+
+    /// This will run the simulation for all the vehicles upto the end time specified by the user. The user can then use
+    /// the GetSimState function to query the states of the vehicles. If the user has set the output to a csv file, then
+    /// the csv files will be written to the data/output folder.
     __host__ void Solve();
 
-    /// @brief Solve the system of equations for a kernel step with the provided controls
+    /// User can set the kernel step with the SetKernelSimTime function.
     /// @param t Current time
     /// @param steering Steering input
     /// @param throttle Throttle input
     /// @param braking Braking input
+    /// @return Time after the kernel step
     __host__ double SolveStep(double t, double steering, double throttle, double braking);
 
-    /// @brief Initialize vehicle and tire states. This function has to be called before solve and after construct.
-    /// Although it is possible to provide non-zero intial states, this is untested and it is recommended to use the
-    /// default zero states. To initialize more vehicles, call the Initialize function again.
+    /// @brief Initialize vehicle and tire states.
+
+    /// This function has to be called before solve and after the
+    ///  Construct function is called. Although it is possible to provide non-zero intial states, this is untested and
+    ///  it is recommended to use the default zero states. To initialize more vehicles, call the Initialize function
+    ///  again.  For examples of use, see demos.
     /// @param vehicle_states Vehicle states
     /// @param tire_states_F Front (F) TMeasy tire states
     /// @param tire_states_R Rear (R) TMeasy tire states
@@ -118,9 +168,12 @@ class d11SolverHalfImplicitGPU {
                              d11GPU::TMeasyState& tire_states_F,
                              d11GPU::TMeasyState& tire_states_R,
                              unsigned int num_vehicles);
-    /// @brief Initialize vehicle and tire states. This function has to be called before solve and after construct.
-    /// Although it is possible to provide non-zero intial states, this is untested and it is recommended to use the
-    /// default zero states. To initialize more vehicles, call the Initialize function again.
+
+    /// @brief Initialize vehicle and tire states. Overloaded for TMesayNr tires.
+
+    /// This function has to be called before solve and after the
+    /// construct. Although it is possible to provide non-zero intial states, this is untested and it is recommended to
+    /// use the default zero states. To initialize more vehicles, call the Initialize function again.
     /// @param vehicle_states Vehicle states
     /// @param tire_states_F Front (F) TMeasyNr tire states
     /// @param tire_states_R Rear (R) TMeasyNr tire states
@@ -130,34 +183,43 @@ class d11SolverHalfImplicitGPU {
                              d11GPU::TMeasyNrState& tire_states_R,
                              unsigned int num_vehicles);
 
-    /// @brief When using the IntegrateStep, once the integration is complete, this function can be used to Write the
-    /// output to a file specified by the user in the SetOutput function.
-    __host__ void WriteToFile();
+    /// @brief Get a SimState object for a particular vehicle given by its index
 
-    d11GPU::SimData* m_sim_data;          ///< Simulation data for all the vehicles
-    d11GPU::SimDataNr* m_sim_data_nr;     ///< Simulation data but with the TMeasyNr tire for all the vehicles
-    d11GPU::SimState* m_sim_states;       ///< Simulation states for all the vehicles
-    d11GPU::SimStateNr* m_sim_states_nr;  ///< Simulation states but with the TMeasyNr tire for all the vehicles
+    /// This is particularly useful when SolveStep is called where the user cannot access the states of the vehicles via
+    /// csv file outputs
+    /// @param vehicle_index Index of the vehicle
+    /// @return SimState object for the vehicle
+    __host__ d11GPU::SimState GetSimState(unsigned int vehicle_index);
 
-    double m_kernel_sim_time;  ///< The maximum time a kernel launch simulates a vehicle. This is set for memory
-                               // constraints as we are required to store the states of the vehicle in device array
-                               // within the kernel and this can run out of memory for long simulatins. This is also the
-                               // time for which the vehicles are simulated on different threads of the GPU without
-                               // interaction or communication. This can be set via the SetKernelSimTime function but
-                               // defaults to 2 seconds.
-    double
-        m_host_dump_time;  ///< Time after which the host array is dumped into a csv file. Default is set to 10 seconds
-                           // but can be changed by the user
+    /// @brief Get Tire type
+    /// @return Tire type used in the solver
+    TireType GetTireType() const { return m_tire_type; }
+
+    d11GPU::SimData* m_sim_data;          ///< Simulation data for all the vehicles. See d11GPU::SimData for more info
+    d11GPU::SimDataNr* m_sim_data_nr;     ///< Simulation data but with the TMeasyNr tire for all the vehicles. See
+                                          // d11GPU::SimDataNr for more info
+    d11GPU::SimState* m_sim_states;       ///< Simulation states for all the vehicles. See d11GPU::SimState for more
+                                          // info
+    d11GPU::SimStateNr* m_sim_states_nr;  ///< Simulation states but with the TMeasyNr tire for all the vehicles. See
+                                          // d11GPU::SimStateNr for more info
+
+    double m_kernel_sim_time;  ///< The maximum time a kernel launch simulates a vehicle. Defaults to 2 seconds. See
+                               ///< SetKernelSimTime for more
+                               // info
+    double m_host_dump_time;   ///< Time after which the host array is dumped into a csv file. Default is set to 10
+                               ///< seconds. See SetHostDumpTime for more info
     unsigned int
         m_threads_per_block;  ///< Number of threads per block. This is set to 32 by default but can be changed by
                               // the user
 
     /// @brief Solve the system of equations for a kernel step by passing a functor that provides the driver inputs
-    /// given a time
+    /// at a given time
+
+    /// An example of the use of this function can be seen in demos/HMMWV/demo_hmmwv_controlsFunctor.cu.
     /// @param t Current time
     /// @param func Functor that provides the driver inputs given a time. This functor should take 2 arguments: 1) The
     /// current time 2) A pointer to DriverInput. It should then fill in the m_steering, m_throttle and m_braking
-    /// variables for the DriverInput (see demmo_hmmwv_controlsFunctor.cu for an example)
+    /// variables for the DriverInput
     template <typename Func>
     __host__ double SolveStep(double t, Func func) {  // Calculate the number of blocks required
         // if m_output is true, then raise assertion
@@ -214,6 +276,10 @@ class d11SolverHalfImplicitGPU {
     }
 
   private:
+    /// @brief When using the IntegrateStep, once the integration is complete, this function can be used to Write the
+    /// output to a file specified by the user in the SetOutput function.
+    __host__ void WriteToFile();
+
     __host__ void Write(double t, unsigned int time_steps_to_write = 0);
 
     TireType m_tire_type;  // Tire type
@@ -266,6 +332,8 @@ class d11SolverHalfImplicitGPU {
 };
 // Cannout have global function as class member function
 /// @brief Integrate the system of equations using the half implicit method - Calls the RHS function at each time step
+
+/// Used internally within Solve
 __global__ void Integrate(double current_time,
                           double kernel_sim_time,
                           double step,
@@ -276,7 +344,10 @@ __global__ void Integrate(double current_time,
                           double* device_response,
                           d11GPU::SimDataNr* sim_data_nr,
                           d11GPU::SimStateNr* sim_states_nr);
-// For the case where the dirver inputs are provided at each time step
+
+/// @brief Overload to provide driver inputs at each time step.
+
+/// Used internally within SolveStep
 __global__ void Integrate(double current_time,
                           double steering,
                           double throttle,
@@ -290,6 +361,10 @@ __global__ void Integrate(double current_time,
                           double* device_response,
                           d11GPU::SimDataNr* sim_data_nr,
                           d11GPU::SimStateNr* sim_states_nr);
+
+/// @brief Overload for TMesay tires
+
+/// Used internally within Solve
 __global__ void Integrate(double current_time,
                           double kernel_sim_time,
                           double step,
@@ -300,6 +375,10 @@ __global__ void Integrate(double current_time,
                           double* device_response,
                           d11GPU::SimData* sim_data,
                           d11GPU::SimState* sim_states);
+
+/// @brief Overload for TMeasy tires and when driver inputs are provided at each time step
+
+/// Used internally when SolveStep is called
 __global__ void Integrate(double current_time,
                           double steering,
                           double throttle,
@@ -315,10 +394,19 @@ __global__ void Integrate(double current_time,
                           d11GPU::SimState* sim_states);
 //===================================================================================================================
 // Integrate calss rhsFun so this also cannot be a class member function
-/// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations)
-/// @param t Current time
-__device__ void rhsFun(double t, unsigned int total_num_vehicles, d11GPU::SimData* sim_data, d11GPU::SimState* sim_states);
-// For the case where the dirver inputs are provided at each time step
+
+/// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations) using the computeRHS functions
+/// within the vehicle model
+
+/// Used internally within Integrate
+__device__ void rhsFun(double t,
+                       unsigned int total_num_vehicles,
+                       d11GPU::SimData* sim_data,
+                       d11GPU::SimState* sim_states);
+
+/// @brief Overloaded for when driver inputs are provided at each time step
+
+/// Used Internally within Integrate
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
                        d11GPU::SimData* sim_data,
@@ -326,10 +414,18 @@ __device__ void rhsFun(double t,
                        double steering,
                        double throttle,
                        double braking);
+
+/// @brief Overloaded for TMeasyNr tires
+
+/// Used internally within Integrate
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
                        d11GPU::SimDataNr* sim_data_nr,
                        d11GPU::SimStateNr* sim_states_nr);
+
+/// @brief Overloaded for TMeasyNr tires and when driver inputs are provided at each time step
+
+/// Used internally within Integrate
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
                        d11GPU::SimDataNr* sim_data_nr,
@@ -338,6 +434,11 @@ __device__ void rhsFun(double t,
                        double throttle,
                        double braking);
 //===================================================================================================================
+/// @brief Integrate the system of equations using the half implicit method
+
+/// Calls the RHS function at each time step and uses the controls functor for the controls
+
+/// Used internally within SolveStep
 template <typename Func>
 __global__ void Integrate(double current_time,
                           Func func,
@@ -420,7 +521,9 @@ __global__ void Integrate(double current_time,
         }
     }
 }
+/// @brief Overloaded for TMeasyNr tires
 
+/// Used internally within SolveStep
 template <typename Func>
 __global__ void Integrate(double current_time,
                           Func func,
@@ -500,7 +603,10 @@ __global__ void Integrate(double current_time,
     }
 }
 //===================================================================================================================
-// For the case where the dirver inputs are provided as a lambda function
+/// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations) using the computeRHS functions
+/// within the vehicle model.
+
+/// Overloaded for Controls Functor. Used internally within Integrate
 template <typename Func>
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
@@ -543,8 +649,9 @@ __device__ void rhsFun(double t,
         computeVehRHS(&veh_state, &veh_param, &fx[0], &fy[0]);
     }
 }
+/// @brief Overloaded for TMeasyNr tires and for the Controls Functor
 
-// For the case where the dirver inputs are provided as a lambda function
+/// Used internally within Integrate
 template <typename Func>
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
