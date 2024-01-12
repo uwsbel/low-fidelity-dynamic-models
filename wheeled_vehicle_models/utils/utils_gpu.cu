@@ -4,11 +4,6 @@
 
 // --------------------------------------------------------------------------------------------------------------------
 
-/// Driver inputs from data file.
-/// A driver model based on user inputs provided as time series. If provided as a
-/// text file, each line in the file must contain 4 values:
-///   time steering throttle braking
-/// It is assumed that the time values are unique and soted from 0 to T
 __host__ void LoadDriverData(DriverData& data, const std::string& filename) {
     std::ifstream ifile(filename.c_str());
     std::string line;

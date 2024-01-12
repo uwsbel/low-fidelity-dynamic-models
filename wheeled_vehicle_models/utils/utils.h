@@ -15,7 +15,7 @@ static const double rpm2rad = C_PI / 30;
 
 // --------------------------------------------------------------------------------------------------------------------
 
-// Structure for storing driver input - Similar to Chrono
+/// @brief Struct through which driver inputs can be provided to the library of vehicle models.
 struct DriverInput {
     DriverInput() : m_time(0), m_steering(0), m_throttle(0), m_braking(0) {}
     DriverInput(double time, double steering, double throttle, double braking)
@@ -31,34 +31,45 @@ struct DriverInput {
 
 typedef std::vector<DriverInput> DriverData;
 
-// Driver inputs from data file.
+/// @brief Function used to load the driver data from a text file.
+/// @param m_data DriverData object to be populated with the data from the file.
+/// @param filename Path to file
 void LoadDriverData(DriverData& m_data, const std::string& filename);
 
-// Function to get the vehicle controls at a given time
+/// @brief Linearly interpolates through the driver data to find the driver input at a given time.
+/// @param time Current time
+/// @param driver_data DriverData object containing the driver data
+/// @return DriverInput object containing the interpolated driver input
 DriverInput GetDriverInput(double time, const DriverData& driver_data);
 
 // --------------------------------------------------------------------------------------------------------------------
-
+/// @brief Reference path for FSA using sundials solver is made up of these PathPoints
 struct PathPoint {
     PathPoint() : m_t(0), m_x(0), m_y(0) {}
     PathPoint(double time, double x, double y) : m_t(time), m_x(x), m_y(y) {}
 
     static bool compare(const PathPoint& a, const PathPoint& b) { return a.m_t < b.m_t; };
 
-    double m_t;
-    double m_x;
-    double m_y;
+    double m_t; //!< time
+    double m_x; //!< x coordinate
+    double m_y; //!< y coordinate
 };
 
 typedef std::vector<PathPoint> PathData;
 
+/// @brief Loads the PathData from a text file
+/// @param path PathData object to be populated with the data from the file
+/// @param filename Path to text file
 void LoadPath(PathData& path, const std::string& filename);
 
+/// @brief Linearly interpolates through the path data to find the path point at a given time.
 PathPoint GetPathPoint(double time, const PathData& path);
 
 // --------------------------------------------------------------------------------------------------------------------
 
-// Structure for entries of any kind of map (anything with x and y)
+/// @brief Struct to points on any sort of map.
+
+/// Used for the engine maps, torque converter maps and steering maps.
 struct MapEntry {
     MapEntry() : _x(0), _y(0) {}
     MapEntry(double x, double y) : _x(x), _y(y) {}
@@ -69,7 +80,11 @@ struct MapEntry {
     double _y;  // y coordinate of the map
 };
 
-// Function to get the Y of the map by linear interpolation
+/// @brief Function that takes a map which is a vector of MapEntry structs and returns the y value at a given x value by
+/// linear interpolation.
+/// @param map Vector of MapEntry structs
+/// @param x Query x value
+/// @return Y value at the given x value (linearly interpolated in case given x value is not in the map)
 double getMapY(const std::vector<MapEntry>& map, const double x);
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -105,6 +120,7 @@ T clamp(T value, T limitMin, T limitMax) {
 
 // --------------------------------------------------------------------------------------------------------------------
 
+/// @brief Class to write data to a csv file.
 class CSV_writer {
   public:
     explicit CSV_writer(const std::string& delim = ",") : m_delim(delim) {}

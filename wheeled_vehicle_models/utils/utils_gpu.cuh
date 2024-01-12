@@ -25,7 +25,7 @@ void check(T err, const char* const func, const char* const file, const int line
 }
 // --------------------------------------------------------------------------------------------------------------------
 
-// Structure for storing driver input - Similar to Chrono
+/// @brief Struct through which driver inputs can be provided to the library of vehicle models - GPU version
 struct DriverInput {
     __device__ __host__ DriverInput() : m_time(0), m_steering(0), m_throttle(0), m_braking(0) {}
     __device__ __host__ DriverInput(double time, double steering, double throttle, double braking)
@@ -41,15 +41,22 @@ struct DriverInput {
 
 typedef std::vector<DriverInput> DriverData;
 
-// Driver inputs from data file.
+/// @brief Function used to load the driver data from a text file.
+/// @param m_data DriverData object to be populated with the data from the file.
+/// @param filename Path to file
 __host__ void LoadDriverData(DriverData& m_data, const std::string& filename);
 
-// Function to get the vehicle controls at a given time
+/// @brief Linearly interpolates through the driver data to find the driver input at a given time.
+/// @param time Current time
+/// @param driver_data DriverData object containing the driver data
+/// @return DriverInput object containing the interpolated driver input
 __device__ DriverInput GetDriverInput(double time, const DriverInput* driver_data, const unsigned int data_length);
 
 // --------------------------------------------------------------------------------------------------------------------
 
-// Structure for entries of any kind of map (anything with x and y)
+/// @brief Struct to points on any sort of map.
+
+/// Used for the engine maps, torque converter maps and steering maps.
 struct MapEntry {
     __device__ __host__ MapEntry() : _x(0), _y(0) {}
     __device__ __host__ MapEntry(double x, double y) : _x(x), _y(y) {}
@@ -60,11 +67,17 @@ struct MapEntry {
     double _y;  // y coordinate of the map
 };
 
-// Function to get the Y of the map by linear interpolation
+/// @brief Function that takes a map which is a vector of MapEntry structs and returns the y value at a given x value by
+/// linear interpolation.
+/// @param map Pointer to the map
+/// @param x Query x value
+/// @param map_size Size of the map
+/// @return Y value at the given x value (linearly interpolated in case given x value is not in the map)
 __device__ double getMapY(const MapEntry* map, const double x, const unsigned int map_size);
 
-// custom lower bound function for entry and map entry needed during interpolation
+/// @brief custom lower bound function for interpolating DriverInputs - Used internally by GetDriverInput
 __device__ unsigned int lower_bound(const DriverInput* a, unsigned int n, DriverInput x);
+/// @brief custom lower bound function for interpolating MapEntries - Used internally by getMapY
 __device__ unsigned int lower_bound_map(const MapEntry* a, unsigned int n, MapEntry x);
 
 // --------------------------------------------------------------------------------------------------------------------
@@ -99,7 +112,7 @@ __device__ T clamp(T value, T limitMin, T limitMax) {
 };
 
 // --------------------------------------------------------------------------------------------------------------------
-
+/// @brief Class to write data to a csv file.
 class CSV_writer {
   public:
     explicit CSV_writer(const std::string& delim = ",") : m_delim(delim) {}
