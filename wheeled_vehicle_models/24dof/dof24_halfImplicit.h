@@ -221,8 +221,14 @@ class d24SolverHalfImplicit {
         m_tireTMNrrr_state;  //!< TMeasyNr Tire state (Right Rear (RR)) - can be accessed any time after construction
     d24::TMeasyNrParam m_tireTMNr_param;  //!< TMeasyNr tire parameters - can be accessed any time after construction
 
-  private:
+    /// @brief Write csv_writer to csv file in case of step by step simulation
+
+    /// In case the user calls IntegrateStepWithJacobian or IntegrateStep as well as set's output to true, then
+    /// at each step states are only written to the csv writer object not to the csv file itself. Thus the user needs to
+    /// call this function to write the data to the csv file by calling WriteToFile.
     void WriteToFile();
+
+  private:
     void Integrate();
 
     void Write(double t);

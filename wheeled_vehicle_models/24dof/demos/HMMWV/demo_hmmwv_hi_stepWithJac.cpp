@@ -79,4 +79,5 @@ int main(int argc, char** argv) {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     // Print time in milli seconds
     std::cout << "Time taken by function: " << duration.count() / 1000.0 << " milliseconds" << std::endl;
+    solver.WriteToFile();
 }

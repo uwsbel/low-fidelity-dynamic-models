@@ -19,11 +19,6 @@ d18SolverHalfImplicit::d18SolverHalfImplicit() : m_tend(0), m_step(0.001), m_out
 }
 d18SolverHalfImplicit::~d18SolverHalfImplicit() {}
 // ======================================================================================================================
-
-/// @brief Construct the the solver using path to vehicle parameters, tire parameters, and driver inputs
-/// @param vehicle_params_file Path to the vehicle parameter json file
-/// @param tire_params_file Path to the tire parameter json file
-/// @param driver_inputs_file Path to the driver inputs text file
 void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
                                       const std::string& tire_params_file,
                                       const std::string& driver_inputs_file) {
@@ -41,11 +36,7 @@ void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
     // Set the final integration time
     m_tend = m_driver_data.back().m_time;
 }
-/// @brief Construct the the solver using path to vehicle parameters, tire parameters, and driver inputs
-/// @param vehicle_params_file Path to the vehicle parameter json file
-/// @param tire_params_file Path to the tire parameter json file
-/// @param driver_inputs_file Path to the driver inputs text file
-/// @param type Tire type to use - TMeasy or TMeasyNR
+
 void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
                                       const std::string& tire_params_file,
                                       const std::string& driver_inputs_file,
@@ -100,13 +91,6 @@ void d18SolverHalfImplicit::Construct(const std::string& vehicle_params_file,
 }
 // ======================================================================================================================
 
-/// @brief Initialize vehicle and tire states in case something other than non zero is needed - has to be called after
-/// construct for now
-/// @param vehicle_states
-/// @param tire_states_LF
-/// @param tire_states_RF
-/// @param tire_states_LR
-/// @param tire_states_RR
 void d18SolverHalfImplicit::Initialize(d18::VehicleState& vehicle_states,
                                        d18::TMeasyState& tire_states_LF,
                                        d18::TMeasyState& tire_states_RF,
@@ -158,8 +142,6 @@ void d18SolverHalfImplicit::Initialize(d18::VehicleState& vehicle_states,
 
 // ======================================================================================================================
 
-/// @brief Sets the path for the output file
-/// @param output_file string with full path with extension
 void d18SolverHalfImplicit::SetOutput(const std::string& output_file, double output_freq) {
     m_output = true;
     m_output_file = output_file;
@@ -169,7 +151,6 @@ void d18SolverHalfImplicit::SetOutput(const std::string& output_file, double out
 
 // ======================================================================================================================
 
-/// @brief Solve the system of equations by calling the integrate function
 void d18SolverHalfImplicit::Solve() {
     assert(!m_driver_data.empty() && "No controls provided, please use construct to pass path to driver inputs");
 
@@ -179,7 +160,6 @@ void d18SolverHalfImplicit::Solve() {
 
 // ======================================================================================================================
 
-/// @brief Integrate the system of equations using the half implicit method - Calls the RHS function at each time step
 void d18SolverHalfImplicit::Integrate() {
     double t = 0;
     // Create output writer
@@ -262,13 +242,6 @@ void d18SolverHalfImplicit::Integrate() {
 }
 // ======================================================================================================================
 
-/// @brief Function call to integrate by just a single time step. This function will always integrate to the t + m_step
-/// where m_step is set using the SetTimeStep function.
-/// @param t current time
-/// @param throttle throttle input
-/// @param steering steering input
-/// @param braking braking input
-/// @return t + m_step
 double d18SolverHalfImplicit::IntegrateStep(double t, double throttle, double steering, double braking) {
     // Store header and first time step
     if (m_output && (t < m_step)) {
@@ -344,7 +317,6 @@ double d18SolverHalfImplicit::IntegrateStep(double t, double throttle, double st
     return new_time;
 }
 // ======================================================================================================================
-/// @brief Function call to integrate by just a single time step with jacobian computation. The order of the states in
 // the jacobian matrix if the TMeasy tire is used are is as follows:
 //  0: tirelf_st._xe;
 //  1: tirelf_st._ye;
@@ -381,12 +353,6 @@ double d18SolverHalfImplicit::IntegrateStep(double t, double throttle, double st
 //  10: v_states._wz;
 //  11: v_states._phi;
 //  12: v_states._wx;
-/// @param t current time
-/// @param throttle throttle input
-/// @param steering steering input
-/// @param braking braking input
-/// @param on boolean to turn on jacobian computation
-/// @return t + m_step
 double d18SolverHalfImplicit::IntegrateStepWithJacobian(double t,
                                                         double throttle,
                                                         double steering,
@@ -555,8 +521,6 @@ double d18SolverHalfImplicit::IntegrateStepWithJacobian(double t,
 
 // ======================================================================================================================
 
-/// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations)
-/// @param t Current time
 void d18SolverHalfImplicit::rhsFun(double t) {
     // Get controls at the current timeStep
     auto controls = GetDriverInput(t, m_driver_data);

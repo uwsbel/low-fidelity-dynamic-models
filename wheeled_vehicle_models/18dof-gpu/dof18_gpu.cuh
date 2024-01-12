@@ -749,7 +749,6 @@ struct VehicleState {
                                      double vdot,
                                      double wxdot,
                                      double wzdot,
-                                     double tor,
                                      double crankOmega,
                                      int current_gr)
         : _x(x),
