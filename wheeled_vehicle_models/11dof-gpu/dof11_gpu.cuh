@@ -744,8 +744,6 @@ struct VehicleState {
           _dOmega_crank(other->_dOmega_crank),
           _current_gr(other->_current_gr) {}
 
-    // special constructor in case need to start simulation
-    // from some other state
     double _x;    //!< Global x position
     double _y;    //!< Global y position
     double _u;    //!< Chassis x velocity in G-RF
