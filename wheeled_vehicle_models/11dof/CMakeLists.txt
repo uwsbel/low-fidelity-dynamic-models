@@ -40,15 +40,6 @@ endif()
 
 # -----------------------------------------------------
 
-# Option to use snopt
-option(USE_SNOPT "Use SNOPT library" OFF)
-if(USE_SNOPT)
-    set(SNOPT_LIBRARY "" CACHE FILEPATH "Path to SNOPT library")
-    set(SNOPT_INCLUDE_DIR "" CACHE PATH "Path to SNOPT headers")
-endif()
-
-# -----------------------------------------------------
-
 # Option to build Python module
 option(BUILD_PYTHON_MODULE "Build Python module" OFF)
 if(BUILD_PYTHON_MODULE)
@@ -104,12 +95,6 @@ if(USE_SUNDIALS)
   )
 endif()
 
-# Add snopt demos if required
-if(USE_SNOPT)
-  set(HMMWV_PROGRAMS ${HMMWV_PROGRAMS}
-      demo_snopt
-  )
-endif()
 
 # -----------------------------------------------------
 
@@ -133,11 +118,6 @@ foreach(PROGRAM ${HMMWV_PROGRAMS})
     target_link_libraries(${PROGRAM} PUBLIC SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense )
   endif()
 
-  # Link snopt libraries if required
-  if(USE_SNOPT)
-    target_include_directories(${PROGRAM} PUBLIC ${SNOPT_INCLUDE_DIR})
-    target_link_libraries(${PROGRAM} PUBLIC ${SNOPT_LIBRARY})
-  endif()
 
 endforeach()
 
@@ -156,11 +136,6 @@ foreach(PROGRAM ${SEDAN_PROGRAMS})
     target_link_libraries(${PROGRAM} PUBLIC SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense )
   endif()
 
-  # Link snopt libraries if required
-  if(USE_SNOPT)
-    target_include_directories(${PROGRAM} PUBLIC ${SNOPT_INCLUDE_DIR})
-    target_link_libraries(${PROGRAM} PUBLIC ${SNOPT_LIBRARY})
-  endif()
 
 endforeach()
 
