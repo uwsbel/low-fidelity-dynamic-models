@@ -1,4 +1,16 @@
-// This demo shows how to use the TMeasy tire without any relaxation
+// =============================================================================
+// Authors: Huzaifa Unjhawala
+// =============================================================================
+//
+// A HMMWV vehicle is defined using example JSON files.
+// In addition, the user is required to provide a driver input file. 
+// Example driver input files are provided in the data/input folder.
+// The Half-Implicit solver is then Constructed, Initialized and solved.
+// In this demo the TMeasy tire without relaxation is used (TMeasyNr). This 
+// requires setting the TireType as shown. Data at the specified
+// output frequency is written to the specified output file.
+//
+// =============================================================================
 #include <numeric>
 #include <algorithm>
 #include <iterator>
@@ -8,9 +20,9 @@
 using namespace d18;
 
 int main(int argc, char** argv) {
-    // Driver inputs and reference trajectory
-    // std::string driver_file = "../data/input/" + std::string(argv[1]) + ".txt";
-    std::string driver_file = "../data/input/sedan_specific/" + std::string(argv[1]) + ".txt";
+    // Driver inputs
+    std::string driver_file = "../data/input/" + std::string(argv[1]) + ".txt";
+    // std::string driver_file = "../data/input/sedan_specific/" + std::string(argv[1]) + ".txt";
 
     // Vehicle specification
     std::string vehParamsJSON = (char*)"../data/json/Sedan/vehicle.json";
@@ -18,6 +30,7 @@ int main(int argc, char** argv) {
 
     // Construct the solver
     d18SolverHalfImplicit solver;
+    // Since the TMeasyNr tire is used, the TireType must be set
     TireType type = TireType::TMeasyNr;
     solver.Construct(vehParamsJSON, tireParamsJSON, driver_file, type);
 
@@ -35,6 +48,6 @@ int main(int argc, char** argv) {
     // Enable output
     solver.SetOutput("../data/output/" + std::string(argv[1]) + "_sedanNr18Hi.csv", 100.);
 
-    // Solve without quadratures (no reference path required)
+    // Solve
     solver.Solve();
 }

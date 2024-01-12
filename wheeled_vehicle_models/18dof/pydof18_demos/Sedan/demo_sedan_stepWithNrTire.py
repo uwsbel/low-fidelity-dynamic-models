@@ -1,4 +1,11 @@
-
+# =============================================================================
+# Authors: Huzaifa Unjhawala
+# =============================================================================
+#
+# This demo shows how you can use the TMeasyNr tire model with the Sedan vehicle model
+# and step through the simulation manually.
+#
+# =============================================================================
 import numpy as np
 import pydof18 as dof18
 import matplotlib.pyplot as plt

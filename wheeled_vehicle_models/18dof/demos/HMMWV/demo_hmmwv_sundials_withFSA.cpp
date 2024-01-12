@@ -1,3 +1,20 @@
+// =============================================================================
+// Authors: Huzaifa Unjhawala
+// =============================================================================
+//
+// A HMMWV vehicle is defined using example JSON files.
+// In addition, the user is required to provide a driver input file. 
+// Example driver input files are provided in the data/input folder.
+// The Sundials solver is then Constructed and Initialized.
+// Since the sundials solver is used, the user can optionally
+// set the solver tolerances and the maximum solver time-step.
+// In this demo, we additionally demonstrate the use of the Forward Sensitivity
+// Analysis (FSA) module. The user thus provides the parameters for which sensitivies
+// are desired as well as parameter scales. In case quadratures are desired, the user
+// must also provide a reference path. The equations are then solved and the data at a frequency of 10 Hz
+// is written to the specified output file.
+//
+// =============================================================================
 #include <numeric>
 #include <algorithm>
 #include <iterator>
@@ -30,8 +47,10 @@ int main(int argc, char** argv) {
     solver.Construct(vehParamsJSON, tireParamsJSON, driver_file);
 
     // Set optional inputs
+    // Solver tolerances and maximum step size
     solver.SetTolerances(1e-5, 1e-3);
     solver.SetReferencePath(path_file);
+    // Set FSA parameters as the Engine Torque Map
     solver.SetSensitivityParameters(ParamFlag::ENGINE_MAP, params);
     solver.SetSensitivityParameterScales(scales);
 
