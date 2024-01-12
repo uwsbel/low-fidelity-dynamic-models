@@ -1,3 +1,14 @@
+// =============================================================================
+// Authors: Huzaifa Unjhawala
+// =============================================================================
+//
+// A HMMWV vehicle is defined using example JSON files.
+// In this case, a driver input file is not required as the vehicle can also be simulated step-by-step.
+// In addition, this demo shows how to use the Jacobian functionality of the Half-Implicit solver can be used.
+// The Half-Implicit solver is then Constructed, Initialized and solved. Data at the specified
+// output frequency is written to the specified output file.
+//
+// =============================================================================
 #include <numeric>
 #include <algorithm>
 #include <iterator>
@@ -18,9 +29,6 @@ void printVectorOfVectors(const std::vector<std::vector<double>>& vec) {
 }
 
 int main(int argc, char** argv) {
-    // Driver inputs and reference trajectory
-    std::string driver_file = "../data/input/" + std::string(argv[1]) + ".txt";
-
     // Vehicle specification
     std::string vehParamsJSON = (char*)"../data/json/HMMWV/vehicle.json";
     std::string tireParamsJSON = (char*)"../data/json/HMMWV/tmeasy.json";
@@ -28,7 +36,7 @@ int main(int argc, char** argv) {
 
     // Construct the solver
     d24SolverHalfImplicit solver;
-    solver.Construct(vehParamsJSON, tireParamsJSON, susParamsJSON, driver_file);
+    solver.Construct(vehParamsJSON, tireParamsJSON, susParamsJSON);
 
     // Set time step
     solver.SetTimeStep(1e-3);
@@ -48,22 +56,33 @@ int main(int argc, char** argv) {
     // Enable output
     solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv24HiStep.csv", 100);
 
-    double timeStep = solver.GetStep();
-    double endTime = solver.GetEndT();
+    double timeStep = solver.GetStep();  // Get the time step
+    double endTime = 10;                 // Get the end time
     double t = 0;
     double new_time = 0;
-    DriverData driver_data = solver.GetDriverData();  // Get the driver data associated with input file
 
+    // Driver inputs
+    double throttle = 0;
+    double steering = 0;
+    double braking = 0;
     // Time the while loop
     auto start = high_resolution_clock::now();
 
     // Start the loop
     while (t < (endTime - timeStep / 10.)) {
-        auto controls = GetDriverInput(t, driver_data);  // Get the controls for the current time
-        new_time =
-            solver.IntegrateStepWithJacobian(t, controls.m_throttle, controls.m_steering, controls.m_braking, true);
+        // Inputs based on time provided externally
+        if (t > 0.5) {
+            throttle = 0.5;
+            steering = 0.1;
+            braking = 0;
+        } else {
+            throttle = 0;
+            steering = 0;
+            braking = 0;
+        }
+        new_time = solver.IntegrateStepWithJacobian(t, throttle, steering, braking, true);
 
-// Print the Jacobian state and controls
+// Print the Jacobian state and controls if compiled with DEBUG flag
 #ifdef DEBUG
         std::cout << "Jacobian state: " << std::endl;
         printVectorOfVectors(solver.GetJacobianState());
@@ -79,5 +98,6 @@ int main(int argc, char** argv) {
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
     // Print time in milli seconds
     std::cout << "Time taken by function: " << duration.count() / 1000.0 << " milliseconds" << std::endl;
+    // Write the output to file (required when solving step-by-step)
     solver.WriteToFile();
 }
