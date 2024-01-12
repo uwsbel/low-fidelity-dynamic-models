@@ -1,3 +1,15 @@
+// =============================================================================
+// Authors: Huzaifa Unjhawala
+// =============================================================================
+//
+// This demo describes simulating user provided number of HMMWVs (specified with JSON files) on a step-by-step
+// basis. The "step" at which a new control input is provided can be set with SetKernelSimTime as shown here.
+// Since the Half Implicit solver is the only one supported for the GPU models, that is what is used here.
+// When the solver is used in a step-by-step manner, the output is not stored in a file (unlike the CPU models).
+// However, access to the vehicle states every control time step is provided through the GetSimState function.
+// Use ./executable_name <total_number_of_vehicles> <threads_per_block>
+//
+// =============================================================================
 #include <cuda.h>
 #include <iostream>
 #include <random>
@@ -10,7 +22,6 @@
 
 #include "dof11_halfImplicit_gpu.cuh"
 
-// Use ./executable_name <total_number_of_vehicles> <threads_per_block>
 
 using namespace d11GPU;
 int main(int argc, char** argv) {

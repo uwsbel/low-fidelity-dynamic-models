@@ -1,3 +1,14 @@
+// =============================================================================
+// Authors: Huzaifa Unjhawala
+// =============================================================================
+//
+// This demo describes simulating user provided number of HMMWVs (specified with JSON files), all operating on the 
+// same driver inputs on the GPU. Since the Half Implicit solver is the only one supported for the GPU models,
+// that is what is used here. The structure of the API is very similar to the CPU version except for the 
+// additional requirements of specifying the number of vehicles and threads per block. 
+// Use ./executable_name <total_number_of_vehicles> <threads_per_block>
+//
+// =============================================================================
 #include <cuda.h>
 #include <iostream>
 #include <random>
@@ -10,7 +21,6 @@
 
 #include "dof11_halfImplicit_gpu.cuh"
 
-// Use ./executable_name <total_number_of_vehicles> <threads_per_block>
 
 using namespace d11GPU;
 int main(int argc, char** argv) {

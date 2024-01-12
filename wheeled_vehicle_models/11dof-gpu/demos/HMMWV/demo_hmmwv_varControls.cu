@@ -1,3 +1,13 @@
+// =============================================================================
+// Authors: Huzaifa Unjhawala
+// =============================================================================
+//
+// This demo describes simulating user 1000 HMMWVs (specified with JSON files), 500 operating on one driver inpput file 
+// and the rest operating on another driver input file. Since the Half Implicit solver is the only one supported 
+// for the GPU models, that is what is used here.
+// Use ./executable_name <threads_per_block>
+//
+// =============================================================================
 #include <cuda.h>
 #include <iostream>
 #include <random>
@@ -10,7 +20,6 @@
 
 #include "dof11_halfImplicit_gpu.cuh"
 
-// Use ./executable_name <threads_per_block>
 
 using namespace d11GPU;
 int main(int argc, char** argv) {
