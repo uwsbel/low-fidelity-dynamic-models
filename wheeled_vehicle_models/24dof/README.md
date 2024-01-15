@@ -8,7 +8,7 @@ Model parameters are set through JSON files which are then used in the `construc
 Driver Inputs can be provided at run-time during the simualtion or before the beginning of the simulation. For examples on provided driver inputs at run-time, see [demos/HMMWV/demo_hmmwv_hi_step.cpp](./demos/HMMWV/demo_hmmwv_hi_step.cpp).  
 These inputs can also be provided before the simulation begins through text files. See [data/input/acc.txt](./data/input/acc.txt) for an example. Here, the first column is the time, second column is steering, third column is throttle and the last column is braking. The solver then computes the steering, throttle and braking inputs at a given time through linear-interpolation. See [demos/HMMWV/demo_hmmwv_hi](./demos/HMMWV/demo_hmmwv_hi.cpp) for more details.
 
-## Build instructions for the 18 DOF CPU Model Demos
+## Build instructions for the 24 DOF CPU Model Demos
 A CMake configuration is used for both the C++ model and the Python Wrapper. First, in the CWD (`PATH_TO_REPO/wheeled_vehicle_models/24dof/`) create a folder `build` and move into it
 ```bash
 mkdir build
