@@ -2,11 +2,11 @@
 To better represent vehicle dynamics during extreme maneuvers and enable off-roading applications, it is necessary to model vehicle pitch and improve the representation of vehicle roll. The 24 DOF model, which considers the suspension at each corner, offers the same benefits as the 18 DOF model, but it can also predict vehicle heave and pitch motions. The chassis model now includes 6 DOF at the vehicle lumped Centre of Mass (C.M) (compared to 4 in the 18 DOF model), and 1 additional DOF at the four corners of the vehicle for vertical suspension travel. The body is again modeled as rigid, with body-fixed coordinates attached to the C.M and aligned in the principal directions. This model assumes the same engine, torque converter, powertrain and TMeasy tires as the 11 DOF and 18 DOF models and takes the same normalized inputs - Throttle $\in [0,1]$, Braking $\in [0,1]$ and Steering $\in [-1,1]$ where $-1$ is a full left turn. See chapter 2 [here](https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc) for more details.
 
 ### Where do I set model parameters?
-Model parameters are set through JSON files which are then used in the `construct` solver function. Examples of these JSON files are available for 2 different vehicles in [data/json/HMMWV](./24dof/data/json/HMMWV) and [data/json/Sedan](./24dof/data/json/Sedan). Examples of use are available in [demos](./24dof/demos/).
+Model parameters are set through JSON files which are then used in the `construct` solver function. Examples of these JSON files are available for 2 different vehicles in [data/json/HMMWV](./data/json/HMMWV) and [data/json/Sedan](./data/json/Sedan). Examples of use are available in [demos](./demos/).
 
 ### How do I provide driver-inputs?
-Driver Inputs can be provided at run-time during the simualtion or before the beginning of the simulation. For examples on provided driver inputs at run-time, see [demos/HMMWV/demo_hmmwv_hi_step.cpp](./24dof/demos/HMMWV/demo_hmmwv_hi_step.cpp).  
-These inputs can also be provided before the simulation begins through text files. See [data/input/acc.txt](./24dof/data/input/acc.txt) for an example. Here, the first column is the time, second column is steering, third column is throttle and the last column is braking. The solver then computes the steering, throttle and braking inputs at a given time through linear-interpolation. See [demos/HMMWV/demo_hmmwv_hi](./24dof/demos/HMMWV/demo_hmmwv_hi.cpp) for more details.
+Driver Inputs can be provided at run-time during the simualtion or before the beginning of the simulation. For examples on provided driver inputs at run-time, see [demos/HMMWV/demo_hmmwv_hi_step.cpp](./demos/HMMWV/demo_hmmwv_hi_step.cpp).  
+These inputs can also be provided before the simulation begins through text files. See [data/input/acc.txt](./data/input/acc.txt) for an example. Here, the first column is the time, second column is steering, third column is throttle and the last column is braking. The solver then computes the steering, throttle and braking inputs at a given time through linear-interpolation. See [demos/HMMWV/demo_hmmwv_hi](./demos/HMMWV/demo_hmmwv_hi.cpp) for more details.
 
 ## Build instructions for the 18 DOF CPU Model Demos
 A CMake configuration is used for both the C++ model and the Python Wrapper. First, in the CWD (`PATH_TO_REPO/wheeled_vehicle_models/24dof/`) create a folder `build` and move into it
@@ -44,7 +44,7 @@ Once all the required options are set hit `c` to configure and `g` to generate. 
 make -j4
 ```
 We recommend to not run `make install` to ensure path consistencies for the demos (as they call upon certain data files relative to the build directory).  
-Once this is run, the `build` folder will be populated with the executables of the [demos](./24dof/demos) and the Python library (if `BUILD_PYTHON_MODULE` is set to `ON`).  
+Once this is run, the `build` folder will be populated with the executables of the [demos](./demos) and the Python library (if `BUILD_PYTHON_MODULE` is set to `ON`).  
 
 ### Python Wrapper
 Since the Python module is built using SWIG, the path to the Python wrapper library needs to be appened to `PYTHON_PATH`. This library can be found in the build directory mentioned above and its path can be set (on Linux) permanently using the following instructions
