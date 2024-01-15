@@ -777,7 +777,6 @@ void d24SolverSundials::Write(CSV_writer& csv, realtype t, N_Vector y, N_Vector*
 
 // =============================================================================
 
-// Function to evaluate f(t, y, ydot) to be used by Sundials ODE solver
 int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
     // Unpack user data
     UserData* udata = (UserData*)user_data;
@@ -807,7 +806,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
 
         // Standard RHS function calls
         vehToSusTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
-                          susrf_state, suslr_state, susrr_state, veh_param, controls.m_steering);
+                          susrf_state, suslr_state, susrr_state, veh_param);
 
         vehToTireTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
                            susrf_state, suslr_state, susrr_state, veh_param, controls.m_steering);
@@ -867,7 +866,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
         auto controls = GetDriverInput(t, udata->GetDriverData());
         // Standard RHS function calls
         vehToSusTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
-                          susrf_state, suslr_state, susrr_state, veh_param, controls.m_steering);
+                          susrf_state, suslr_state, susrr_state, veh_param);
 
         vehToTireTransform(veh_state, tireTMlf_state, tireTMrf_state, tireTMlr_state, tireTMrr_state, suslf_state,
                            susrf_state, suslr_state, susrr_state, veh_param, controls.m_steering);
@@ -958,7 +957,6 @@ int rhsQuadSens(int Ns,
 }
 
 // =============================================================================
-// Utility functions for finite differencing
 void packY(const d24::VehicleState& v_states,
            const d24::TMeasyState& tirelf_st,
            const d24::TMeasyState& tirerf_st,

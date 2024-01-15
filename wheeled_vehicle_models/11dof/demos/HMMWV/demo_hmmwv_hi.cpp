@@ -1,3 +1,15 @@
+// =============================================================================
+// Authors: Huzaifa Unjhawala
+// =============================================================================
+//
+// A HMMWV vehicle is defined using example JSON files.
+// In addition, the user is required to provide a driver input file. 
+// Example driver input files are provided in the data/input folder.
+// The Half-Implicit solver is then Constructed, Initialized and solved. Data at the specified
+// output frequency is written to the specified output file.
+//
+// =============================================================================
+
 #include <numeric>
 #include <algorithm>
 #include <iterator>
@@ -7,7 +19,7 @@
 using namespace d11;
 
 int main(int argc, char** argv) {
-    // Driver inputs and reference trajectory
+    // Driver inputs
     std::string driver_file = "../data/input/" + std::string(argv[1]) + ".txt";
 
     // Vehicle specification

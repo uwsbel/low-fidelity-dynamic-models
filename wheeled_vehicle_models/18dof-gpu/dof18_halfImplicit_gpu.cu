@@ -9,7 +9,7 @@
 #include "dof18_gpu.cuh"
 #include "dof18_halfImplicit_gpu.cuh"
 
-using namespace d18;
+using namespace d18GPU;
 // ======================================================================================================================
 __host__ d18SolverHalfImplicitGPU::d18SolverHalfImplicitGPU(unsigned int total_num_vehicles)
     : m_step(0.001),
@@ -23,10 +23,10 @@ __host__ d18SolverHalfImplicitGPU::d18SolverHalfImplicitGPU(unsigned int total_n
     m_total_num_vehicles = total_num_vehicles;
 
     // Allocate memory for the simData and simStates
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data, sizeof(d18::SimData) * m_total_num_vehicles));
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data_nr, sizeof(d18::SimDataNr) * m_total_num_vehicles));
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states, sizeof(d18::SimState) * m_total_num_vehicles));
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states_nr, sizeof(d18::SimStateNr) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data, sizeof(d18GPU::SimData) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data_nr, sizeof(d18GPU::SimDataNr) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states, sizeof(d18GPU::SimState) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states_nr, sizeof(d18GPU::SimStateNr) * m_total_num_vehicles));
 
     // Set device and host arrays to nullptrs in case SetOutput is not called by the user
     m_device_response = nullptr;
@@ -68,8 +68,8 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
     // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them up
     // and then copy them over to the simData structs
-    d18::VehicleParam veh_param;
-    d18::TMeasyParam tire_param;
+    d18GPU::VehicleParam veh_param;
+    d18GPU::TMeasyParam tire_param;
 
     setVehParamsJSON(veh_param, vehicle_params_file.c_str());
     setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -117,8 +117,8 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d18::VehicleParam veh_param;
-        d18::TMeasyParam tire_param;
+        d18GPU::VehicleParam veh_param;
+        d18GPU::TMeasyParam tire_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -153,8 +153,8 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d18::VehicleParam veh_param;
-        d18::TMeasyNrParam tire_param;
+        d18GPU::VehicleParam veh_param;
+        d18GPU::TMeasyNrParam tire_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -200,8 +200,8 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
     // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them up
     // and then copy them over to the simData structs
-    d18::VehicleParam veh_param;
-    d18::TMeasyParam tire_param;
+    d18GPU::VehicleParam veh_param;
+    d18GPU::TMeasyParam tire_param;
 
     setVehParamsJSON(veh_param, vehicle_params_file.c_str());
     setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -239,8 +239,8 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d18::VehicleParam veh_param;
-        d18::TMeasyParam tire_param;
+        d18GPU::VehicleParam veh_param;
+        d18GPU::TMeasyParam tire_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -266,8 +266,8 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d18::VehicleParam veh_param;
-        d18::TMeasyNrParam tire_param;
+        d18GPU::VehicleParam veh_param;
+        d18GPU::TMeasyNrParam tire_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -287,11 +287,11 @@ __host__ void d18SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 }
 // ======================================================================================================================
 
-__host__ void d18SolverHalfImplicitGPU::Initialize(d18::VehicleState& vehicle_states,
-                                                   d18::TMeasyState& tire_states_LF,
-                                                   d18::TMeasyState& tire_states_RF,
-                                                   d18::TMeasyState& tire_states_LR,
-                                                   d18::TMeasyState& tire_states_RR,
+__host__ void d18SolverHalfImplicitGPU::Initialize(d18GPU::VehicleState& vehicle_states,
+                                                   d18GPU::TMeasyState& tire_states_LF,
+                                                   d18GPU::TMeasyState& tire_states_RF,
+                                                   d18GPU::TMeasyState& tire_states_LR,
+                                                   d18GPU::TMeasyState& tire_states_RR,
                                                    unsigned int num_vehicles) {
     // Esnure that construct was called with TMeasy tire type
     assert((m_tire_type == TireType::TMeasy) &&
@@ -313,11 +313,11 @@ __host__ void d18SolverHalfImplicitGPU::Initialize(d18::VehicleState& vehicle_st
 }
 
 // TMeasy without relaxation does not have tire states and so the jacobian size reduces by 8
-__host__ void d18SolverHalfImplicitGPU::Initialize(d18::VehicleState& vehicle_states,
-                                                   d18::TMeasyNrState& tire_states_LF,
-                                                   d18::TMeasyNrState& tire_states_RF,
-                                                   d18::TMeasyNrState& tire_states_LR,
-                                                   d18::TMeasyNrState& tire_states_RR,
+__host__ void d18SolverHalfImplicitGPU::Initialize(d18GPU::VehicleState& vehicle_states,
+                                                   d18GPU::TMeasyNrState& tire_states_LF,
+                                                   d18GPU::TMeasyNrState& tire_states_RF,
+                                                   d18GPU::TMeasyNrState& tire_states_LR,
+                                                   d18GPU::TMeasyNrState& tire_states_RR,
                                                    unsigned int num_vehicles) {
     // Esnure that construct was called with TMeasyNr tire type
     assert((m_tire_type == TireType::TMeasyNr) &&
@@ -730,8 +730,8 @@ __device__ void rhsFun(double t, unsigned int total_num_vehicles, SimData* sim_d
 // ======================================================================================================================
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d18::SimData* sim_data,
-                       d18::SimState* sim_states,
+                       d18GPU::SimData* sim_data,
+                       d18GPU::SimState* sim_states,
                        double steering,
                        double throttle,
                        double braking) {
@@ -828,8 +828,8 @@ __device__ void rhsFun(double t, unsigned int total_num_vehicles, SimDataNr* sim
 // ======================================================================================================================
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d18::SimDataNr* sim_data_nr,
-                       d18::SimStateNr* sim_states_nr,
+                       d18GPU::SimDataNr* sim_data_nr,
+                       d18GPU::SimStateNr* sim_states_nr,
                        double steering,
                        double throttle,
                        double braking) {
@@ -987,8 +987,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d18::SimData* sim_data,
-                          d18::SimState* sim_states) {
+                          d18GPU::SimData* sim_data,
+                          d18GPU::SimState* sim_states) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -1172,8 +1172,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d18::SimDataNr* sim_data_nr,
-                          d18::SimStateNr* sim_states_nr) {
+                          d18GPU::SimDataNr* sim_data_nr,
+                          d18GPU::SimStateNr* sim_states_nr) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response

@@ -9,7 +9,7 @@
 #include "dof24_gpu.cuh"
 #include "dof24_halfImplicit_gpu.cuh"
 
-using namespace d24;
+using namespace d24GPU;
 // ======================================================================================================================
 // Constructor
 d24SolverHalfImplicitGPU::d24SolverHalfImplicitGPU(unsigned int total_num_vehicles)
@@ -24,10 +24,10 @@ d24SolverHalfImplicitGPU::d24SolverHalfImplicitGPU(unsigned int total_num_vehicl
     m_total_num_vehicles = total_num_vehicles;
 
     // Allocate memory for the simData and simStates
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data, sizeof(d24::SimData) * m_total_num_vehicles));
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data_nr, sizeof(d24::SimDataNr) * m_total_num_vehicles));
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states, sizeof(d24::SimState) * m_total_num_vehicles));
-    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states_nr, sizeof(d24::SimStateNr) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data, sizeof(d24GPU::SimData) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_data_nr, sizeof(d24GPU::SimDataNr) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states, sizeof(d24GPU::SimState) * m_total_num_vehicles));
+    CHECK_CUDA_ERROR(cudaMallocManaged((void**)&m_sim_states_nr, sizeof(d24GPU::SimStateNr) * m_total_num_vehicles));
 
     // Set device and host arrays to nullptrs in case SetOutput is not called by the user
     m_device_response = nullptr;
@@ -69,9 +69,9 @@ __host__ void d24SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
     // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them up
     // and then copy them over to the simData structs
-    d24::VehicleParam veh_param;
-    d24::TMeasyParam tire_param;
-    d24::SuspensionParam sus_param;
+    d24GPU::VehicleParam veh_param;
+    d24GPU::TMeasyParam tire_param;
+    d24GPU::SuspensionParam sus_param;
 
     setVehParamsJSON(veh_param, vehicle_params_file.c_str());
     setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -122,9 +122,9 @@ __host__ void d24SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d24::VehicleParam veh_param;
-        d24::TMeasyParam tire_param;
-        d24::SuspensionParam sus_param;
+        d24GPU::VehicleParam veh_param;
+        d24GPU::TMeasyParam tire_param;
+        d24GPU::SuspensionParam sus_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -161,9 +161,9 @@ __host__ void d24SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d24::VehicleParam veh_param;
-        d24::TMeasyNrParam tire_param;
-        d24::SuspensionParam sus_param;
+        d24GPU::VehicleParam veh_param;
+        d24GPU::TMeasyNrParam tire_param;
+        d24GPU::SuspensionParam sus_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -212,9 +212,9 @@ __host__ void d24SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
     // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them up
     // and then copy them over to the simData structs
-    d24::VehicleParam veh_param;
-    d24::TMeasyParam tire_param;
-    d24::SuspensionParam sus_param;
+    d24GPU::VehicleParam veh_param;
+    d24GPU::TMeasyParam tire_param;
+    d24GPU::SuspensionParam sus_param;
 
     setVehParamsJSON(veh_param, vehicle_params_file.c_str());
     setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -255,9 +255,9 @@ __host__ void d24SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d24::VehicleParam veh_param;
-        d24::TMeasyParam tire_param;
-        d24::SuspensionParam sus_param;
+        d24GPU::VehicleParam veh_param;
+        d24GPU::TMeasyParam tire_param;
+        d24GPU::SuspensionParam sus_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -285,9 +285,9 @@ __host__ void d24SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
 
         // Since cudaMallocManaged does not call the constructor for non-POD types, we create cpu structs and fill them
         // up and then copy them over to the simData structs
-        d24::VehicleParam veh_param;
-        d24::TMeasyNrParam tire_param;
-        d24::SuspensionParam sus_param;
+        d24GPU::VehicleParam veh_param;
+        d24GPU::TMeasyNrParam tire_param;
+        d24GPU::SuspensionParam sus_param;
 
         setVehParamsJSON(veh_param, vehicle_params_file.c_str());
         setTireParamsJSON(tire_param, tire_params_file.c_str());
@@ -308,15 +308,15 @@ __host__ void d24SolverHalfImplicitGPU::Construct(const std::string& vehicle_par
     }
 }
 // ======================================================================================================================
-__host__ void d24SolverHalfImplicitGPU::Initialize(d24::VehicleState& vehicle_states,
-                                                   d24::TMeasyState& tire_states_LF,
-                                                   d24::TMeasyState& tire_states_RF,
-                                                   d24::TMeasyState& tire_states_LR,
-                                                   d24::TMeasyState& tire_states_RR,
-                                                   d24::SuspensionState& sus_states_LF,
-                                                   d24::SuspensionState& sus_states_RF,
-                                                   d24::SuspensionState& sus_states_LR,
-                                                   d24::SuspensionState& sus_states_RR,
+__host__ void d24SolverHalfImplicitGPU::Initialize(d24GPU::VehicleState& vehicle_states,
+                                                   d24GPU::TMeasyState& tire_states_LF,
+                                                   d24GPU::TMeasyState& tire_states_RF,
+                                                   d24GPU::TMeasyState& tire_states_LR,
+                                                   d24GPU::TMeasyState& tire_states_RR,
+                                                   d24GPU::SuspensionState& sus_states_LF,
+                                                   d24GPU::SuspensionState& sus_states_RF,
+                                                   d24GPU::SuspensionState& sus_states_LR,
+                                                   d24GPU::SuspensionState& sus_states_RR,
                                                    unsigned int num_vehicles) {
     // Esnure that construct was called with TMeasy tire type
     assert((m_tire_type == TireType::TMeasy) &&
@@ -344,15 +344,15 @@ __host__ void d24SolverHalfImplicitGPU::Initialize(d24::VehicleState& vehicle_st
                                           0));  // move the simState onto the GPU
 }
 
-__host__ void d24SolverHalfImplicitGPU::Initialize(d24::VehicleState& vehicle_states,
-                                                   d24::TMeasyNrState& tire_states_LF,
-                                                   d24::TMeasyNrState& tire_states_RF,
-                                                   d24::TMeasyNrState& tire_states_LR,
-                                                   d24::TMeasyNrState& tire_states_RR,
-                                                   d24::SuspensionState& sus_states_LF,
-                                                   d24::SuspensionState& sus_states_RF,
-                                                   d24::SuspensionState& sus_states_LR,
-                                                   d24::SuspensionState& sus_states_RR,
+__host__ void d24SolverHalfImplicitGPU::Initialize(d24GPU::VehicleState& vehicle_states,
+                                                   d24GPU::TMeasyNrState& tire_states_LF,
+                                                   d24GPU::TMeasyNrState& tire_states_RF,
+                                                   d24GPU::TMeasyNrState& tire_states_LR,
+                                                   d24GPU::TMeasyNrState& tire_states_RR,
+                                                   d24GPU::SuspensionState& sus_states_LF,
+                                                   d24GPU::SuspensionState& sus_states_RF,
+                                                   d24GPU::SuspensionState& sus_states_LR,
+                                                   d24GPU::SuspensionState& sus_states_RR,
                                                    unsigned int num_vehicles) {
     // Esnure that construct was called with TMeasy tire type
     assert((m_tire_type == TireType::TMeasy) &&
@@ -750,7 +750,7 @@ __device__ void rhsFun(double t, unsigned int total_num_vehicles, SimData* sim_d
         auto controls = GetDriverInput(t, driver_data, len);
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities
@@ -786,8 +786,8 @@ __device__ void rhsFun(double t, unsigned int total_num_vehicles, SimData* sim_d
 
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d24::SimData* sim_data,
-                       d24::SimState* sim_states,
+                       d24GPU::SimData* sim_data,
+                       d24GPU::SimState* sim_states,
                        double steering,
                        double throttle,
                        double braking) {  // Get the vehicle index
@@ -815,7 +815,7 @@ __device__ void rhsFun(double t,
         controls.m_braking = braking;
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities
@@ -853,8 +853,8 @@ __device__ void rhsFun(double t,
 
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d24::SimDataNr* sim_data_nr,
-                       d24::SimStateNr* sim_states_nr) {  // Get the vehicle index
+                       d24GPU::SimDataNr* sim_data_nr,
+                       d24GPU::SimStateNr* sim_states_nr) {  // Get the vehicle index
     unsigned int vehicle_index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (vehicle_index < total_num_vehicles) {
@@ -878,7 +878,7 @@ __device__ void rhsFun(double t,
         auto controls = GetDriverInput(t, driver_data, len);
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities
@@ -914,8 +914,8 @@ __device__ void rhsFun(double t,
 
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d24::SimDataNr* sim_data_nr,
-                       d24::SimStateNr* sim_states_nr,
+                       d24GPU::SimDataNr* sim_data_nr,
+                       d24GPU::SimStateNr* sim_states_nr,
                        double steering,
                        double throttle,
                        double braking) {
@@ -943,7 +943,7 @@ __device__ void rhsFun(double t,
         controls.m_braking = braking;
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities
@@ -1123,8 +1123,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d24::SimData* sim_data,
-                          d24::SimState* sim_states) {
+                          d24GPU::SimData* sim_data,
+                          d24GPU::SimState* sim_states) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -1257,8 +1257,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d24::SimDataNr* sim_data_nr,
-                          d24::SimStateNr* sim_states_nr) {
+                          d24GPU::SimDataNr* sim_data_nr,
+                          d24GPU::SimStateNr* sim_states_nr) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -1385,8 +1385,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d24::SimDataNr* sim_data_nr,
-                          d24::SimStateNr* sim_states_nr) {
+                          d24GPU::SimDataNr* sim_data_nr,
+                          d24GPU::SimStateNr* sim_states_nr) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response

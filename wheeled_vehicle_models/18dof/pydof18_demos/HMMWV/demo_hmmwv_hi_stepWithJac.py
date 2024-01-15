@@ -1,5 +1,12 @@
-# This demo is intended to provide an example of how to use the Low fidelity models with the ART vehicle for doing something like a PID control where you might have to interate multiple times in a loop from the same state
-
+# =============================================================================
+# Authors: Huzaifa Unjhawala
+# =============================================================================
+#
+# This demo is intended to recreate the demo_hmmwv_hi_stepWithJac.cpp demo in python
+# In addition, we also show that although we don't necessarily need to use the a driver file
+# to run the simulation, we can still optionally use the driver file to get the driver input.
+#
+# =============================================================================
 import time
 import numpy as np
 import pydof18 as dof18

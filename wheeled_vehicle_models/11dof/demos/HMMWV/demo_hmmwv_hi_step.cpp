@@ -1,3 +1,13 @@
+// =============================================================================
+// Authors: Huzaifa Unjhawala
+// =============================================================================
+//
+// A HMMWV vehicle is defined using example JSON files.
+// In this case, a driver input file is not required as the vehicle can also be simulated step-by-step.
+// The Half-Implicit solver is then Constructed, Initialized and solved. Data at the specified
+// output frequency is written to the specified output file.
+//
+// =============================================================================
 #include <numeric>
 #include <algorithm>
 #include <iterator>
@@ -7,16 +17,13 @@
 using namespace d11;
 
 int main(int argc, char** argv) {
-    // Driver inputs and reference trajectory
-    std::string driver_file = "../data/input/" + std::string(argv[1]) + ".txt";
-
     // Vehicle specification
     std::string vehParamsJSON = (char*)"../data/json/HMMWV/vehicle.json";
     std::string tireParamsJSON = (char*)"../data/json/HMMWV/tmeasy.json";
 
     // Construct the solver
     d11SolverHalfImplicit solver;
-    solver.Construct(vehParamsJSON, tireParamsJSON, driver_file);
+    solver.Construct(vehParamsJSON, tireParamsJSON);
 
     // Set time step
     solver.SetTimeStep(1e-3);
@@ -32,15 +39,31 @@ int main(int argc, char** argv) {
     solver.SetOutput("../data/output/" + std::string(argv[1]) + "_hmmwv11HiStep.csv", 100);
 
     double timeStep = solver.GetStep();
-    double endTime = solver.GetEndT();
+    double endTime = 10;
     double t = 0;
     double new_time = 0;
-    DriverData driver_data = solver.GetDriverData();  // Get the driver data associated with input file
+
+    // Driver inputs
+    double throttle = 0;
+    double steering = 0;
+    double braking = 0;
+
     // Start the loop
     while (t < (endTime - timeStep / 10.)) {
-        auto controls = GetDriverInput(t, driver_data);  // Get the controls for the current time
-        new_time = solver.IntegrateStep(t, controls.m_throttle, controls.m_steering, controls.m_braking);
+        // Inputs based on time provided externally
+        if(t > 0.5) {
+            throttle = 0.5;
+            steering = 0.1;
+            braking = 0;
+        }
+        else {
+            throttle = 0;
+            steering = 0;
+            braking = 0;
+        }
+        new_time = solver.IntegrateStep(t, throttle, steering, braking);
         t = new_time;
     }
+    // Write the writer to file (required when using the step-by-step solver)
     solver.WriteToFile();
 }

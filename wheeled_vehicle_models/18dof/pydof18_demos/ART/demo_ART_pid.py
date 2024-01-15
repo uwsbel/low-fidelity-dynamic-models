@@ -1,4 +1,13 @@
-# This demo is intended to provide an example of how to use the Low fidelity models with the ART vehicle for doing something like a PID control where you might have to interate multiple times in a loop from the same state
+# =============================================================================
+# Authors: Huzaifa Unjhawala
+# =============================================================================
+#
+# This demo is intended to provide an example of how to use the Low fidelity models with the 
+# ART vehicle for doing something like a PID control where you might have to interate multiple
+# times in a loop from the same state.
+# It also shows how one could use the SWIG wrapper to call the low fidelity models from C++
+#
+# =============================================================================
 
 import numpy as np
 import pydof18 as dof18

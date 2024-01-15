@@ -6,13 +6,23 @@
 #include <stdlib.h>
 
 #include "utils.h"
-// enum to decide what type of tire we have
+/// @brief enum to decide what type of tire is being used. You will need to set this in case you wish to use the TMeasy
+/// tire without relaxation (TMeasyNr where Nr stands for no relaxation). See the HalfImplicit and Sundials solver
+/// documentation for more details
 enum class TireType { TMeasy, TMeasyNr };
 namespace d11 {
 
-// TMeasy parameter structure
+// -----------------------------------------------------------------------------
+// Tire Structs
+// -----------------------------------------------------------------------------
+/// @brief This tire model is an implementation of the TMeasy tire model developed by Prof. Dr. Georg Rill.
+
+/// The TMeasyParam struct holds all the parameters that are required to define a TMeasy tire. See here for more details
+/// http://www.tmeasy.de/.
 struct TMeasyParam {
-    // constructor that takes default values of HMMWV
+    /// @brief This constructor sets default values for all the parameters in the TMeasyParam struct. The values are an
+    /// okay proxy for a truck tire. It is highly recommended that you set the parameters yourself using the
+    /// SetTireParamsJSON function that is available within this name space.
     TMeasyParam()
         : _jw(6.69),
           _rr(0.015),
@@ -48,85 +58,12 @@ struct TMeasyParam {
           _symPn(0.38786),
           _symP2n(0.38786),
           _sysPn(0.82534),
-          _sysP2n(0.91309),
-          _step(1e-2) {}
+          _sysP2n(0.91309) {}
 
-    // constructor that takes given values - ugly looking code - can this be
-    // beutified?
-    TMeasyParam(double jw,
-                double rr,
-                double mu,
-                double r0,
-                double pn,
-                double pnmax,
-                double cx,
-                double cy,
-                double dx,
-                double dy,
-                double kt,
-                double rdyncoPn,
-                double rdyncoP2n,
-                double fzRdynco,
-                double rdyncoCrit,
-                double dfx0Pn,
-                double dfx0P2n,
-                double fxmPn,
-                double fxmP2n,
-                double fxsPn,
-                double fxsP2n,
-                double sxmPn,
-                double sxmP2n,
-                double sxsPn,
-                double sxsP2n,
-                double dfy0Pn,
-                double dfy0P2n,
-                double fymPn,
-                double fymP2n,
-                double fysPn,
-                double fysP2n,
-                double symPn,
-                double symP2n,
-                double sysPn,
-                double sysP2n,
-                double step)
-        : _jw(jw),
-          _rr(rr),
-          _mu(mu),
-          _r0(r0),
-          _pn(pn),
-          _pnmax(pnmax),
-          _cx(cx),
-          _cy(cy),
-          _kt(kt),
-          _dx(dx),
-          _dy(dy),
-          _rdyncoPn(rdyncoPn),
-          _rdyncoP2n(rdyncoP2n),
-          _fzRdynco(fzRdynco),
-          _rdyncoCrit(rdyncoCrit),
-          _dfx0Pn(dfx0Pn),
-          _dfx0P2n(dfx0P2n),
-          _fxmPn(fxmPn),
-          _fxmP2n(fxmP2n),
-          _fxsPn(fxsPn),
-          _fxsP2n(fxsP2n),
-          _sxmPn(sxmPn),
-          _sxmP2n(sxmP2n),
-          _sxsPn(sxsPn),
-          _sxsP2n(sxsP2n),
-          _dfy0Pn(dfy0Pn),
-          _dfy0P2n(dfy0P2n),
-          _fymPn(fymPn),
-          _fymP2n(fymP2n),
-          _fysPn(fysPn),
-          _fysP2n(fysP2n),
-          _symPn(symPn),
-          _symP2n(symP2n),
-          _sysPn(sysPn),
-          _sysP2n(sysP2n),
-          _step(step) {}
 
-    // copy constructor
+    /// @brief Copy constructor that takes in a pointer to another TMeasyParam struct and copies all the values into the
+    /// new struct
+    /// @param other TMeasyParam struct that is copied into the new struct
     TMeasyParam(const TMeasyParam& other)
         : _jw(other._jw),
           _rr(other._rr),
@@ -165,44 +102,63 @@ struct TMeasyParam {
           _sysP2n(other._sysP2n) {}
 
     // basic tire parameters
-    double _jw;  // wheel inertia
-    double _rr;  // rolling resistance of tire
-    double _mu;  // friction constant
-    double _r0;  // unloaded tire radius
+    double _jw;  //!< Wheel inertia
+    double _rr;  //!< Rolling resistance of tire
+    double _mu;  //!< Friction constant
+    double _r0;  //!< Unloaded tire radius
 
     // TM easy specific tire params
-    double _pn, _pnmax;    // nominal and max vertical force
-    double _cx, _cy, _kt;  // longitudinal, lateral and vertical stiffness
-    double _dx,
-        _dy;  // longitudinal and lateral damping coeffs. No vertical damping
+    double _pn;     //!< Nominal vertical force
+    double _pnmax;  //!< Max vertical force
+    double _cx;     //!< Longitudinal tire stiffness
+    double _cy;     //!< Lateral tire stiffness
+    double _kt;     //!< Vertical tire stiffness
+    double _dx;     //!< Longitudinal tire damping coefficient
+    double _dy;     //!< Lateral damping coeffs
 
     // TM easy force characteristic params
     // 2 values - one at nominal load and one at max load
 
     // dynamic radius weighting coefficient and a critical value for the
     // vertical force
-    double _rdyncoPn, _rdyncoP2n, _fzRdynco, _rdyncoCrit;
+    double _rdyncoPn;    //!< Dynamic radius weighting coefficient at nominal load
+    double _rdyncoP2n;   //!< Dynamic radius weighting coefficient at max load
+    double _fzRdynco;    //!< Nominal value the vertical force
+    double _rdyncoCrit;  //!< Critical value for the vertical force
 
     // Longitudinal
-    double _dfx0Pn, _dfx0P2n;  // intial longitudinal slopes dFx/dsx [N]
-    double _fxmPn, _fxmP2n;    // maximum longituidnal force [N]
-    double _fxsPn, _fxsP2n;    // Longitudinal load at sliding [N]
-    double _sxmPn, _sxmP2n;    // slip sx at maximum longitudinal load Fx
-    double _sxsPn, _sxsP2n;    // slip sx where sliding begins
+    double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
+    double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
+    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
+    double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
+    double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
+    double _sxmP2n;   //!< Slip sx at maximum longitudinal load Fx at max load
+    double _sxsPn;    //!< Slip sx where sliding begins at nominal load
+    double _sxsP2n;   //!< Slip sx where sliding begins at max load
     // Lateral
-    double _dfy0Pn, _dfy0P2n;  // intial lateral slopes dFx/dsx [N]
-    double _fymPn, _fymP2n;    // maximum lateral force [N]
-    double _fysPn, _fysP2n;    // Lateral load at sliding [N]
-    double _symPn, _symP2n;    // slip sx at maximum lateral load Fx
-    double _sysPn, _sysP2n;    // slip sx where sliding begins
-
-    double _step;  // integration time step
+    double _dfy0Pn;   //!< Intial lateral slopes dFx/dsx [N] at nominal load
+    double _dfy0P2n;  //!< Intial lateral slopes dFx/dsx [N] at max load
+    double _fymPn;    //!< Maximum lateral force [N] at nominal load
+    double _fymP2n;   //!< Maximum lateral force [N] at max load
+    double _fysPn;    //!< Lateral load at sliding [N] at nominal load
+    double _fysP2n;   //!< Lateral load at sliding [N] at max load
+    double _symPn;    //!< Slip sx at maximum lateral load Fx at nominal load
+    double _symP2n;   //!< Slip sx at maximum lateral load Fx at max load
+    double _sysPn;    //!< Slip sx where sliding begins at nominal load
+    double _sysP2n;   //!< Slip sx where sliding begins at max load
 };
 
-// Tm easy state structure - actual states + things that we need to keep track
-// of
+/// @brief This tire model is an implementation of the TMeasy tire model developed by Prof. Dr. Georg Rill.
+
+/// The TMeasyState struct holds all the states that are updates with time-integration of the TMeasy tire model. Apart
+/// from the states that are updated by time integration, this struct also holds states that are updated without time
+/// integration. Also, the "tire" and the "wheel" in these models are considered a single entity. Thus we also have the
+/// angular velocity states as part of this struct. See here for more details about the tire model
+/// http://www.tmeasy.de/.
 struct TMeasyState {
-    // default contructor to 0's
+    /// @brief Default constructor that sets all the states to zero
     TMeasyState()
         : _xe(0.),
           _ye(0.),
@@ -220,8 +176,10 @@ struct TMeasyState {
           _My(0.),
           _engTor(0.) {}
 
-    // special constructor in case we want to start the simualtion at
-    // some other time step
+    /// @brief Constructor that takes in all the states and sets them to the values that are passed in. Note, its
+    /// usually very difficult to set all the states to physical meaningful values while ensuring that the tire is in
+    /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
+    /// constructor below
     TMeasyState(double xe,
                 double ye,
                 double xedot,
@@ -248,7 +206,9 @@ struct TMeasyState {
           _vsx(vsx),
           _vsy(vsy) {}
 
-    // Copy constructor
+    /// @brief Copy constructor that takes in a pointer to another TMeasyState struct and copies all the values into the
+    /// new struct
+    /// @param other TMeasyState struct that is copied into the new struct
     TMeasyState(const TMeasyState& other)
         : _xe(other._xe),
           _ye(other._ye),
@@ -267,28 +227,37 @@ struct TMeasyState {
           _engTor(other._engTor) {}
 
     // the actual state that are intgrated
-    double _xe, _ye;        // long and lat tire deflection
-    double _xedot, _yedot;  // long and lat tire deflection velocity
-    double _omega;          // angular velocity of wheel
-    double _dOmega;         // angular velocity dot
+    double _xe;      //!< Longitudinal tire deflection
+    double _ye;      //!< Lateral tire deflection
+    double _xedot;   //!< Longitudinal tire deflection velocity
+    double _yedot;   //!< Lateral tire deflection velocity
+    double _omega;   //!< Angular velocity of wheel
+    double _dOmega;  //!< Angular acceleration of wheel
 
     // other "states" that we need to keep track of
-    double _xt;            // vertical tire compression
-    double _rStat;         // loaded tire radius
-    double _fx, _fy, _fz;  // long, lateral and vertical force in tire frame
-
+    double _xt;     //!< Vertical tire compression
+    double _rStat;  //!< Loaded tire radius
+    double _fx;     //!< Longitudinal force in tire contact patch frame
+    double _fy;     //!< Lateral force in tire contact patch frame
+    double _fz;     //!< Vertical force in tire contact patch frame
     // velocities in tire frame
-    double _vsx, _vsy;
+    double _vsx;  //!< Longitudinal velocity in tire contact patch frame
+    double _vsy;  //!< Lateral velocity in tire contact patch frame
 
-    double _My;  // Rolling resistance moment (negetive)
-
-    // torque from engine that we keep track of
-    double _engTor;
+    double _My;      //!< Rolling resistance moment (negative)
+    double _engTor;  //!< Torque from engine that we keep track of
 };
 
-// TMeasy tire without relaxation
+/// @brief This tire model is an implementation of the TMeasy tire model developed by Prof. Dr. Georg Rill but without
+/// relaxation.
+
+/// The TMeasyNrParam (Nr stands for No relaxaation) struct holds all the parameters that are required to
+/// define a TMeasyNr tire. The implementation is largely inspired by a similar model in Project Chrono (see code at
+/// https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h).
 struct TMeasyNrParam {
-    // default constructor just assigns zero to all members
+    /// @brief This constructor sets default values for all the parameters in the TMeasyNrParam struct. The values are
+    /// an okay proxy for a truck tire. It is highly recommended that you set the parameters yourself using the
+    /// SetTireParamsJSON function that is available within this name space.
     TMeasyNrParam()
         : _jw(6.69),
           _rr(0.015),
@@ -330,7 +299,10 @@ struct TMeasyNrParam {
           _li(90),
           _p_li(1.),
           _p_use(1.) {}
-    // copy constructor
+
+    /// @brief Copy constructor that takes in a pointer to another TMeasyNrParam struct and copies all the values into
+    /// the new struct
+    /// @param other TMeasyNrParam struct that is copied into the new struct
     TMeasyNrParam(const TMeasyNrParam& other)
         : _jw(other._jw),
           _rr(other._rr),
@@ -373,40 +345,64 @@ struct TMeasyNrParam {
           _p_li(other._p_li),
           _p_use(other._p_use) {}
 
-    double _jw;          // wheel inertia
-    double _rr;          // Rolling Resistance
-    double _mu;          // Local friction coefficient between tire and road
-    double _r0;          // unloaded tire radius
-    double _width;       // tire width
-    double _rim_radius;  // rim radius
-    double _pn;          // nominal vertical force
-    double _pnmax;       // max vertical force
-    double _kt;          // vertical tire stiffness
-    double _rdyncoPn;    // dynamic radius weighting coefficient at nominal load
-    double _rdyncoP2n;   // dynamic radius weighting coefficient at max load
-    double _fzRdynco;    // critical value for the vertical force
-    double _rdyncoCrit;
+    double _jw;  //!< Wheel inertia
+    double _rr;  //!< Rolling resistance of tire
+    double _mu;  //!< Friction constant
+    double _r0;  //!< Unloaded tire radius
+
+    double _width;       //!< Tire width
+    double _rim_radius;  //!< Rim radius
+    double _pn;          //!< Nominal vertical force
+    double _pnmax;       //!< Max vertical force
+    double _kt;          //!< Vertical tire stiffness
+    double _rdyncoPn;    //!< Dynamic radius weighting coefficient at nominal load
+    double _rdyncoP2n;   //!< Dynamic radius weighting coefficient at max load
+    double _fzRdynco;    //!< Nominal value the vertical force
+    double _rdyncoCrit;  //!< Critical value for the vertical force
     // Longitudinal
-    double _dfx0Pn, _dfx0P2n;  // Initial longitudinal slopes dFx/dsx [N]
-    double _fxmPn, _fxmP2n;    // Maximum longituidnal force [N]
-    double _fxsPn, _fxsP2n;    // Longitudinal load at sliding [N]
-    double _sxmPn, _sxmP2n;    // slip sx at maximum longitudinal load Fx
-    double _sxsPn, _sxsP2n;    // slip sx where sliding begins
+    double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
+    double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
+    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
+    double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
+    double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
+    double _sxmP2n;   //!< Slip sx at maximum longitudinal load Fx at max load
+    double _sxsPn;    //!< Slip sx where sliding begins at nominal load
+    double _sxsP2n;   //!< Slip sx where sliding begins at max load
     // Lateral
-    double _dfy0Pn, _dfy0P2n;  // intial lateral slopes dFx/dsx [N]
-    double _fymPn, _fymP2n;    // maximum lateral force [N]
-    double _fysPn, _fysP2n;    // Lateral load at sliding [N]
-    double _symPn, _symP2n;    // slip sx at maximum lateral load Fx
-    double _sysPn, _sysP2n;    // slip sx where sliding begins
-    double _vcoulomb;          // Velocity below which we care about static friction
-    double _frblend_begin;     // Beginning of friction blending
-    double _frblend_end;       // End of friction blending
-    double _bearingCapacity;   // High level tire parameters that define all other parameters that the user can set
-    double _li;                // Load index
-    double _p_li;              // Pressure at load index
-    double _p_use;             // Pressure at which the tire is used
+    double _dfy0Pn;    //!< Intial lateral slopes dFx/dsx [N] at nominal load
+    double _dfy0P2n;   //!< Intial lateral slopes dFx/dsx [N] at max load
+    double _fymPn;     //!< Maximum lateral force [N] at nominal load
+    double _fymP2n;    //!< Maximum lateral force [N] at max load
+    double _fysPn;     //!< Lateral load at sliding [N] at nominal load
+    double _fysP2n;    //!< Lateral load at sliding [N] at max load
+    double _symPn;     //!< Slip sx at maximum lateral load Fx at nominal load
+    double _symP2n;    //!< Slip sx at maximum lateral load Fx at max load
+    double _sysPn;     //!< Slip sx where sliding begins at nominal load
+    double _sysP2n;    //!< Slip sx where sliding begins at max load
+    double _vcoulomb;  //!< Velocity below which we care about static friction -> Defaults to 1 if user does not provide
+                       //!< this
+    double _frblend_begin;  //!< Beginning of friction blending used instead of relexation -> Defaults to 1 if the user
+                            //!< does not provide this
+    double _frblend_end;  //!< End of friction blending used instead of relexation -> Defaults to 1 if the user does not
+                          //!< provide this
+    double _bearingCapacity;  //!< In case bearing capacity of the tire is known, it can be provided. If not, the
+                              //!< "loadIndex" is used to calculate the bearing capacity
+    double _li;               // Load index
+    double _p_li;             // Pressure at load index -> Defaults to 0 if the user does not provide this
+    double _p_use;            // Pressure at which the tire is used -> Defaults to 0 if the user does not provide this
 };
 
+/// @brief This tire model is an implementation of the TMeasy tire model developed by Prof. Dr. Georg Rill but without
+/// relaxation.
+
+/// The TMeasyNrState (Nr stands for No relaxaation) struct holds all the states that are updates with
+/// time-integration of the TMeasy tire model. Apart from the states that are updated by time integration, this struct
+/// also holds states that are updated without time integration. Also, the "tire" and the "wheel" in these models are
+/// considered a single entity. Thus we also have the angular velocity states as part of this struct. The implementation
+/// is largely inspired by a similar model in Project Chrono (see code at
+/// https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h).
 struct TMeasyNrState {
     TMeasyNrState()
         : _omega(0.),
@@ -421,6 +417,10 @@ struct TMeasyNrState {
           _My(0.),
           _engTor(0.) {}
 
+    /// @brief Constructor that takes in all the states and sets them to the values that are passed in. Note, its
+    /// usually very difficult to set all the states to physical meaningful values while ensuring that the tire is in
+    /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
+    /// constructor below
     TMeasyNrState(double omega,
                   double dOmega,
                   double xt,
@@ -444,7 +444,9 @@ struct TMeasyNrState {
           _My(My),
           _engTor(engTor) {}
 
-    // Copy constructor
+    /// @brief Copy constructor that takes in a pointer to another TMeasyNrState struct and copies all the values into
+    /// the new struct
+    /// @param other TMeasyNrState struct that is copied into the new struct
     TMeasyNrState(const TMeasyNrState& other)
         : _omega(other._omega),
           _dOmega(other._dOmega),
@@ -459,26 +461,42 @@ struct TMeasyNrState {
           _engTor(other._engTor) {}
 
     // Wheel states that are set as tire states
-    double _omega;   // angular velocity of wheel
-    double _dOmega;  // angular velocity dot
+    double _omega;   //!< Angular velocity of wheel
+    double _dOmega;  //!< Angular acceleration of wheel
 
     // Other "states" that we need to keep track of
-    double _xt;            // vertical tire compression
-    double _rStat;         // loaded tire radius
-    double _fx, _fy, _fz;  // long, lateral and vertical force in tire frame
+    double _xt;     //!< Vertical tire compression
+    double _rStat;  //!< Loaded tire radius
+    // long, lateral and vertical force in tire contact patch frame/ tire frame (after applying steer angle)
+    double _fx;  //!< Longitudinal force in tire contact patch frame
+    double _fy;  //!< Lateral force in tire contact patch frame
+    double _fz;  //!< Vertical force in tire contact patch frame
 
-    // Velocities in the tire frame
-    double _vsx, _vsy;
+    double _vsx;  //!< Longitudinal velocity in tire contact patch frame
+    double _vsy;  //!< Lateral velocity in tire contact patch frame
 
-    double _My;  // Rolling resistance moment (negetive)
-
-    // Torque from engine that we keep track of
-    double _engTor;
+    double _My;      //!< Rolling resistance moment (negative)
+    double _engTor;  //!< Torque from engine that we keep track of
 };
 
-// vehicle Parameters structure
+// -----------------------------------------------------------------------------
+// Vehicle Structs
+// -----------------------------------------------------------------------------
+/// @brief Defined here are chassis, engine/motor, powertrain, driveline and steering parameters required for the
+/// simualtion of a 11 DOF model.
+
+/// The single-track vehicle model, also known as the ’bicycle model’ and here the 11DOF model, is commonly used in
+/// controller design and serves as the entry point in our library of vehicle models. The Chassis includes 3 DOF at the
+/// vehicle lumped C.M, representing the vehicle’s yaw, lateral, and longitudinal motions. This model assumes the same
+/// engine, torque converter, and powertrain as the 18 DOF and 24 DOF models. However, as it is a single-track model, it
+/// uses only two TMeasy tires. Similarly, the driveline now only consists of the center differential, which splits the
+/// torque between the front and rear wheels based on the shaft speeds. The steering mechanism remains unchanged, with
+/// only one front wheel that is steered. The Bicycle model takes the same driver inputs as the 18 and 24 DOF models.
+/// See chapter 2 here for more details https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. 
 struct VehicleParam {
-    // default constructor with pre tuned values from HMMVW calibration
+    /// @brief This constructor sets default values for all the parameters in the VehicleParam struct. The values are an
+    /// okay proxy for a truck (namely the HMMWV model).  It is highly recommended that you set the parameters yourself
+    /// using the setVehParamsJSON function that is available within this name space.
     VehicleParam()
         : _a(1.6889),
           _b(1.6889),
@@ -491,53 +509,14 @@ struct VehicleParam {
           _maxSteer(0.6525249),
           _crankInertia(1.1),
           _tcbool(false),
-          _upshift_RPS(10000.),
-          _downshift_RPS(0.),
           _maxBrakeTorque(4000.),
-          _step(1e-2),
           _throttleMod(0),
           _driveType(1),
           _whichWheels(1) {}
 
-    // constructor
-    VehicleParam(double a,
-                 double b,
-                 double h,
-                 double m,
-                 double Jz,
-                 double muf,
-                 double mur,
-                 bool steer_bool,
-                 double maxSteer,
-                 double crank_inertia,
-                 bool tc_bool,
-                 double upshift_RPS,
-                 double downshift_RPS,
-                 double brakeTorque,
-                 double step,
-                 bool throttle_mod,
-                 bool driveType,
-                 bool whichWheels)
-        : _a(a),
-          _b(b),
-          _h(h),
-          _m(m),
-          _jz(Jz),
-          _muf(muf),
-          _mur(mur),
-          _nonLinearSteer(steer_bool),
-          _maxSteer(maxSteer),
-          _crankInertia(crank_inertia),
-          _tcbool(tc_bool),
-          _upshift_RPS(upshift_RPS),
-          _downshift_RPS(downshift_RPS),
-          _maxBrakeTorque(brakeTorque),
-          _step(step),
-          _throttleMod(throttle_mod),
-          _driveType(driveType),
-          _whichWheels(whichWheels) {}
-
-    // Copy constructor
+    /// @brief Copy constructor that takes in a pointer to another VehicleParam struct and copies all the values into
+    /// the new struct
+    /// @param other VehicleParam struct that is copied into the new struct
     VehicleParam(const VehicleParam& other)
         : _a(other._a),
           _b(other._b),
@@ -550,10 +529,7 @@ struct VehicleParam {
           _maxSteer(other._maxSteer),
           _crankInertia(other._crankInertia),
           _tcbool(other._tcbool),
-          _upshift_RPS(other._upshift_RPS),
-          _downshift_RPS(other._downshift_RPS),
           _maxBrakeTorque(other._maxBrakeTorque),
-          _step(other._step),
           _throttleMod(other._throttleMod),
           _driveType(other._driveType),
           _whichWheels(other._whichWheels),
@@ -565,70 +541,132 @@ struct VehicleParam {
           _TRmap(other._TRmap),
           _shiftMap(other._shiftMap) {}
 
-    double _a, _b;      // distance c.g. - front axle & distance c.g. - rear axle (m)
-    double _h;          // height of c.g
-    double _m;          // total vehicle mass (kg)
-    double _jz;         // yaw moment inertia (kg.m^2)
-    double _muf, _mur;  // front and rear unsprung mass
+    double _a;    //!< Distance of C.G to front axle (m)
+    double _b;    //!< Distance of C.G to rear axle (m)
+    double _h;    //!< Height of C.G
+    double _m;    //!< Total vehicle mass (kg)
+    double _jz;   //!< Yaw moment of inertia (kg.m^2)
+    double _muf;  //!< Front unsprung mass (kg)
+    double _mur;  //!< Rear unsprung mass (kg)
 
-    // Bool that checks if the steering is non linea ---> Need to depricate
-    // this, can always define a steer map 1 -> Steering is non linear, requires
-    // a steering map defined - example in json 0 -> Steering is linear. Need
-    // only a max steer defined. The normalized sterring then just multiplies
-    // against this value to give a wheel angle
+    /**
+     * @brief Bool that checks if the steering is non linear. A non-linear map can be defined in a json file and read
+     * using setVehParamsJSON.
+     *
+     * 1 -> Steering is non linear, requires a steering map defined
+     * 0 -> Steering is linear. Need only a _maxSteer defined.
+     */
     bool _nonLinearSteer;
-    // Non linear steering map in case the steering mechanism is not linear
+
+    /**
+     * @brief _steerMap stores the non-linear steering map (in case required by the user) and can be set using the JSON
+     * file.
+     *
+     *  _steerMap is a vector of MapEntry's where the x component of the MapEntry is the normalized steering input
+     * (between -1 and 1 where negative implies a left turn) and the y component is the wheel angle. For steerng inputs
+     * between the values specified by the MapEntry's, the wheel angle is linearly interpolated. Set using the
+     * "steerMap" key in the JSON file.
+     */
     std::vector<MapEntry> _steerMap;
-    // max steer angle parameters of the vehicle
-    double _maxSteer;
 
-    // crank shaft inertia
-    double _crankInertia;
-    double _upshift_RPS;
-    double _downshift_RPS;
-    // some gear parameters
-    std::vector<double> _gearRatios;  // gear ratio
+    double _maxSteer; //!< In case _nonLinearSteer is set to 0, this is the maximum wheel angle that can be achieved
+                       //!< (in radians). Values at other steering wheel inputs are then linearly interpolated.
 
-    // boolean for torque converter presense
-    bool _tcbool;
+    double _crankInertia; //!< Inertia of the engine/motor crankshaft
+    std::vector<double> _gearRatios;  //!< Vector of gear ratios
+    /**
+     * @brief A shift map defines the RPMs at which the various gears shift.
+     *
+     * _shiftMap is a vector of MapEntry's where the x component of the MapEntry is the down shift RPM and the y
+     * component is the upshift RPM. The user can either specify the shift map for all the gears or can specify an
+     * "upshiftRPM" and a "downshiftRPM". These two values are then applied for all the gears (see json files for
+     * examples)
+     */
+    std::vector<MapEntry> _shiftMap;
+    
+    bool _tcbool; //!< Boolean that checks for the presence of a torque converter. Can be set using "tcBool" in the
+                   //!< JSON file. Defaults to 0 if not specified.
 
-    // double _maxTorque; // Max torque
-    double _maxBrakeTorque;  // max brake torque
+    double _maxBrakeTorque;  //!< The maximum braking torque (Nm) that the brakes applu to the wheels. Can be set using
+                             //!< "maxBrakeTorque" in the JSON file. Based on the normalized brake input between 0 and
+                             //!< 1, a torque input*_maxBrakeTorque is applied to the wheel.
 
-    double _step;  // vehicle integration time step
-
-    // Bool that defines how the throttle modulates the maps
-    // 1 -> Modulates like in a motor -> Modifies the entire torque and RPM map
-    // 0 -> Modulates like in an engine -> multiplies only against the torque -
-    // > Default
+    /**
+     * @brief Bool that defines how the throttle modulates the Torque map of the motor
+     * 1 -> Modulates like in a motor -> Modifies the entire torque and RPM map
+     * 0 -> Modulates like in an engine -> multiplies only against the torque -> Default
+     * Can be set using "throttleMod" in the JSON file.
+     * For more details see implementation of function driveTorque.
+     */
     bool _throttleMod;
-    // We will always define the powertrain with a map
+    /**
+     * @brief _powertrainMap stores the powertrain map.
+     *
+     * _powertrainMap is a vector of MapEntry's where the x component of the MapEntry is the engine crankshaft RPM
+     and the y
+     * component is the torque. For RPMs between the values specified by the MapEntry's, the torque is linearly
+     interpolated. Set using the "torqueMap" key in the JSON file.
+     */
     std::vector<MapEntry> _powertrainMap;
+    /**
+     * @brief _lossesMap stores the powertrain losses map and can be set using the JSON file using the "lossesMap" key.
+     * _lossesMap is a vector of MapEntry's where the x component of the MapEntry is the engine crankshaft RPM and
+     * the y component is the losses in Nm. For RPMs between the values specified by the MapEntry's, the losses are
+     * linearly interpolated. The losses are subtracted from the torque obtained from the powertrain map after throttle
+     * is applied. See function driveTorque for more details.
+     * Set using the "lossesMap" key in the JSON file.
+     */
     std::vector<MapEntry> _lossesMap;
 
-    // torque converter maps
+        /**
+     * @brief In case a torque converter is part of the model, the capacity map needs to be defined.
+     *
+     * _CFmap is a vector of MapEntry's where the x component of the MapEntry is the speed ratio between the
+     * driven and driving shafts (whether the engine crank is driven or driving depends on if there is a throttle
+     * applied) and the y component is the capacity factor. For speed ratios between the values specified by the
+     * MapEntry's, the capacity factor is linearly interpolated.
+     * Set using the "capacityFactorMap" key in the JSON file.
+     */
     std::vector<MapEntry> _CFmap;  // capacity factor map
+    /**
+     * @brief In case a torque converter is part of the model, the torque ratio map needs to be defined.
+     *
+     * _TRmap points is a vector of MapEntry's where the x component of the MapEntry is the speed ratio between the
+     * driven and driving shafts (whether the engine crank is driven or driving depends on if there is a throttle
+     * applied) and the y component is the torque ratio. For speed ratios between the values specified by the
+     * MapEntry's, the torque ratio is linearly interpolated. Set using the "torqueRatioMap" key in the JSON file.
+     */
     std::vector<MapEntry> _TRmap;  // Torque ratio map
 
-    // Flag for wether we have an 4WD or 2WD
-    // 1-> 4WD - This is the default
-    // 0 -> 2WD - To set this, the JSON entry needs to be added.
+    /**
+     * @brief This boolean specifies whether the vehicle has a 4WD or a 2WD drivetrain.
+     *
+     * 1 -> 4WD - This is the default
+     * 0 -> 2WD - To set this, the JSON entry needs to be added.
+     * This can be set using the "4wd" key in the JSON file.
+     */
     bool _driveType;
 
-    // If we have a 2WD vehicle this bool specifies which of the 2 wheels are
-    // powered 1 -> Rear wheels are powered 0 -> Front wheels are powered
+    /**
+     * @brief This boolean specifies whether the vehicle is front wheel drive or rear wheel drive in case its a 2WD
+     *
+     * 1 -> Rear wheel drive
+     * 0 -> Front wheel drive
+     * This can be set using the "rearWheels" key in the JSON file.
+     */
     bool _whichWheels;
-
-    // Additionally we have a shift map that needs to always be filled,
-    // This can either be filled by setting the same upshift and downshift RPM
-    // for all the gears or by setting upshift and downshift RPM for each of the
-    // gears
-    std::vector<MapEntry> _shiftMap;
 };
 
-// vehicle states structure
+/// @brief The VehicleState struct holds the chassis, engine/motor, powertrain, driveline and steering states required
+/// for the simualtion.
+
+/// Apart from the states that are updated by time integration, this struct also holds "non-states"
+///  such as accelerations, forces and torques that are not updated by time integration. See here for more details
+///  https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. important to note that this implementation within the
+///  d11GPU namespace is exactly the same as the implementation in the d11 namespace. The only difference is that the
+///  d11GPU namespace is meant to be used on the GPU where standard library functions are not available.
 struct VehicleState {
-    // default constructor just assigns zero to all members
+    /// @brief Default constructor that sets all the states to zero
     VehicleState()
         : _x(0.),
           _y(0.),
@@ -646,7 +684,12 @@ struct VehicleState {
           _dOmega_crank(0.),
           _current_gr(0) {}
 
-    VehicleState(double x double y,
+    /// @brief Constructor that takes in all the states and sets them to the values that are passed in. Note, its
+    /// usually very difficult to set all the states to physical meaningful values while ensuring that the tire is in
+    /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
+    /// constructor below
+    VehicleState(double x,
+                 double y,
                  double dx,
                  double dy,
                  double u,
@@ -676,7 +719,9 @@ struct VehicleState {
           _dOmega_crank(dOmega_crank),
           _current_gr(current_gr) {}
 
-    // copy constructor
+    /// @brief Copy constructor that takes in a pointer to another VehicleState struct and copies all the values into
+    /// the new struct
+    /// @param other VehicleState struct that is copied into the new struct
     VehicleState(const VehicleState& other)
         : _x(other._x),
           _y(other._y),
@@ -694,32 +739,183 @@ struct VehicleState {
           _dOmega_crank(other._dOmega_crank),
           _current_gr(other._current_gr) {}
 
-    // special constructor in case need to start simulation
-    // from some other state
-    double _x, _y;     // x and y position
+    double _x;    //!< Global x position
+    double _y;    //!< Global y position
     double _dx, _dy;   // This is basically u and v but transformed to global coordinates
-    double _u, _v;     // x and y velocity
-    double _psi, _wz;  // yaw angle and yaw rate
+    double _u;    //!< Chassis x velocity in G-RF
+    double _v;    //!< Chassis y velocity in G-RF
+    double _psi;  //!< Yaw angle of chassis (rotation about z axis of G-RF) - this is the angle that is used to rotate
+                  //!< the chassis frame to the global frame
+    double _wz;   //!< Yaw rate of chassis
 
     // acceleration 'states'
-    double _udot, _vdot;
-    double _wzdot;
+    double _udot;   //!< Chassis x acceleration in G-RF
+    double _vdot;   //!< Chassis y acceleration in G-RF
+    double _wzdot;  //!< Yaw acceleration of chassis
 
-    // crank torque (used to transmit torque to tires) and crank angular
-    // velocity state
-    double _tor;
-    double _crankOmega;
-    double _dOmega_crank;
-    int _current_gr;
+    double _tor;           //!< Torque from engine/motor
+    double _crankOmega;    //!< Crankshaft angular velocity
+    double _dOmega_crank;  //!< Crankshaft angular acceleration
+    int _current_gr;       //!< Current gear
 };
 
-// ------------------------------ Vehicle functions
+// -----------------------------------------------------------------------------
+// Initalize functions
+// -----------------------------------------------------------------------------
+/// @brief Initializes the nominal and critical value for the vertical force based on tire parameters
+/// @param t_params TMeasytire parameters
+void tireInit(TMeasyParam& t_params);
+/// @brief Overload of tireInit for TMeasyNr tire model
+/// @param t_params TMeasyNr tire parameters
+void tireInit(TMeasyNrParam& t_params);
 
+// -----------------------------------------------------------------------------
+// Frame Transform functions
+// -----------------------------------------------------------------------------
+/// @brief Transform all vehicle velocites to tire velocities
+/// @param tiref_st TMeasy tire states (Front (F))
+/// @param tirer_st TMeasy tire states (Rear (R))
+/// @param v_states Vehicle states
+/// @param loads Tire vertical loads
+/// @param v_params Vehicle parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
+void vehToTireTransform(TMeasyState& tiref_st,
+                        TMeasyState& tirer_st,
+                        const VehicleState& v_states,
+                        const std::vector<double>& loads,
+                        const VehicleParam& v_params,
+                        double steering);
+
+/// @brief Overload of vehToTireTransform for TMeasyNr tire model
+/// @param tiref_st TMeasyNr tire states (Front (F))
+/// @param tirer_st TMeasyNr tire states (Rear (R))
+/// @param v_states Vehicle states
+/// @param loads Tire vertical loads
+/// @param v_params Vehicle parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
+void vehToTireTransform(TMeasyNrState& tiref_st,
+                        TMeasyNrState& tirer_st,
+                        const VehicleState& v_states,
+                        const std::vector<double>& loads,
+                        const VehicleParam& v_params,
+                        double steering);
+
+/// @brief Transform forces generated in the contact patch to forces in inertial frame (G-RF)
+/// @param tiref_st TMeasy tire states (Front (F))
+/// @param tirer_st TMeasy tire states (Tear (R))
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
+void tireToVehTransform(TMeasyState& tiref_st,
+                        TMeasyState& tirer_st,
+                        const VehicleState& v_states,
+                        const VehicleParam& v_params,
+                        double steering);
+
+/// @brief Overload of tireToVehTransform for TMeasyNr tire model
+/// @param tiref_st TMeasyNr tire states (Front (F))
+/// @param tirer_st TMeasyNr tire states (Tear (R))
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param steering Steering input to get the angle of the wheel which gives the orientation of the wheel frame
+void tireToVehTransform(TMeasyNrState& tiref_st,
+                        TMeasyNrState& tirer_st,
+                        const VehicleState& v_states,
+                        const VehicleParam& v_params,
+                        double steering);
+
+// -----------------------------------------------------------------------------
+// Tire RHS functions and helper functions
+// -----------------------------------------------------------------------------
+/// @brief Helper function to provide the tire force (f) and tire force / combined slip (fos) for the combined slip
+/// model of the TMeasy and TMeasyNr tire models.
+
+/// See page 78 of book Road Vehicle Dynamics: Fundamentals and Modeling by Georg Rill for more details about other
+/// input parameters
+void tmxy_combined(double& f, double& fos, double s, double df0, double sm, double fm, double ss, double fs);
+
+/// @brief Computes the combined columnb force for the TMeasyNr tire model
+
+/// This force provides the stability at low speeds and is belnded with the slip force provided by the tmxy_combined
+/// function.
+void computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
+
+/// @brief Compute the vertical loads on the tire using quasi-static load transfer equations.
+
+/// See chapter 2 here for
+/// more details here for more details https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc
+/// @param loads Computed vertical loads on each tire (F, R)
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param t_params Tire parameters
+void computeTireLoads(std::vector<double>& loads,
+                      const VehicleState& v_states,
+                      const VehicleParam& v_params,
+                      const TMeasyParam& t_params);
+
+/// @brief computeTireLoads overloaded for TMeasyNr tire model
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param t_params Tire parameters
+void computeTireLoads(std::vector<double>& loads,
+                      const VehicleState& v_states,
+                      const VehicleParam& v_params,
+                      const TMeasyNrParam& t_params);
+
+/// @brief Computes the tire forces for the TMeasy tire model in the tire contact patch frame (T-RF)
+
+/// The tire slip force produces a lateral and longitudinal tire deflection which produces the forces. A lot more detail
+/// of the formulation can be found in the book Road Vehicle Dynamics: Fundamentals and Modeling by Georg Rill
+/// @param t_states TMeasy tire states
+/// @param t_params TMeasy tire parameters
+/// @param v_params Vehicle Parameters
+/// @param steering Steering input used to calculate the lateral tire slip
+void computeTireRHS(TMeasyState& t_states, const TMeasyParam& t_params, const VehicleParam& v_params, double steering);
+
+/// @brief Computes the tire forces for the TMeasyNr tire model in the tire contact patch frame (T-RF)
+
+/// For the TMeasyNr tire model, since there is no relaxation, the tire forces from slip are blended with the tire
+/// forces from columb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
+/// is an approximation of the original TMeasy tire model and is inspired by the Project Chrono implementation (see code
+/// at https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h).
+/// @param t_states TMeasyNr tire states
+/// @param t_params TMeasyNr tire parameter
+/// @param v_params Vehicle Parameters
+/// @param steering Steering input used to calculate the lateral tire slip
+void computeTireRHS(TMeasyNrState& t_states,
+                    const TMeasyNrParam& t_params,
+                    const VehicleParam& v_params,
+                    double steering);
+
+
+// -----------------------------------------------------------------------------
+// Powertrain RHS and helper functions
+// -----------------------------------------------------------------------------
+
+/// @brief Computes the Engine drive torque based on throttle input, engine omega _throttleMod, the _powertrainMap and
+/// the _lossesMap.
+/// @param v_params Vehicle Parameters
+/// @param throttle Throttle input [0-1]
+/// @param omega Engine angular velocity (rad/s)
 double driveTorque(const VehicleParam& v_params, const double throttle, const double omega);
 
+/// @brief Computes the Engine braking torque based on brake input and _maxBrakeTorque
+/// @param v_params Vehicle Parameters
+/// @param brake Brake input [0-1]
 inline double brakeTorque(const VehicleParam& v_params, const double brake) {
     return v_params._maxBrakeTorque * brake;
 }
+
+/// @brief  Helper function that calculates the torque split between the front and rear tire based on the differential
+/// max bias and the tires relative angular velocity
+/// @param torque Torque to differential
+/// @param max_bias Bias that determines the impact of relative angular velocity on torque split
+/// @param speed_rear Angular velocity of rear tire
+/// @param speed_front Angular velocity of front tire
+/// @param torque_rear Torque applied to rear tire
+/// @param torque_front Torque applied to front tire
+/// @param split Boolean that determines if its 2WD or 1WD
+/// @param whichWheels Boolean that determines if its front or rear wheel drive
 void differentialSplit(double torque,
                        double max_bias,
                        double speed_rear,
@@ -729,85 +925,92 @@ void differentialSplit(double torque,
                        bool split,
                        bool whichWheels);
 
-// setting vehicle parameters using a JSON file
-void setVehParamsJSON(VehicleParam& v_params, const char* fileName);
+/// @brief Computes the Crank-Shaft angular acceleration (if there is a torque converter) as well as the angular wheel
+/// accelerations that are integrated to provide the wheel angular velocities.
 
-void vehToTireTransform(TMeasyState& tiref_st,
-                        TMeasyState& tirer_st,
-                        const VehicleState& v_states,
-                        const std::vector<double>& loads,
-                        const VehicleParam& v_params,
-                        double steering);
-
-void vehToTireTransform(TMeasyNrState& tiref_st,
-                        TMeasyNrState& tirer_st,
-                        const VehicleState& v_states,
-                        const std::vector<double>& loads,
-                        const VehicleParam& v_params,
-                        double steering);
-
-void tireToVehTransform(TMeasyState& tiref_st,
-                        TMeasyState& tirer_st,
-                        const VehicleState& v_states,
-                        const VehicleParam& v_params,
-                        double steering);
-
-void tireToVehTransform(TMeasyNrState& tiref_st,
-                        TMeasyNrState& tirer_st,
-                        const VehicleState& v_states,
-                        const VehicleParam& v_params,
-                        double steering);
-
-// ------------------------------ Tire functions
-
-// sets the vertical tire deflection based on the vehicle weight
-// template based on which tire
-void tireInit(TMeasyParam& t_params);
-void tireInit(TMeasyNrParam& t_params);
-
-// function to calculate the force from the force charactristics
-// used by tireSync
-void tmxy_combined(double& f, double& fos, double s, double df0, double sm, double fm, double ss, double fs);
-// Force function required by the TMeasy tire with no relaxation
-void computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
-// setting tire parameters using a JSON file
-void setTireParamsJSON(TMeasyParam& t_params, const char* fileName);
-void setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName);
-
-// Functions used in the RHS function for the external solver
-void computeTireLoads(std::vector<double>& loads,
-                      const VehicleState& v_states,
-                      const VehicleParam& v_params,
-                      const TMeasyParam& t_params);
-void computeTireLoads(std::vector<double>& loads,
-                      const VehicleState& v_states,
-                      const VehicleParam& v_params,
-                      const TMeasyNrParam& t_params);
-
-void computeTireRHS(TMeasyState& t_states, const TMeasyParam& t_params, const VehicleParam& v_params, double steering);
-void computeTireRHS(TMeasyNrState& t_states,
-                    const TMeasyNrParam& t_params,
-                    const VehicleParam& v_params,
-                    double steering);
+/// In case there is no torque converter, the crank-shaft angular velocity is calculated solely based on the wheel
+/// angular velocities (not integrated). This function is also where the velocities go from the wheel to the engine
+/// (through the differential, gear box, torque converter (optional)) and the torques go from the engine to the wheel
+/// (through the differential, gear box, torque converter (optional)).
+/// @param v_states Vehicle states
+/// @param tiref_st TMeasyNr tire states (Front (F))
+/// @param tirer_st TMeasyNr tire states (Tear (R))
+/// @param v_params Vehicle parameters
+/// @param t_params Tire parameters
+/// @param controls Vehicle driver inputs (throttle, brake, steering)
 void computePowertrainRHS(VehicleState& v_states,
                           TMeasyState& tiref_st,
                           TMeasyState& tirer_st,
                           const VehicleParam& v_params,
                           const TMeasyParam& t_params,
                           const DriverInput& controls);
+
+/// @brief computePowertrainRHS overloaded for TMeasyNr tire model
+/// @param v_states Vehicle states
+/// @param tiref_st TMeasyNr tire states (Front (F))
+/// @param tirer_st TMeasyNr tire states (Tear (R))
+/// @param v_params Vehicle parameters
+/// @param t_params Tire parameters
+/// @param controls Vehicle driver inputs (throttle, brake, steering)                        
 void computePowertrainRHS(VehicleState& v_states,
                           TMeasyNrState& tiref_st,
                           TMeasyNrState& tirer_st,
                           const VehicleParam& v_params,
                           const TMeasyNrParam& t_params,
                           const DriverInput& controls);
+
+// -----------------------------------------------------------------------------
+// Vehicle RHS and helper functions
+// -----------------------------------------------------------------------------       
+
+/// @brief Computes the vehicle linear and angular accelerations that are to be integrated
+/// @param v_states Vehicle states
+/// @param v_params Vehicle parameters
+/// @param fx Tire longitudinal forces in inertial frame (G-RF) (F, R)
+/// @param fy Tire lateral forces in inertial frame (G-RF) (F, R)
 void computeVehRHS(VehicleState& v_states,
                    const VehicleParam& v_params,
                    const std::vector<double>& fx,
                    const std::vector<double>& fy);
 
+// -----------------------------------------------------------------------------
+// Json parsing functions
+// -----------------------------------------------------------------------------
+// --------
+// Tire
+// --------
+/// @brief Parses the tire parameters from a JSON file for the TMeasy tire model. Please see implementation and/or
+/// example json files for appropriate keys and format.
+/// @param t_params TMeasy tire parameters
+/// @param fileName Path to JSON file (see demo for example)
+void setTireParamsJSON(TMeasyParam& t_params, const char* fileName);
+
+/// @brief Parses the tire parameters from a JSON file for the TMeasyNr tire model. Please see implementation and/or
+/// example json files for appropriate keys and format.
+
+/// The TMeasyNr follows a different approach to setting tire parameters as it only requires high level tire parameters
+/// to be set by the user. However, the user can still set the tire parameters directly if they wish to do so by setting
+/// the "highLevelParams" key to false.
+/// @param t_params TMeasyNr tire parameters
+/// @param fileName Path to JSON file (see demo for example)
+void setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName);
+
+/// @brief Helper function to compute the max tire load from the load index
+/// @param li Load index
 double GetTireMaxLoad(unsigned int li);
-// Functions to guess tire parameters from general tire specs
+
+
+/// @brief Functions to guess tire parameters from general truck tire. The ability to do this is one of the major
+/// advanatages of the TMeasy tire models.
+
+/// This function will be called if the user sets the key "vehicleType" to "Truck" in the JSON file
+/// @param li load index
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 void GuessTruck80Par(unsigned int li,
                      double tireWidth,
                      double ratio,
@@ -816,6 +1019,14 @@ void GuessTruck80Par(unsigned int li,
                      double pinfl_use,
                      TMeasyNrParam& t_params);
 
+/// @brief Overload of GuessTruck80Par for TMeasyNr tire model when tireload is provided directly instead of load index
+/// @param tireLoad Tire load
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 void GuessTruck80Par(double tireLoad,
                      double tireWidth,
                      double ratio,
@@ -824,6 +1035,14 @@ void GuessTruck80Par(double tireLoad,
                      double pinfl_use,
                      TMeasyNrParam& t_params);
 
+/// @brief For passenger tires. This function is called internally when "vehicleType" is set to "Passenger" in the JSON
+/// @param li load index
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 void GuessPassCar70Par(unsigned int li,
                        double tireWidth,
                        double ratio,
@@ -832,6 +1051,15 @@ void GuessPassCar70Par(unsigned int li,
                        double pinfl_use,
                        TMeasyNrParam& t_params);
 
+/// @brief Overload of GuessPassCar70Par for TMeasyNr tire model when tireload is provided directly instead of load
+/// index
+/// @param tireLoad Tire load
+/// @param tireWidth Tire width
+/// @param ratio Tire aspect ration
+/// @param rimDia Tire rim diameter
+/// @param pinfl_li Designed inflation pressure for the load index
+/// @param pinfl_use Used inflation pressure
+/// @param t_params TMeasyNr tire parameters
 void GuessPassCar70Par(double tireLoad,
                        double tireWidth,
                        double ratio,
@@ -840,6 +1068,13 @@ void GuessPassCar70Par(double tireLoad,
                        double pinfl_use,
                        TMeasyNrParam& t_params);
 
+// --------
+// Vehicle
+// --------
+/// @brief Parses the vehicle parameters from a JSON file for the TMeasy tire model.
+/// @param v_params Vehicle parameters
+/// @param fileName Path to JSON file (see demo for example)
+void setVehParamsJSON(VehicleParam& v_params, const char* fileName);
 }  // namespace d11
 
 #endif

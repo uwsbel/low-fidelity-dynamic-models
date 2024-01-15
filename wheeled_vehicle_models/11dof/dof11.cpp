@@ -150,10 +150,6 @@ void d11::tireToVehTransform(TMeasyNrState& tiref_st,
     // rear tires - No steer so no need to transform
 }
 
-/////////////////////////////////////////////////////////////////////////////
-/// Tire Functions
-////////////////////////////////////////////////////////////
-
 // Code for the TM easy tire model implemented with the 8DOF model
 void d11::tireInit(TMeasyParam& t_params) {
     // calculates some critical values that are needed
@@ -989,7 +985,6 @@ void d11::setVehParamsJSON(VehicleParam& v_params, const char* fileName) {
     v_params._tcbool = d["tcBool"].GetBool();
 
     v_params._maxBrakeTorque = d["maxBrakeTorque"].GetDouble();
-    v_params._step = d["step"].GetDouble();
 
     v_params._throttleMod = d["throttleMod"].GetBool();
     // Read the powertrain map
@@ -1089,8 +1084,6 @@ void d11::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
     t_params._symP2n = d["symP2n"].GetDouble();
     t_params._sysPn = d["sysPn"].GetDouble();
     t_params._sysP2n = d["sysP2n"].GetDouble();
-
-    t_params._step = d["step"].GetDouble();
 }
 
 // setting Tire parameters using a JSON file for a TMeasyNr

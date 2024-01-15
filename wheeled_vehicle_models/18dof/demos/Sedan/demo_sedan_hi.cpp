@@ -1,3 +1,14 @@
+// =============================================================================
+// Authors: Huzaifa Unjhawala
+// =============================================================================
+//
+// A Sedan vehicle is defined using example JSON files.
+// In addition, the user is required to provide a driver input file. 
+// Example driver input files are provided in the data/input folder.
+// The Half-Implicit solver is then Constructed, Initialized and solved. Data at the specified
+// output frequency is written to the specified output file.
+//
+// =============================================================================
 #include <numeric>
 #include <algorithm>
 #include <iterator>
@@ -7,7 +18,7 @@
 using namespace d18;
 
 int main(int argc, char** argv) {
-    // Driver inputs and reference trajectory
+    // Driver inputs
     std::string driver_file = "../data/input/" + std::string(argv[1]) + ".txt";
 
     // Vehicle specification
@@ -32,6 +43,6 @@ int main(int argc, char** argv) {
     // Enable output
     solver.SetOutput("../data/output/" + std::string(argv[1]) + "_sedan18Hi.csv", 100.);
 
-    // Solve without quadratures (no reference path required)
+    // Solve
     solver.Solve();
 }

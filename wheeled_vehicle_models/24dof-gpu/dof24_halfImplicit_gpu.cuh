@@ -10,18 +10,23 @@
 #include "dof24_gpu.cuh"
 
 // =============================================================================
-// Define the solver class
+// Solver class
 // =============================================================================
 class d24SolverHalfImplicitGPU {
   public:
     /// @brief Initialize the solver with the total number of vehicles to be simulated
+    /// @param num_vehicles Number of vehicles to be simulated
     __host__ d24SolverHalfImplicitGPU(unsigned int num_vehicles);
     __host__ ~d24SolverHalfImplicitGPU();
 
     /// @brief Construct the solver using path to vehicle parameters, tire parameters, suspension parameters, number of
-    /// vehicles and driver inputs. Each of these vehicles will have the specified parameters and driver inputs. To add
+    /// vehicles and driver inputs.
+
+    /// Each of these vehicles will have the specified parameters and driver inputs. To add
     /// more vehicles (ensuring they are still lesser than the total number of vehicles initally specified in the class
-    /// constructor) with different parameters, call the Construct function again. The tire type defaults to TMeasy
+    /// constructor) with different parameters, call the Construct function again. The tire type defaults to TMEasy and
+    /// is set for all the vehilces. It is also important to note thet the TireType has to be consistent across all the
+    /// vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param sus_params_file Path to the suspension parameter json file
@@ -34,9 +39,12 @@ class d24SolverHalfImplicitGPU {
                    const std::string& driver_file);
 
     /// @brief Construct the the solver using path to vehicle parameters, tire parameters,suspension parameters,  number
-    /// of vehicles, driver inputs and the TireType (Either TMEasy or TMEasyNr). Each of these vehicles will have the
+    /// of vehicles, driver inputs and the TireType (Either TMEasy or TMEasyNr).
+
+    /// Each of these vehicles will have the
     /// specified parameters and driver inputs. To add more vehicles with different parameters, call the Construct
-    /// function again.
+    /// function again. It is also important to note thet the TireType has to be consistent across all the
+    /// vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param sus_params_file Path to the suspension parameter json file
@@ -49,11 +57,15 @@ class d24SolverHalfImplicitGPU {
                    unsigned int num_vehicles,
                    const std::string& driver_inputs_file,
                    TireType type);
+
     /// @brief Construct the the solver using path to vehicle parameters, tire parameters, suspension parameters, number
-    /// of vehicles. TireType defualts to TMEasy tires. Each of these vehicles will have the specified parameters. This
+    /// of vehicles.
+
+    /// Each of these vehicles will have the specified parameters. This function signature
     /// is mainly provided for cases where the driver inputs are not available at the start of the simulation but rather
-    /// come from a controller during the simualtion. To add more vehicles with different parameters, call the Construct
-    /// function again.
+    /// come from a controller during the simualtion. TireType defualts to TMEasy tires. To add more vehicles with
+    /// different parameters, call the Construct function again. It is also important to note thet the TireType has to
+    /// be consistent across all the vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param sus_params_file Path to the suspension parameter json file
@@ -62,11 +74,15 @@ class d24SolverHalfImplicitGPU {
                    const std::string& tire_params_file,
                    const std::string& sus_params_file,
                    unsigned int num_vehicles);
+
     /// @brief Construct the the solver using path to vehicle parameters, tire parameters, suspension parameters,number
-    /// of vehicles and the TireType (Either TMEasy or TMEasyNr). Each of these vehicles will have the specified
+    /// of vehicles and the TireType (Either TMEasy or TMEasyNr).
+
+    /// Each of these vehicles will have the specified
     /// parameters. This is mainly provided for cases where the driver inputs are not available at the start of the
-    /// simulation but rather come from a controller during the simualtion. To add more vehicles with different
-    /// parameters, call the Construct function again.
+    /// simulation but rather come from a controller during the simualtion and the user wants to specify a TireType. To
+    /// add more vehicles with different parameters, call the Construct function again. It is also important to note
+    /// thet the TireType has to be consistent across all the vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param sus_params_file Path to the suspension parameter json file
@@ -78,18 +94,51 @@ class d24SolverHalfImplicitGPU {
                    unsigned int num_vehicles,
                    TireType type);
 
-    // Set the solver time step
+    /// @brief  Set the simulation end time.
+
+    /// This function has to be called by the user. All vehicles will be simulated to this time.
+    /// @param tend End time to set
     __host__ void SetEndTime(double tend) { m_tend = tend; }
+
+    /// @brief Set the simulation time step used to integrate all the vehicles using the half implicit solver
+    /// @param step time step to set
     __host__ void SetTimeStep(double step) { m_step = step; }
+
+    /// @brief Set the time for which the GPU kernel simulates without a sync between the vehicles
+
+    /// The simulation proceeds by multiple launches of the GPU kernel for m_kernel_sim_time duration. This is mainly
+    /// for memory reasons and is discussed in this document
+    /// https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. For the user, this means that in case you use
+    /// SolveStep to solve, control will only be returned to the CPU (or to you) after m_kernel_sim_time. Thus, in a
+    /// control setting, m_kernel_sim_time should be set to the time between two control calls. This is set to 2 seconds
+    /// by default but can be changed by the user using this function.
+    /// @param time Time to set
     __host__ void SetKernelSimTime(double time) { m_kernel_sim_time = time; }
+
+    /// @brief Set the time interval between data output to a csv file
+
+    /// This is usually not required to be set by the user and defaults to 10 seconds. However, this will impact speed
+    /// of simulation as the host array is written into a csv writer every m_host_dump_time. Thus, setting a low value
+    /// will slow down the simulation. However, based on the users memory constraints, this can be set to a higher value
+    /// to speed up the simulation.
+    /// @param time Time to be set
     __host__ void SetHostDumpTime(double time) { m_host_dump_time = time; }
+
+    /// @brief Sets the threads per block for the GPU kernel. Defaults to 32
+    /// @param threads Threads per block to be set
     __host__ void SetThreadsPerBlock(unsigned int threads) { m_threads_per_block = threads; }
+
+    /// @brief Getter function for simulation time step
     __host__ __device__ double GetStep() { return m_step; }
+
+    /// @brief Getter function for the simulation end time
     __host__ __device__ double GetEndTime() { return m_tend; }
 
-    __host__ __device__ DriverData GetDriverData() { return m_driver_data; }
-
     /// @brief Switch on output to a csv file at the specified frequency.
+
+    /// Note: If the SolveStep is used, no output can be set currently. If the user desires to obtain vehicle state
+    /// information, they can query the states using the GetSimState function. See demo demos/HMMWV/demo_hmmwv_step.cu
+    /// for an example.
     /// @param output_file Path to the output file
     /// @param output_freq Frequency of data output
     /// @param store_all Flag to store data from each vehicle on all the threads or no_outs vehicles
@@ -99,40 +148,53 @@ class d24SolverHalfImplicitGPU {
                             bool store_all = false,
                             unsigned int no_outs = 50);
 
-    /// @brief Solve the system of equations by calling the integrate function
+    /// @brief Solve the system of equations and run the simulation untill m_tend
+
+    /// This will run the simulation for all the vehicles upto the end time specified by the user. The user can then use
+    /// the GetSimState function to query the states of the vehicles. If the user has set the output to a csv file, then
+    /// the csv files will be written to the data/output folder.
     __host__ void Solve();
 
     /// @brief Solve the system of equations for a kernel step with the provided controls
+
+    /// User can set the kernel step with the SetKernelSimTime function.
     /// @param t Current time
     /// @param steering Steering input
     /// @param throttle Throttle input
     /// @param braking Braking input
+    /// @return Time after the kernel step
     __host__ double SolveStep(double t, double steering, double throttle, double braking);
 
-    /// @brief Initialize vehicle, tire and suspension states. This function has to be called before solve and after
-    /// construct. Although it is possible to provide non-zero intial states, this is untested and it is recommended to
-    /// use the default zero states. To initialize more vehicles, call the Initialize function again.
-    /// @param vehicle_states Vehicle states
-    /// @param tire_states_LF Left Front (LF) TMeasy tire states
-    /// @param tire_states_RF Right Front (RF) TMeasy tire states
-    /// @param tire_states_LR Left Rear (LR) TMeasy tire states
-    /// @param tire_states_RR Right Rear (RR) TMeasy tire states
-    /// @param sus_states_LF Left Front (LF) suspension states
-    /// @param sus_states_RF Right Front (RF) suspension states
-    /// @param sus_states_LR Left Rear (LR) suspension states
-    /// @param sus_states_RR Right Rear (RR) suspension states
-    /// @param num_vehicles Number of vehicles to be simulated with the specified states
-    void Initialize(d24::VehicleState& vehicle_states,
-                    d24::TMeasyState& tire_states_LF,
-                    d24::TMeasyState& tire_states_RF,
-                    d24::TMeasyState& tire_states_LR,
-                    d24::TMeasyState& tire_states_RR,
-                    d24::SuspensionState& sus_states_LF,
-                    d24::SuspensionState& sus_states_RF,
-                    d24::SuspensionState& sus_states_LR,
-                    d24::SuspensionState& sus_states_RR,
+    /// @brief Initialize vehicle, tire and suspension states.
+
+    /// This function has to be called before solve and after the
+    ///  Construct function is called. Although it is possible to provide non-zero intial states, this is untested and
+    ///  it is recommended to use the default zero states. To initialize more vehicles, call the Initialize function
+    ///  again.  For examples of use, see demos.
+    ///  @param vehicle_states Vehicle states
+    ///  @param tire_states_LF Left Front (LF) TMeasy tire states
+    ///  @param tire_states_RF Right Front (RF) TMeasy tire states
+    ///  @param tire_states_LR Left Rear (LR) TMeasy tire states
+    ///  @param tire_states_RR Right Rear (RR) TMeasy tire states
+    ///  @param sus_states_LF Left Front (LF) suspension states
+    ///  @param sus_states_RF Right Front (RF) suspension states
+    ///  @param sus_states_LR Left Rear (LR) suspension states
+    ///  @param sus_states_RR Right Rear (RR) suspension states
+    ///  @param num_vehicles Number of vehicles to be simulated with the specified states
+    void Initialize(d24GPU::VehicleState& vehicle_states,
+                    d24GPU::TMeasyState& tire_states_LF,
+                    d24GPU::TMeasyState& tire_states_RF,
+                    d24GPU::TMeasyState& tire_states_LR,
+                    d24GPU::TMeasyState& tire_states_RR,
+                    d24GPU::SuspensionState& sus_states_LF,
+                    d24GPU::SuspensionState& sus_states_RF,
+                    d24GPU::SuspensionState& sus_states_LR,
+                    d24GPU::SuspensionState& sus_states_RR,
                     unsigned int num_vehicles);
-    /// @brief Initialize vehicle, tire and suspension states. This function has to be called before solve and after
+
+    /// @brief Initialize vehicle, tire and suspension states. Overloaded for TMesayNr tires.
+
+    /// This function has to be called before solve and after the
     /// construct. Although it is possible to provide non-zero intial states, this is untested and it is recommended to
     /// use the default zero states. To initialize more vehicles, call the Initialize function again.
     /// @param vehicle_states Vehicle states
@@ -145,52 +207,54 @@ class d24SolverHalfImplicitGPU {
     /// @param sus_states_LR Left Rear (LR) suspension states
     /// @param sus_states_RR Right Rear (RR) suspension states
     /// @param num_vehicles Number of vehicles to be simulated with the specified states
-    void Initialize(d24::VehicleState& vehicle_states,
-                    d24::TMeasyNrState& tire_states_LF,
-                    d24::TMeasyNrState& tire_states_RF,
-                    d24::TMeasyNrState& tire_states_LR,
-                    d24::TMeasyNrState& tire_states_RR,
-                    d24::SuspensionState& sus_states_LF,
-                    d24::SuspensionState& sus_states_RF,
-                    d24::SuspensionState& sus_states_LR,
-                    d24::SuspensionState& sus_states_RR,
+    void Initialize(d24GPU::VehicleState& vehicle_states,
+                    d24GPU::TMeasyNrState& tire_states_LF,
+                    d24GPU::TMeasyNrState& tire_states_RF,
+                    d24GPU::TMeasyNrState& tire_states_LR,
+                    d24GPU::TMeasyNrState& tire_states_RR,
+                    d24GPU::SuspensionState& sus_states_LF,
+                    d24GPU::SuspensionState& sus_states_RF,
+                    d24GPU::SuspensionState& sus_states_LR,
+                    d24GPU::SuspensionState& sus_states_RR,
                     unsigned int num_vehicles);
 
-    /// @brief When using the IntegrateStep, once the integration is complete, this function can be used to Write the
-    /// output to a file specified by the user in the SetOutput function.
-    __host__ void WriteToFile();
+    /// @brief Get a SimState object for a particular vehicle given by its index
 
-    /// @brief Get a SimState object for a particular vehicle
+    /// This is particularly useful when SolveStep is called where the user cannot access the states of the vehicles via
+    /// csv file outputs
     /// @param vehicle_index Index of the vehicle
     /// @return SimState object for the vehicle
-    __host__ d24::SimState GetSimState(unsigned int vehicle_index);
+    __host__ d24GPU::SimState GetSimState(unsigned int vehicle_index);
+
     /// @brief Get Tire type
     /// @return Tire type used in the solver
     TireType GetTireType() const { return m_tire_type; }
 
-    d24::SimData* m_sim_data;          ///< Simulation data for all the vehicles
-    d24::SimDataNr* m_sim_data_nr;     ///< Simulation data but with the TMeasyNr tire for all the vehicles
-    d24::SimState* m_sim_states;       ///< Simulation states for all the vehicles
-    d24::SimStateNr* m_sim_states_nr;  ///< Simulation states but with the TMeasyNr tire for all the vehicles
+    d24GPU::SimData* m_sim_data;          ///< Simulation data for all the vehicles. See d24GPU::SimData for more info
+    d24GPU::SimDataNr* m_sim_data_nr;     ///< Simulation data but with the TMeasyNr tire for all the vehicles. See
+                                          // d24GPU::SimDataNr for more info
+    d24GPU::SimState* m_sim_states;       ///< Simulation states for all the vehicles. See d24GPU::SimState for more
+                                          // info
+    d24GPU::SimStateNr* m_sim_states_nr;  ///< Simulation states but with the TMeasyNr tire for all the vehicles. See
+                                          // d24GPU::SimStateNr for more info
 
-    double m_kernel_sim_time;  ///< The maximum time a kernel launch simulates a vehicle. This is set for memory
-                               // constraints as we are required to store the states of the vehicle in device array
-                               // within the kernel and this can run out of memory for long simulatins. This is also the
-                               // time for which the vehicles are simulated on different threads of the GPU without
-                               // interaction or communication. This can be set via the SetKernelSimTime function but
-                               // defaults to 2 seconds.
-    double
-        m_host_dump_time;  ///< Time after which the host array is dumped into a csv file. Default is set to 10 seconds
-                           // but can be changed by the user
+    double m_kernel_sim_time;  ///< The maximum time a kernel launch simulates a vehicle. Defaults to 2 seconds. See
+                               ///< SetKernelSimTime for more
+                               // info
+    double m_host_dump_time;   ///< Time after which the host array is dumped into a csv file. Default is set to 10
+                               ///< seconds. See SetHostDumpTime for more info
     unsigned int
         m_threads_per_block;  ///< Number of threads per block. This is set to 32 by default but can be changed by
                               // the user
+
     /// @brief Solve the system of equations for a kernel step by passing a functor that provides the driver inputs
-    /// given a time
+    /// at a given time
+
+    /// An example of the use of this function can be seen in demos/HMMWV/demo_hmmwv_controlsFunctor.cu.
     /// @param t Current time
     /// @param func Functor that provides the driver inputs given a time. This functor should take 2 arguments: 1) The
     /// current time 2) A pointer to DriverInput. It should then fill in the m_steering, m_throttle and m_braking
-    /// variables for the DriverInput (see demmo_hmmwv_controlsFunctor.cu for an example)
+    /// variables for the DriverInput
     template <typename Func>
     __host__ double SolveStep(double t, Func func) {  // Calculate the number of blocks required
         // if m_output is true, then raise assertion
@@ -248,6 +312,8 @@ class d24SolverHalfImplicitGPU {
 
   private:
     __host__ void Write(double t, unsigned int time_steps_to_write = 0);
+    /// @brief Helper function used to write csv_writer to a CSV file (called internally)
+    __host__ void WriteToFile();
 
     TireType m_tire_type;  // Tire type
     double m_step;         // integration time step
@@ -301,6 +367,8 @@ class d24SolverHalfImplicitGPU {
 };
 // Cannout have global function as class member function
 /// @brief Integrate the system of equations using the half implicit method - Calls the RHS function at each time step
+
+/// Used internally within Solve
 __global__ void Integrate(double current_time,
                           double kernel_sim_time,
                           double step,
@@ -309,32 +377,12 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d24::SimDataNr* sim_data_nr,
-                          d24::SimStateNr* sim_states_nr);
-// For the case where the dirver inputs are provided at each time step
-__global__ void Integrate(double current_time,
-                          double steering,
-                          double throttle,
-                          double braking,
-                          double kernel_sim_time,
-                          double step,
-                          bool output,
-                          unsigned int total_num_vehicles,
-                          unsigned int collection_states,
-                          double dtout,
-                          double* device_response,
-                          d24::SimDataNr* sim_data_nr,
-                          d24::SimStateNr* sim_states_nr);
-__global__ void Integrate(double current_time,
-                          double kernel_sim_time,
-                          double step,
-                          bool output,
-                          unsigned int total_num_vehicles,
-                          unsigned int collection_states,
-                          double dtout,
-                          double* device_response,
-                          d24::SimData* sim_data,
-                          d24::SimState* sim_states);
+                          d24GPU::SimDataNr* sim_data_nr,
+                          d24GPU::SimStateNr* sim_states_nr);
+
+/// @brief Overload to provide driver inputs at each time step.
+
+/// Used internally within SolveStep
 __global__ void Integrate(double current_time,
                           double steering,
                           double throttle,
@@ -346,34 +394,84 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d24::SimData* sim_data,
-                          d24::SimState* sim_states);
+                          d24GPU::SimDataNr* sim_data_nr,
+                          d24GPU::SimStateNr* sim_states_nr);
+
+/// @brief Overload for TMesay tires
+
+/// Used internally within Solve
+__global__ void Integrate(double current_time,
+                          double kernel_sim_time,
+                          double step,
+                          bool output,
+                          unsigned int total_num_vehicles,
+                          unsigned int collection_states,
+                          double dtout,
+                          double* device_response,
+                          d24GPU::SimData* sim_data,
+                          d24GPU::SimState* sim_states);
+
+/// @brief Overload for TMeasy tires and when driver inputs are provided at each time step
+
+/// Used internally when SolveStep is called
+__global__ void Integrate(double current_time,
+                          double steering,
+                          double throttle,
+                          double braking,
+                          double kernel_sim_time,
+                          double step,
+                          bool output,
+                          unsigned int total_num_vehicles,
+                          unsigned int collection_states,
+                          double dtout,
+                          double* device_response,
+                          d24GPU::SimData* sim_data,
+                          d24GPU::SimState* sim_states);
 //===================================================================================================================
-// Integrate calss rhsFun so this also cannot be a class member function
-/// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations)
-/// @param t Current time
-__device__ void rhsFun(double t, unsigned int total_num_vehicles, d24::SimData* sim_data, d24::SimState* sim_states);
-// For the case where the dirver inputs are provided at each time step
+// Integrate calls rhsFun so this also cannot be a class member function
+/// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations) using the computeRHS functions
+/// within the vehicle model
+
+/// Used internally within Integrate
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d24::SimData* sim_data,
-                       d24::SimState* sim_states,
+                       d24GPU::SimData* sim_data,
+                       d24GPU::SimState* sim_states);
+/// @brief Overloaded for when driver inputs are provided at each time step
+
+/// Used Internally within Integrate
+__device__ void rhsFun(double t,
+                       unsigned int total_num_vehicles,
+                       d24GPU::SimData* sim_data,
+                       d24GPU::SimState* sim_states,
                        double steering,
                        double throttle,
                        double braking);
+/// @brief Overloaded for TMeasyNr tires
+
+/// Used internally within Integrate
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d24::SimDataNr* sim_data_nr,
-                       d24::SimStateNr* sim_states_nr);
+                       d24GPU::SimDataNr* sim_data_nr,
+                       d24GPU::SimStateNr* sim_states_nr);
+
+/// @brief Overloaded for TMeasyNr tires and when driver inputs are provided at each time step
+
+/// Used internally within Integrate
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d24::SimDataNr* sim_data_nr,
-                       d24::SimStateNr* sim_states_nr,
+                       d24GPU::SimDataNr* sim_data_nr,
+                       d24GPU::SimStateNr* sim_states_nr,
                        double steering,
                        double throttle,
                        double braking);
 
 //===================================================================================================================
+/// @brief Integrate the system of equations using the half implicit method
+
+/// Calls the RHS function at each time step and uses the controls functor for the controls
+
+/// Used internally within SolveStep
 template <typename Func>
 __global__ void Integrate(double current_time,
                           Func func,
@@ -384,8 +482,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d24::SimData* sim_data,
-                          d24::SimState* sim_states) {
+                          d24GPU::SimData* sim_data,
+                          d24GPU::SimState* sim_states) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -400,16 +498,16 @@ __global__ void Integrate(double current_time,
             // Integrate according to explicit method for first order states
 
             // Extract the states of the vehicle and the tires
-            d24::VehicleState& v_states = sim_states[vehicle_id]._v_states;
-            d24::VehicleParam& veh_param = sim_data[vehicle_id]._veh_params;
-            d24::TMeasyState& tirelf_st = sim_states[vehicle_id]._tirelf_st;
-            d24::TMeasyState& tirerf_st = sim_states[vehicle_id]._tirerf_st;
-            d24::TMeasyState& tirelr_st = sim_states[vehicle_id]._tirelr_st;
-            d24::TMeasyState& tirerr_st = sim_states[vehicle_id]._tirerr_st;
-            d24::SuspensionState& suslf_st = sim_states[vehicle_id]._suslf_st;
-            d24::SuspensionState& susrf_st = sim_states[vehicle_id]._susrf_st;
-            d24::SuspensionState& suslr_st = sim_states[vehicle_id]._suslr_st;
-            d24::SuspensionState& susrr_st = sim_states[vehicle_id]._susrr_st;
+            d24GPU::VehicleState& v_states = sim_states[vehicle_id]._v_states;
+            d24GPU::VehicleParam& veh_param = sim_data[vehicle_id]._veh_params;
+            d24GPU::TMeasyState& tirelf_st = sim_states[vehicle_id]._tirelf_st;
+            d24GPU::TMeasyState& tirerf_st = sim_states[vehicle_id]._tirerf_st;
+            d24GPU::TMeasyState& tirelr_st = sim_states[vehicle_id]._tirelr_st;
+            d24GPU::TMeasyState& tirerr_st = sim_states[vehicle_id]._tirerr_st;
+            d24GPU::SuspensionState& suslf_st = sim_states[vehicle_id]._suslf_st;
+            d24GPU::SuspensionState& susrf_st = sim_states[vehicle_id]._susrf_st;
+            d24GPU::SuspensionState& suslr_st = sim_states[vehicle_id]._suslr_st;
+            d24GPU::SuspensionState& susrr_st = sim_states[vehicle_id]._susrr_st;
 
             // First the tire states
             // LF
@@ -508,7 +606,9 @@ __global__ void Integrate(double current_time,
         }
     }
 }
+/// @brief Overloaded for TMeasyNr tires
 
+/// Used internally within SolveStep
 template <typename Func>
 __global__ void Integrate(double current_time,
                           Func func,
@@ -519,8 +619,8 @@ __global__ void Integrate(double current_time,
                           unsigned int collection_states,
                           double dtout,
                           double* device_response,
-                          d24::SimDataNr* sim_data_nr,
-                          d24::SimStateNr* sim_states_nr) {
+                          d24GPU::SimDataNr* sim_data_nr,
+                          d24GPU::SimStateNr* sim_states_nr) {
     double t = current_time;           // Set the current time
     double kernel_time = 0;            // Time since kernel was launched
     unsigned int timeStep_stored = 0;  // Number of time steps already stored in the device response
@@ -535,16 +635,16 @@ __global__ void Integrate(double current_time,
             // Integrate according to explicit method for first order states
 
             // Extract the states of the vehicle and the tires
-            d24::VehicleState& v_states = sim_states_nr[vehicle_id]._v_states;
-            d24::VehicleParam& veh_param = sim_data_nr[vehicle_id]._veh_params;
-            d24::TMeasyNrState& tirelf_st = sim_states_nr[vehicle_id]._tirelf_st;
-            d24::TMeasyNrState& tirerf_st = sim_states_nr[vehicle_id]._tirerf_st;
-            d24::TMeasyNrState& tirelr_st = sim_states_nr[vehicle_id]._tirelr_st;
-            d24::TMeasyNrState& tirerr_st = sim_states_nr[vehicle_id]._tirerr_st;
-            d24::SuspensionState& suslf_st = sim_states_nr[vehicle_id]._suslf_st;
-            d24::SuspensionState& susrf_st = sim_states_nr[vehicle_id]._susrf_st;
-            d24::SuspensionState& suslr_st = sim_states_nr[vehicle_id]._suslr_st;
-            d24::SuspensionState& susrr_st = sim_states_nr[vehicle_id]._susrr_st;
+            d24GPU::VehicleState& v_states = sim_states_nr[vehicle_id]._v_states;
+            d24GPU::VehicleParam& veh_param = sim_data_nr[vehicle_id]._veh_params;
+            d24GPU::TMeasyNrState& tirelf_st = sim_states_nr[vehicle_id]._tirelf_st;
+            d24GPU::TMeasyNrState& tirerf_st = sim_states_nr[vehicle_id]._tirerf_st;
+            d24GPU::TMeasyNrState& tirelr_st = sim_states_nr[vehicle_id]._tirelr_st;
+            d24GPU::TMeasyNrState& tirerr_st = sim_states_nr[vehicle_id]._tirerr_st;
+            d24GPU::SuspensionState& suslf_st = sim_states_nr[vehicle_id]._suslf_st;
+            d24GPU::SuspensionState& susrf_st = sim_states_nr[vehicle_id]._susrf_st;
+            d24GPU::SuspensionState& suslr_st = sim_states_nr[vehicle_id]._suslr_st;
+            d24GPU::SuspensionState& susrr_st = sim_states_nr[vehicle_id]._susrr_st;
 
             // First the tire states
             // LF
@@ -636,36 +736,39 @@ __global__ void Integrate(double current_time,
     }
 }
 //===================================================================================================================
-// For the case where the dirver inputs are provided as a lambda function
+/// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations) using the computeRHS functions
+/// within the vehicle model.
+
+/// Overloaded for Controls Functor. Used internally within Integrate
 template <typename Func>
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d24::SimData* sim_data,
-                       d24::SimState* sim_states,
+                       d24GPU::SimData* sim_data,
+                       d24GPU::SimState* sim_states,
                        Func func) {
     unsigned int vehicle_index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (vehicle_index < total_num_vehicles) {
         // All vehicles have one or the other tire type and thus no thread divergence
-        d24::VehicleParam& veh_params = sim_data[vehicle_index]._veh_params;
-        d24::VehicleState& v_states = sim_states[vehicle_index]._v_states;
-        d24::TMeasyParam& tireTM_params = sim_data[vehicle_index]._tireTM_params;
-        d24::TMeasyState& tireTMlf_st = sim_states[vehicle_index]._tirelf_st;
-        d24::TMeasyState& tireTMrf_st = sim_states[vehicle_index]._tirerf_st;
-        d24::TMeasyState& tireTMlr_st = sim_states[vehicle_index]._tirelr_st;
-        d24::TMeasyState& tireTMrr_st = sim_states[vehicle_index]._tirerr_st;
-        d24::SuspensionParam& sus_params = sim_data[vehicle_index]._sus_params;
-        d24::SuspensionState& suslf_st = sim_states[vehicle_index]._suslf_st;
-        d24::SuspensionState& susrf_st = sim_states[vehicle_index]._susrf_st;
-        d24::SuspensionState& suslr_st = sim_states[vehicle_index]._suslr_st;
-        d24::SuspensionState& susrr_st = sim_states[vehicle_index]._susrr_st;
+        d24GPU::VehicleParam& veh_params = sim_data[vehicle_index]._veh_params;
+        d24GPU::VehicleState& v_states = sim_states[vehicle_index]._v_states;
+        d24GPU::TMeasyParam& tireTM_params = sim_data[vehicle_index]._tireTM_params;
+        d24GPU::TMeasyState& tireTMlf_st = sim_states[vehicle_index]._tirelf_st;
+        d24GPU::TMeasyState& tireTMrf_st = sim_states[vehicle_index]._tirerf_st;
+        d24GPU::TMeasyState& tireTMlr_st = sim_states[vehicle_index]._tirelr_st;
+        d24GPU::TMeasyState& tireTMrr_st = sim_states[vehicle_index]._tirerr_st;
+        d24GPU::SuspensionParam& sus_params = sim_data[vehicle_index]._sus_params;
+        d24GPU::SuspensionState& suslf_st = sim_states[vehicle_index]._suslf_st;
+        d24GPU::SuspensionState& susrf_st = sim_states[vehicle_index]._susrf_st;
+        d24GPU::SuspensionState& suslr_st = sim_states[vehicle_index]._suslr_st;
+        d24GPU::SuspensionState& susrr_st = sim_states[vehicle_index]._susrr_st;
 
         // Get controls at the current timeStep
         DriverInput controls;
         func(t, &controls);  // Use the functor to get the controls for this time step
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities
@@ -698,36 +801,38 @@ __device__ void rhsFun(double t,
                           &suslr_st, &susrr_st, &veh_params, &tireTM_params, &sus_params);
     }
 }
+/// @brief Overloaded for TMeasyNr tires and for the Controls Functor
 
+/// Used internally within Integrate
 template <typename Func>
 __device__ void rhsFun(double t,
                        unsigned int total_num_vehicles,
-                       d24::SimDataNr* sim_data_nr,
-                       d24::SimStateNr* sim_states_nr,
+                       d24GPU::SimDataNr* sim_data_nr,
+                       d24GPU::SimStateNr* sim_states_nr,
                        Func func) {
     unsigned int vehicle_index = blockIdx.x * blockDim.x + threadIdx.x;
 
     if (vehicle_index < total_num_vehicles) {
         // All vehicles have one or the other tire type and thus no thread divergence
-        d24::VehicleParam& veh_params = sim_data_nr[vehicle_index]._veh_params;
-        d24::VehicleState& v_states = sim_states_nr[vehicle_index]._v_states;
-        d24::TMeasyNrParam& tireTM_params = sim_data_nr[vehicle_index]._tireTMNr_params;
-        d24::TMeasyNrState& tireTMlf_st = sim_states_nr[vehicle_index]._tirelf_st;
-        d24::TMeasyNrState& tireTMrf_st = sim_states_nr[vehicle_index]._tirerf_st;
-        d24::TMeasyNrState& tireTMlr_st = sim_states_nr[vehicle_index]._tirelr_st;
-        d24::TMeasyNrState& tireTMrr_st = sim_states_nr[vehicle_index]._tirerr_st;
-        d24::SuspensionParam& sus_params = sim_data_nr[vehicle_index]._sus_params;
-        d24::SuspensionState& suslf_st = sim_states_nr[vehicle_index]._suslf_st;
-        d24::SuspensionState& susrf_st = sim_states_nr[vehicle_index]._susrf_st;
-        d24::SuspensionState& suslr_st = sim_states_nr[vehicle_index]._suslr_st;
-        d24::SuspensionState& susrr_st = sim_states_nr[vehicle_index]._susrr_st;
+        d24GPU::VehicleParam& veh_params = sim_data_nr[vehicle_index]._veh_params;
+        d24GPU::VehicleState& v_states = sim_states_nr[vehicle_index]._v_states;
+        d24GPU::TMeasyNrParam& tireTM_params = sim_data_nr[vehicle_index]._tireTMNr_params;
+        d24GPU::TMeasyNrState& tireTMlf_st = sim_states_nr[vehicle_index]._tirelf_st;
+        d24GPU::TMeasyNrState& tireTMrf_st = sim_states_nr[vehicle_index]._tirerf_st;
+        d24GPU::TMeasyNrState& tireTMlr_st = sim_states_nr[vehicle_index]._tirelr_st;
+        d24GPU::TMeasyNrState& tireTMrr_st = sim_states_nr[vehicle_index]._tirerr_st;
+        d24GPU::SuspensionParam& sus_params = sim_data_nr[vehicle_index]._sus_params;
+        d24GPU::SuspensionState& suslf_st = sim_states_nr[vehicle_index]._suslf_st;
+        d24GPU::SuspensionState& susrf_st = sim_states_nr[vehicle_index]._susrf_st;
+        d24GPU::SuspensionState& suslr_st = sim_states_nr[vehicle_index]._suslr_st;
+        d24GPU::SuspensionState& susrr_st = sim_states_nr[vehicle_index]._susrr_st;
 
         // Get controls at the current timeStep
         DriverInput controls;
         func(t, &controls);  // Use the functor to get the controls for this time step
 
         vehToSusTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
-                          &suslr_st, &susrr_st, &veh_params, controls.m_steering);
+                          &suslr_st, &susrr_st, &veh_params);
         vehToTireTransform(&v_states, &tireTMlf_st, &tireTMrf_st, &tireTMlr_st, &tireTMrr_st, &suslf_st, &susrf_st,
                            &suslr_st, &susrr_st, &veh_params, controls.m_steering);
         // Tire velocities

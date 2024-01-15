@@ -1167,10 +1167,6 @@ void d18::setVehParamsJSON(VehicleParam& v_params, const char* fileName) {
     v_params._tcbool = d["tcBool"].GetBool();
 
     v_params._maxBrakeTorque = d["maxBrakeTorque"].GetDouble();
-    // v_params._maxSpeed = d["maxSpeed"].GetDouble();
-    v_params._c1 = d["c1"].GetDouble();
-    v_params._c0 = d["c0"].GetDouble();
-    v_params._step = d["step"].GetDouble();
 
     v_params._throttleMod = d["throttleMod"].GetBool();
     // Read the powertrain map
@@ -1274,7 +1270,6 @@ void d18::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
     t_params._sysPn = d["sysPn"].GetDouble();
     t_params._sysP2n = d["sysP2n"].GetDouble();
 
-    t_params._step = d["step"].GetDouble();
 }
 
 // setting Tire parameters using a JSON file for a TMeasyNr

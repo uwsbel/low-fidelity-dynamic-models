@@ -1,4 +1,10 @@
-# Demo for hmmwv simulation using the half implicit integrator in python
+# =============================================================================
+# Authors: Huzaifa Unjhawala
+# =============================================================================
+#
+# This demo is intended to recreate the demo_hmmwv_sundials.cpp demo in python
+#
+# =============================================================================
 
 import numpy as np
 import pydof18 as dof18
