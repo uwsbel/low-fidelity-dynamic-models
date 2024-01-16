@@ -1,0 +1,56 @@
+name: Build Sundials and Models
+
+on:
+  push:
+    branches:
+      - main  
+      - workflow_dispatch
+
+jobs:
+  build-sundials:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v3
+
+    - name: Install General Dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y cmake g++ make libopenmpi-dev
+        # Installs CMake, G++, Make, and OpenMPI
+
+    - name: Install SWIG
+      run: sudo apt-get install -y swig
+
+    - name: Install OpenMP
+      run: sudo apt-get install -y libomp-dev
+      # This installs the OpenMP library
+
+    - name: Install CUDA Toolkit
+      uses: Jimver/cuda-toolkit@v2
+      with:
+        cuda-version: '12.0.0'
+        # Specify the desired version of the CUDA toolkit
+
+    - name: Download Sundials
+      run: |
+        wget https://computing.llnl.gov/projects/sundials/sundials-software -O sundials-6.7.0.tar.gz
+        tar -xzvf sundials-6.7.0.tar.gz
+
+    - name: Build Sundials
+      run: |
+        mkdir -p sundials-build
+        cd sundials-build
+        cmake ../sundials-5.7.0 -DBUILD_SHARED_LIBS=ON -DEXAMPLES_INSTALL_PATH=${GITHUB_WORKSPACE}/sundials-examples
+        make
+        sudo make install
+      # Customize the cmake command based on your specific requirements for Sundials
+
+    - name: Cache Sundials Build
+      uses: actions/cache@v2
+      with:
+        path: sundials-build
+        key: ${{ runner.os }}-sundials-${{ hashFiles('**/sundials-5.7.0.tar.gz') }}
+      # Caches the Sundials build for faster subsequent runs
+  
