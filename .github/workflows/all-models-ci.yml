@@ -78,7 +78,7 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=${{ github.workspace }}/wheeled_vehicle_models/18dof/build:$PYTHONPATH" >> $GITHUB_ENV
 
-      - name: Import 11dof Python Module
+      - name: Import 18dof Python Module
         run: python -c "import pydof18 as dof18"
 
       - name: Build 24DOF
@@ -92,7 +92,7 @@ jobs:
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=${{ github.workspace }}/wheeled_vehicle_models/24dof/build:$PYTHONPATH" >> $GITHUB_ENV
 
-      - name: Import 11dof Python Module
+      - name: Import 24dof Python Module
         run: python -c "import pydof24 as dof24"
 
       - name: Build 11dof-gpu
