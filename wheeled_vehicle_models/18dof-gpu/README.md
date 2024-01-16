@@ -25,7 +25,7 @@ It's important to highlight that there are several methods to set the CMake opti
 Once you launch the curses-based GUI for CMake, you will see an `Empty Cache`, hit `c` on your keyboard to see the CMake options. Here is the description of the CMake options
 - `CMAKE_BUILD_TYPE` - Set the Build type (`Release` or `Debug`). Press `t` on your keyboard to toggle to `advanced mode` and see what Flags these build types use. Default: `Debug`
 - `CMAKE_CUDA_ARCHITECTURES` - Set this to the CUDA Architecture in your machine for highly optimized code. See [here](https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/) for more details. Default: `52`
-- `CMAKE_INSTALL_PREFIX` - Define's the root directory for installation when using the install target. Default (on Linux): `/usr/local`
+- `CMAKE_INSTALL_PREFIX` - Defines the root directory for installation when using the install target. Default (on Linux): `/usr/local`
 - `CUDA_HOST_COMPILER` - Path to CUDA compiler. This can be left empty for now. Default: blank
 - `CUDA_SDK_ROOT_DIR` - Path to CUDA SDK. Leave as is. Default: blank
 - `CUDA_TOOLKIT_ROOT_DIR` - Path to the CUDA Toolkit. Should be automatically filled in. Default: `path_to_toolkit_on_your_machine`

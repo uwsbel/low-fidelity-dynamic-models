@@ -24,7 +24,7 @@ It's important to highlight that there are several methods to set the CMake opti
 Once you launch the curses-based GUI for CMake, you will see an `Empty Cache`, hit `c` on your keyboard to see the CMake options. Here is the description of the CMake options
 - `BUILD_PYTHON_MODULE` - Bool to switch on the building of the Python wrapper. Default: `OFF`
 - `CMAKE_BUILD_TYPE` - Set the Build type (`Release` or `Debug`). Press `t` on your keyboard to toggle to `advanced mode` and see what Flags these build types use. Default: `Debug`
-- `CMAKE_INSTALL_PREFIX` - Define's the root directory for installation when using the install target. Default (on Linux): `/usr/local`
+- `CMAKE_INSTALL_PREFIX` - Defines the root directory for installation when using the install target. Default (on Linux): `/usr/local`
 - `USE_OPENMP` - Option to switch `ON` OpenMP for calculation of system RHS Jacobians. Leads to about 2X speed up. Default: `OFF`
 - `USE_SUNDIALS` - Option to link against [Sundials](https://sundials.readthedocs.io/en/latest/) and use the [CVODES](https://sundials.readthedocs.io/en/latest/cvodes/index.html) integrator to solve the system ODE's - Default: `OFF`
 
