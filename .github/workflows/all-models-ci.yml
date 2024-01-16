@@ -50,10 +50,3 @@ jobs:
           make
           sudo make install
         # Customize the cmake command based on your specific requirements for Sundials
-
-      - name: Cache Sundials Build
-        uses: actions/cache@v2
-        with:
-          path: sundials-build
-          key: ${{ runner.os }}-sundials-${{ hashFiles('**/sundials-5.7.0.tar.gz') }}
-        # Caches the Sundials build for faster subsequent runs
