@@ -32,11 +32,11 @@ jobs:
       uses: Jimver/cuda-toolkit@v0.2.14
       id: cuda-toolkit
       with:
-        cuda: '12.0.0'
-        # Specify the desired version of the CUDA toolkit
-      - run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
-      - run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
-      - run: nvcc -V
+        cuda: '12.3.2'
+        
+      run: echo "Installed cuda version is: ${{steps.cuda-toolkit.outputs.cuda}}"
+      run: echo "Cuda install location: ${{steps.cuda-toolkit.outputs.CUDA_PATH}}"
+      run: nvcc -V
 
     - name: Download Sundials
       run: |
