@@ -38,7 +38,7 @@ jobs:
 
       - name: Download Sundials
         run: |
-          wget https://computing.llnl.gov/projects/sundials/sundials-software -O sundials-6.7.0.tar.gz
+          wget https://github.com/LLNL/sundials/releases/download/v6.7.0/sundials-6.7.0.tar.gz -O sundials-6.7.0.tar.gz
           tar -xzvf sundials-6.7.0.tar.gz
 
       - name: Build Sundials
@@ -48,4 +48,9 @@ jobs:
           cmake ../sundials-5.7.0 -DBUILD_SHARED_LIBS=ON -DEXAMPLES_INSTALL_PATH=${GITHUB_WORKSPACE}/sundials-examples
           make
           sudo make install
-        # Customize the cmake command based on your specific requirements for Sundials
+
+      - name: Upload Sundials Build
+        uses: actions/upload-artifact@v2
+        with:
+          name: sundials-build
+          path: sundials-build
