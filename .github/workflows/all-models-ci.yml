@@ -6,12 +6,17 @@ on:
     branches:
       - main
 jobs:
-  build-sundials:
+  build-all:
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
 
       - name: Install General Dependencies
         run: |
@@ -45,12 +50,16 @@ jobs:
         run: |
           mkdir -p sundials-build
           cd sundials-build
-          cmake ../sundials-5.7.0 -DBUILD_SHARED_LIBS=ON -DEXAMPLES_INSTALL_PATH=${GITHUB_WORKSPACE}/sundials-examples
+          cmake ../sundials-6.7.0 -DBUILD_SHARED_LIBS=ON -DEXAMPLES_INSTALL_PATH=${GITHUB_WORKSPACE}/sundials-examples
           make
           sudo make install
 
-      - name: Upload Sundials Build
-        uses: actions/upload-artifact@v2
-        with:
-          name: sundials-build
-          path: sundials-build
+      - name: Build 11DOF
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/11dof/
+          mkdir -p build
+          cd build
+          cmake ../ -DBUILD_PYTHON_MODULE=ON -DCMAKE_BUILD_TYPE=Release -DUSE_OPENMP=ON -USE_SUNDIALS=ON -DSUNDIALS_DIR=${GITHUB_WORKSPACE}/sundials-build
+          make
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}/wheeled_vehicle_models/11dof/build:$PYTHONPATH" >> $GITHUB_ENV
