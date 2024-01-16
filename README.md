@@ -25,7 +25,7 @@ This library is thus an ideal resource for those in need of a balance between sp
 The repository is set up with multiple directories, each with a specific role. You'll find sub-folders that contain the source code for a range of vehicle models and the integrators that run them. We've provided CMake configurations to help you build _demos_, so you can see how to get the models and integrators working together to kick off simulations. Here’s a quick outline of the main folders:
 
 - **docs**: Documentation related to the dynamic models and their usage. See [README](./docs/README.md) for instructions to build the docs locally.
-- **wheeled_vehicle_models**: Contains subdirectories for different degrees of freedom (DOF) models for wheeled vehicles:
+- **wheeled_vehicle_models**: Contains subdirectories for different DOF models for wheeled vehicles:
   - **11dof**: CPU version for the 11 DOF wheeled vehicle model. See [README](./wheeled_vehicle_models/11dof/README.md) for build and use instructions.
   - **11dof-gpu**: GPU version for the 11 DOF wheeled vehicle model. See [README](./wheeled_vehicle_models/11dof-gpu/README.md) for build and use instructions.
   - **18dof**: CPU version for the 18 DOF wheeled vehicle model. See [README](./wheeled_vehicle_models/18dof/README.md) for build and use instructions.
