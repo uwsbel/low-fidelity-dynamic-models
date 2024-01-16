@@ -63,3 +63,58 @@ jobs:
           make
       - name: Set PYTHONPATH
         run: echo "PYTHONPATH=${{ github.workspace }}/wheeled_vehicle_models/11dof/build:$PYTHONPATH" >> $GITHUB_ENV
+
+      - name: Import 11dof Python Module
+        run: python -c "import pydof11 as dof11"
+
+      - name: Build 18DOF
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/18dof/
+          mkdir -p build
+          cd build
+          cmake ../ -DBUILD_PYTHON_MODULE=ON -DCMAKE_BUILD_TYPE=Release -DUSE_OPENMP=ON -USE_SUNDIALS=ON -DSUNDIALS_DIR=${GITHUB_WORKSPACE}/sundials-build
+          make
+
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}/wheeled_vehicle_models/18dof/build:$PYTHONPATH" >> $GITHUB_ENV
+
+      - name: Import 11dof Python Module
+        run: python -c "import pydof18 as dof18"
+
+      - name: Build 24DOF
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/24dof/
+          mkdir -p build
+          cd build
+          cmake ../ -DBUILD_PYTHON_MODULE=ON -DCMAKE_BUILD_TYPE=Release -DUSE_OPENMP=ON -USE_SUNDIALS=ON -DSUNDIALS_DIR=${GITHUB_WORKSPACE}/sundials-build
+          make
+
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}/wheeled_vehicle_models/24dof/build:$PYTHONPATH" >> $GITHUB_ENV
+
+      - name: Import 11dof Python Module
+        run: python -c "import pydof24 as dof24"
+
+      - name: Build 11dof-gpu
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/11dof-gpu/
+          mkdir -p build
+          cd build
+          cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=52
+          make
+
+      - name: Build 18dof-gpu
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/18dof-gpu/
+          mkdir -p build
+          cd build
+          cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=52
+          make
+
+      - name: Build 24dof-gpu
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/24dof-gpu/
+          mkdir -p build
+          cd build
+          cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=52
+          make
