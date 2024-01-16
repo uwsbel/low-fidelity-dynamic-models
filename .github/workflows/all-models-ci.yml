@@ -1,11 +1,11 @@
 name: Build Sundials and Models
 
 on:
+  workflow_dispatch:
   push:
     branches:
       - main
       - feature/ci
-  workflow_dispatch:
 
 jobs:
   build-sundials:
