@@ -777,7 +777,7 @@ void d24SolverSundials::Write(CSV_writer& csv, realtype t, N_Vector y, N_Vector*
 
 // =============================================================================
 
-int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
+int d24::rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
     // Unpack user data
     UserData* udata = (UserData*)user_data;
     const VehicleParam& veh_param = udata->GetVehicleParam();
@@ -907,7 +907,7 @@ int rhsFun(realtype t, N_Vector y, N_Vector ydot, void* user_data) {
     return 0;
 }
 
-int rhsQuad(realtype t, N_Vector y, N_Vector qdot, void* user_data) {
+int d24::rhsQuad(realtype t, N_Vector y, N_Vector qdot, void* user_data) {
     // Unpack user data
     UserData* udata = (UserData*)user_data;
     const PathData& ref_path = udata->GetReferencePath();
@@ -925,15 +925,15 @@ int rhsQuad(realtype t, N_Vector y, N_Vector qdot, void* user_data) {
     return 0;
 }
 
-int rhsQuadSens(int Ns,
-                realtype t,
-                N_Vector y,
-                N_Vector* yS,
-                N_Vector qdot,
-                N_Vector* qSdot,
-                void* user_data,
-                N_Vector tmp,
-                N_Vector tmpQ) {
+int d24::rhsQuadSens(int Ns,
+                     realtype t,
+                     N_Vector y,
+                     N_Vector* yS,
+                     N_Vector qdot,
+                     N_Vector* qSdot,
+                     void* user_data,
+                     N_Vector tmp,
+                     N_Vector tmpQ) {
     // Unpack user data
     UserData* udata = (UserData*)user_data;
     const VehicleParam& veh_param = udata->GetVehicleParam();
@@ -1333,7 +1333,7 @@ void unpackY(const N_Vector& y,
 
 // =============================================================================
 
-int printStatsCvode(void* cvode_mem) {
+int d24::printStatsCvode(void* cvode_mem) {
     int retval = 0;
     long int nst, nfe, nsetups, nje, nfeLS, ncfn, netf;
 
@@ -1371,7 +1371,7 @@ int printStatsCvode(void* cvode_mem) {
     return retval;
 }
 
-void printSUNMatrix(SUNMatrix A, sunindextype matrows, sunindextype matcols) {
+void d24::printSUNMatrix(SUNMatrix A, sunindextype matrows, sunindextype matcols) {
     realtype* Adata = SUNDenseMatrix_Data(A);
     std::cout << "Jacobian state: " << std::endl;
     for (sunindextype i = 0; i < matrows; i++) {

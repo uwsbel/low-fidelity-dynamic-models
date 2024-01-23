@@ -47,7 +47,9 @@ enum Enum {
     ALL = 0xFFFF            //
 };
 }
-
+// Forward declaration of class needed for friend declaration
+class d11SolverSundials;
+namespace d11 {
 /// @brief User Data structure to pass to the RHS function for the sundials solver. Handled internally
 
 /// The RHS functions that the sundials solver uses to integrate the vehicle model take very specific arguments. In
@@ -107,7 +109,7 @@ class UserData {
     std::vector<realtype> m_params;
     std::vector<realtype> m_param_scales;
 
-    friend class d11SolverSundials;
+    friend class ::d11SolverSundials;
 };
 
 // =============================================================================
@@ -117,7 +119,7 @@ struct Objective {
     realtype value;
     std::vector<realtype> gradient;
 };
-
+}  // namespace d11
 #endif
 
 class d11SolverSundials {
@@ -180,7 +182,7 @@ class d11SolverSundials {
 
     /// Currently FSA is only supported with point wise loss on the reference path. The reference path is a text file
     /// with the ground truth vehicle positions (x,y) at a frequency of 10 Hz.
-    /// @param reference_path_file Path to the reference path text file  
+    /// @param reference_path_file Path to the reference path text file
     void SetReferencePath(const std::string& reference_path_file);
 
     /// @brief Set the solver to verbose mode (prints out solver statistics)
@@ -245,7 +247,7 @@ class d11SolverSundials {
     /// @param gradient Whether the gradient is required or not
     /// @return Objective which holds the value (Objective.value) and the gradient (Objective.gradient[]) with respect
     /// to the parameters
-    Objective Evaluate_FSA(bool gradient);
+    d11::Objective Evaluate_FSA(bool gradient);
 
   private:
     bool Integrate(bool fsa);
@@ -255,9 +257,9 @@ class d11SolverSundials {
     bool m_has_TC;
     int m_offset;
 
-    int m_method;     // CVODES integration method
-    int m_mode;       // CVODES return mode
-    UserData m_data;  // CVODES user data
+    int m_method;          // CVODES integration method
+    int m_mode;            // CVODES return mode
+    d11::UserData m_data;  // CVODES user data
 
     realtype m_tend;  // final integration time
     realtype m_hmax;  // maximum step size
@@ -318,7 +320,7 @@ void unpackY(const N_Vector& y,
              d11::VehicleState& v_states,
              d11::TMeasyNrState& tiref_st,
              d11::TMeasyNrState& tirer_st);
-
+namespace d11 {
 void calcF();
 void calcFtL();
 void calcJtL();
@@ -367,6 +369,6 @@ static int check_retval(void* returnvalue, const char* funcname, int opt) {
 }
 
 void printSUNMatrix(SUNMatrix A, sunindextype matrows, sunindextype matcols);
-
-#endif // SWIG
-#endif // DOF18_SUNDIALS_H
+}  // namespace d11
+#endif  // SWIG
+#endif  // DOF18_SUNDIALS_H

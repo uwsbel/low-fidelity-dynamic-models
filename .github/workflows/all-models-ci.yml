@@ -1,0 +1,133 @@
+name: Build Sundials and Models
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+jobs:
+  build-all:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.8"
+
+      - name: Install General Dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake g++ make libopenmpi-dev
+          # Installs CMake, G++, Make, and OpenMPI
+
+      - name: Install SWIG
+        run: sudo apt-get install -y swig
+
+      - name: Install OpenMP
+        run: sudo apt-get install -y libomp-dev
+        # This installs the OpenMP library
+
+      - name: Install CUDA Toolkit
+        uses: Jimver/cuda-toolkit@v0.2.14
+        id: cuda-toolkit
+        with:
+          cuda: "12.0.0"
+          use-github-cache: false
+
+      - name: Check NVCC Version
+        run: nvcc -V
+
+      - name: Download Sundials
+        run: |
+          wget https://github.com/LLNL/sundials/releases/download/v6.7.0/sundials-6.7.0.tar.gz -O sundials-6.7.0.tar.gz
+          tar -xzvf sundials-6.7.0.tar.gz
+
+      - name: Build Sundials
+        run: |
+          mkdir -p sundials-build
+          cd sundials-build
+          cmake ../sundials-6.7.0 -DBUILD_SHARED_LIBS=ON -DEXAMPLES_INSTALL_PATH=${GITHUB_WORKSPACE}/sundials-examples
+          make
+          sudo make install
+
+      - name: Build 11DOF
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/11dof/
+          mkdir -p build
+          cd build
+          cmake ../ -DBUILD_PYTHON_MODULE=ON -DCMAKE_BUILD_TYPE=Release -DUSE_OPENMP=ON -USE_SUNDIALS=ON -DSUNDIALS_DIR=${GITHUB_WORKSPACE}/sundials-build
+          make
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}/wheeled_vehicle_models/11dof/build:$PYTHONPATH" >> $GITHUB_ENV
+
+      - name: Import 11dof Python Module
+        run: python -c "import pydof11 as dof11"
+
+      - name: Build 18DOF
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/18dof/
+          mkdir -p build
+          cd build
+          cmake ../ -DBUILD_PYTHON_MODULE=ON -DCMAKE_BUILD_TYPE=Release -DUSE_OPENMP=ON -USE_SUNDIALS=ON -DSUNDIALS_DIR=${GITHUB_WORKSPACE}/sundials-build
+          make
+
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}/wheeled_vehicle_models/18dof/build:$PYTHONPATH" >> $GITHUB_ENV
+
+      - name: Import 18dof Python Module
+        run: python -c "import pydof18 as dof18"
+
+      - name: Build 24DOF
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/24dof/
+          mkdir -p build
+          cd build
+          cmake ../ -DBUILD_PYTHON_MODULE=ON -DCMAKE_BUILD_TYPE=Release -DUSE_OPENMP=ON -USE_SUNDIALS=ON -DSUNDIALS_DIR=${GITHUB_WORKSPACE}/sundials-build
+          make
+
+      - name: Set PYTHONPATH
+        run: echo "PYTHONPATH=${{ github.workspace }}/wheeled_vehicle_models/24dof/build:$PYTHONPATH" >> $GITHUB_ENV
+
+      - name: Import 24dof Python Module
+        run: python -c "import pydof24 as dof24"
+
+      - name: Build 11dof-gpu
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/11dof-gpu/
+          mkdir -p build
+          cd build
+          cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=52
+          make
+
+      - name: Build 18dof-gpu
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/18dof-gpu/
+          mkdir -p build
+          cd build
+          cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=52
+          make
+
+      - name: Build 24dof-gpu
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/24dof-gpu/
+          mkdir -p build
+          cd build
+          cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=52
+          make
+
+      - name: Build Tests
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/tests
+          mkdir -p build
+          cd build
+          cmake ../ -DCMAKE_BUILD_TYPE=Release -DINSTALL_GTEST=ON -DBUILD_GPU_TESTS=OFF
+          make
+
+      - name: Run Tests
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/tests/build
+          ctest --output-on-failure

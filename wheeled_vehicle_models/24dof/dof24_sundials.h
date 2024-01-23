@@ -45,7 +45,9 @@ enum Enum {
     ALL = 0xFFFF            //
 };
 }
-
+// Forward declaration required for friend class
+class d24SolverSundials;
+namespace d24 {
 /// @brief User Data structure to pass to the RHS function for the sundials solver. Handled internally
 
 /// The RHS functions that the sundials solver uses to integrate the vehicle model take very specific arguments. In
@@ -107,7 +109,7 @@ class UserData {
     std::vector<realtype> m_params;
     std::vector<realtype> m_param_scales;
 
-    friend class d24SolverSundials;
+    friend class ::d24SolverSundials;
 };
 
 // =============================================================================
@@ -118,7 +120,7 @@ struct Objective {
     realtype value;
     std::vector<realtype> gradient;
 };
-
+}  // namespace d24
 #endif
 class d24SolverSundials {
   public:
@@ -270,7 +272,7 @@ class d24SolverSundials {
     /// @param gradient Whether the gradient is required or not
     /// @return Objective which holds the value (Objective.value) and the gradient (Objective.gradient[]) with respect
     /// to the parameters
-    Objective Evaluate_FSA(bool gradient);
+    d24::Objective Evaluate_FSA(bool gradient);
 
   private:
     bool Integrate(bool fsa);
@@ -280,9 +282,9 @@ class d24SolverSundials {
     bool m_has_TC;
     int m_offset;
 
-    int m_method;     // CVODES integration method
-    int m_mode;       // CVODES return mode
-    UserData m_data;  // CVODES user data
+    int m_method;          // CVODES integration method
+    int m_mode;            // CVODES return mode
+    d24::UserData m_data;  // CVODES user data
 
     realtype m_tend;  // final integration time
     realtype m_hmax;  // maximum step size
@@ -378,7 +380,7 @@ void unpackY(const N_Vector& y,
              d24::SuspensionState& susrf_st,
              d24::SuspensionState& suslr_st,
              d24::SuspensionState& susrr_st);
-
+namespace d24 {
 void calcF();
 void calcFtL();
 void calcJtL();
@@ -427,5 +429,6 @@ static int check_retval(void* returnvalue, const char* funcname, int opt) {
 }
 
 void printSUNMatrix(SUNMatrix A, sunindextype matrows, sunindextype matcols);
+}  // namespace d24
 #endif
 #endif
