@@ -47,13 +47,15 @@ enum Enum {
     ALL = 0xFFFF            //
 };
 }
-
+// Forward declare the UserData class so we can use it in the d18SolverSundials class
+class d18SolverSundials;
+namespace d18 {
 /// @brief User Data structure to pass to the RHS function for the sundials solver. Handled internally
 
 /// The RHS functions that the sundials solver uses to integrate the vehicle model take very specific arguments. In
-/// order to pass paramateres, driver input and reference paths (in case FSA is enabled) to the RHS functions, we need
-/// to pack them into a single structure. This is done in the UserData class. This is not exposed to the user, and is
-/// handled internally by the solver.
+/// order to pass paramateres, driver input and reference paths (in case FSA is enabled) to the RHS functions, we
+/// need to pack them into a single structure. This is done in the UserData class. This is not exposed to the user,
+/// and is handled internally by the solver.
 class UserData {
   public:
     UserData() : m_current_gr(0), m_param_flags(0), m_vx_idx(0), m_vy_idx(0) {}
@@ -105,7 +107,7 @@ class UserData {
     std::vector<realtype> m_params;
     std::vector<realtype> m_param_scales;
 
-    friend class d18SolverSundials;
+    friend class ::d18SolverSundials;
 };
 
 // =============================================================================
@@ -116,7 +118,7 @@ struct Objective {
     realtype value;
     std::vector<realtype> gradient;
 };
-
+}  // namespace d18
 #endif
 
 class d18SolverSundials {
@@ -178,7 +180,7 @@ class d18SolverSundials {
 
     /// Currently FSA is only supported with point wise loss on the reference path. The reference path is a text file
     /// with the ground truth vehicle positions (x,y) at a frequency of 10 Hz.
-    /// @param reference_path_file Path to the reference path text file  
+    /// @param reference_path_file Path to the reference path text file
     void SetReferencePath(const std::string& reference_path_file);
 
     /// @brief Set the solver to verbose mode (prints out solver statistics)
@@ -230,7 +232,6 @@ class d18SolverSundials {
     /// @return number of parameters
     int GetNumParameters() const { return m_ns; }
 
-
     /// @brief Get the TireType
     /// @return TireType (Either TMEasy or TMEasyNr)
     TireType GetTireType() const { return m_tire_type; }
@@ -250,7 +251,7 @@ class d18SolverSundials {
     /// @param gradient Whether the gradient is required or not
     /// @return Objective which holds the value (Objective.value) and the gradient (Objective.gradient[]) with respect
     /// to the parameters
-    Objective Evaluate_FSA(bool gradient);
+    d18::Objective Evaluate_FSA(bool gradient);
 
   private:
     bool Integrate(bool fsa);
@@ -260,9 +261,9 @@ class d18SolverSundials {
     bool m_has_TC;
     int m_offset;
 
-    int m_method;     // CVODES integration method
-    int m_mode;       // CVODES return mode
-    UserData m_data;  // CVODES user data
+    int m_method;          // CVODES integration method
+    int m_mode;            // CVODES return mode
+    d18::UserData m_data;  // CVODES user data
 
     realtype m_tend;  // final integration time
     realtype m_hmax;  // maximum step size
@@ -338,7 +339,7 @@ void unpackY(const N_Vector& y,
              d18::TMeasyNrState& tirerf_st,
              d18::TMeasyNrState& tirelr_st,
              d18::TMeasyNrState& tirerr_st);
-
+namespace d18 {
 void calcF();
 void calcFtL();
 void calcJtL();
@@ -387,6 +388,6 @@ static int check_retval(void* returnvalue, const char* funcname, int opt) {
 }
 
 void printSUNMatrix(SUNMatrix A, sunindextype matrows, sunindextype matcols);
-
+}  // namespace d18
 #endif
 #endif

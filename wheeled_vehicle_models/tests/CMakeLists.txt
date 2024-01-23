@@ -42,6 +42,11 @@ FetchContent_MakeAvailable(googletest)
 set(MODEL_FILES
   ${CMAKE_SOURCE_DIR}/../18dof/dof18.h
   ${CMAKE_SOURCE_DIR}/../18dof/dof18.cpp
+  ${CMAKE_SOURCE_DIR}/../11dof/dof11.h
+  ${CMAKE_SOURCE_DIR}/../11dof/dof11.cpp
+  ${CMAKE_SOURCE_DIR}/../24dof/dof24.h
+  ${CMAKE_SOURCE_DIR}/../24dof/dof24.cpp
+
 )
 
 set(UTILS_FILES
@@ -55,11 +60,21 @@ set(SOLVER_FILES
   ${CMAKE_SOURCE_DIR}/../18dof/dof18_halfImplicit.cpp
   ${CMAKE_SOURCE_DIR}/../18dof/dof18_sundials.h
   ${CMAKE_SOURCE_DIR}/../18dof/dof18_sundials.cpp
+  ${CMAKE_SOURCE_DIR}/../11dof/dof11_halfImplicit.h
+  ${CMAKE_SOURCE_DIR}/../11dof/dof11_halfImplicit.cpp
+  ${CMAKE_SOURCE_DIR}/../11dof/dof11_sundials.h
+  ${CMAKE_SOURCE_DIR}/../11dof/dof11_sundials.cpp
+  ${CMAKE_SOURCE_DIR}/../24dof/dof24_halfImplicit.h
+  ${CMAKE_SOURCE_DIR}/../24dof/dof24_halfImplicit.cpp
+  ${CMAKE_SOURCE_DIR}/../24dof/dof24_sundials.h
+  ${CMAKE_SOURCE_DIR}/../24dof/dof24_sundials.cpp
 )
 
 # Test programs to build
 set(TEST_PROGRAMS
   18dof
+  11dof
+  24dof
 )
 enable_testing() 
 
@@ -67,6 +82,8 @@ enable_testing()
 # -----------------------------------------------------
 
 include_directories(${CMAKE_SOURCE_DIR}/../18dof)
+include_directories(${CMAKE_SOURCE_DIR}/../11dof)
+include_directories(${CMAKE_SOURCE_DIR}/../24dof)
 include_directories(${CMAKE_SOURCE_DIR}/../utils)
 include_directories(${CMAKE_SOURCE_DIR}/../third_party)
 
@@ -91,3 +108,5 @@ endforeach()
 
 include(GoogleTest)
 gtest_discover_tests(18dof)
+gtest_discover_tests(11dof)
+gtest_discover_tests(24dof)
