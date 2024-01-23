@@ -118,3 +118,16 @@ jobs:
           cd build
           cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=52
           make
+
+      - name: Build Tests
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/tests
+          mkdir -p build
+          cd build
+          cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=52 -DINSTALL_GTEST=ON -DBUILD_GPU_TESTS=ON
+          make
+
+      - name: Run Tests
+        run: |
+          cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/tests/build
+          ctest --output-on-failure
