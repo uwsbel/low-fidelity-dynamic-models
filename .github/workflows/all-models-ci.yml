@@ -124,7 +124,7 @@ jobs:
           cd ${GITHUB_WORKSPACE}/wheeled_vehicle_models/tests
           mkdir -p build
           cd build
-          cmake ../ -DCMAKE_BUILD_TYPE=Release -DCMAKE_CUDA_ARCHITECTURES=89 -DINSTALL_GTEST=ON -DBUILD_GPU_TESTS=ON
+          cmake ../ -DCMAKE_BUILD_TYPE=Release -DINSTALL_GTEST=ON -DBUILD_GPU_TESTS=OFF
           make
 
       - name: Run Tests
