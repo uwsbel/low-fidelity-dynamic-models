@@ -50,6 +50,7 @@ set(CPU_SOLVER_FILES
 set(CPU_TEST_PROGRAMS
   accTest
   dlTest
+  timingTest
 )
 
 # -----------------------------------------------------
