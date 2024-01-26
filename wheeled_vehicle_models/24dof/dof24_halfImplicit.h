@@ -42,7 +42,7 @@ class d24SolverHalfImplicit {
                    const std::string& tire_params_file,
                    const std::string& sus_params_file,
                    const std::string& driver_inputs_file,
-                   TireType type);
+                   d24::TireType type);
 
     /// @brief Construct the the solver using path to vehicle parameters, tire parameters, suspension parameters.
     /// TireType defualts to TMEasy tires
@@ -68,7 +68,7 @@ class d24SolverHalfImplicit {
     void Construct(const std::string& vehicle_params_file,
                    const std::string& tire_params_file,
                    const std::string& sus_params_file,
-                   TireType type);
+                   d24::TireType type);
 
     /// @brief Set the simulation time step used to integrate all the vehicles using the solver
     /// @param step time step to set
@@ -187,7 +187,7 @@ class d24SolverHalfImplicit {
 
     /// @brief Get the tire type being used by the solver
     /// @return TireType (Either TMEasy or TMEasyNr)
-    TireType GetTireType() const { return m_tire_type; }
+    d24::TireType GetTireType() const { return m_tire_type; }
 
     d24::VehicleState m_veh_state;  //!< Vehicle state - can be accessed any time after construction
     d24::TMeasyState
@@ -241,7 +241,7 @@ class d24SolverHalfImplicit {
     void PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot);
 
     // variable to store the tire type
-    TireType m_tire_type;
+    d24::TireType m_tire_type;
     CSV_writer m_csv;           // CSV writer object
     double m_tend;              // final integration time
     double m_step;              // integration time step
