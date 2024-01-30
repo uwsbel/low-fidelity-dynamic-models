@@ -89,14 +89,9 @@ To show that the LFDMs are not just accurate but also fast, we benchmark each of
 | 18 DoF | 10,000 | $2.6 \pm 0.0006$ | $2.6e^{-3}$ | 3835 |
 | 11 DoF | 10,000 | $1.5 \pm 0.0002$ | $1.5e^{-3}$ | 6461 |
 
-# Figures
+The GPU version of the LFDMs can further enable large scale parallel simulation, useful for applications in Reinforcement Learning (RL) and traffic simulations. Fig. \autoref{fig:gpu_scale}, shows about 330,000 11DoF vehicle models can be simulation on an Nvidia A100 GPU with a RTF of 1.
 
-<!-- Figures can be included like this:
-![Caption for example figure.\label{fig:example}](figure.png)
-and referenced from text using \autoref{fig:example}.
-
-Figure sizes can be customized by adding an optional second parameter:
-![Caption for example figure.](figure.png){ width=20% } -->
+![Scaling analysis of the GPU versions of the LFDMs shows that about 330,000 11 DoF vehicles can be simulated in Real-Time.\label{fig:gpu_scale}](images/gpuScale.png){ width=60% }
 
 # Acknowledgements
 This work has been partially supported by NSF projects FW-HTF-R2222541 and CMMI2153855.
