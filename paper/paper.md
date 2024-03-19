@@ -1,5 +1,5 @@
 ---
-title: 'Library of Lower Fidelity Dynamic Models (LFDMs) For On-Road Vehicle Dynamics In Faster Than Real-Time Applications'
+title: 'A Library of Lower Fidelity Dynamics Models (LFDMs) For On-Road Vehicle Dynamics Targeting Faster Than Real-Time Applications'
 tags:
   - C++
   - CUDA
@@ -33,13 +33,17 @@ bibliography: paper.bib
 ---
 
 # Summary
-Lower Fidelity Dynamic Models (LFDM) is a library of on-road wheeled-vehicle dynamics models written in C++ and Cuda and wrapped to Python using SWIG. Each of these on-road wheeled-vehicle dynamics models are described as Ordinary Differential Equations (ODEs) that take a driver input - a normalized throttle between 0 and 1, a normalized steering between -1 and 1 with -1 representing a left turn, and a normalized braking input between 0 and 1 and map the vehicle state (its position, velocity etc.) at the current time step to the vehicle state at the next time step.<br>
-In mathematical connotation, these ODEs are of second order and are written as
+Lower Fidelity Dynamic Models (LFDM) is a library of on-road wheeled vehicles that is written in C++ and CUDA and wrapped to Python using SWIG. Each of these on-road wheeled-vehicle dynamics models is described as a set of Ordinary Differential Equations (ODEs) that take a driver input - a normalized throttle between 0 and 1, a normalized steering between -1 and 1 (with -1 representing a left turn), and a normalized braking input between 0 and 1, and subsequently advance the state of the vehicle (its position and velocity) forward in time.<br>
+
+In mathematical notation, these ODEs are of second order and are expressed as
+
 \begin{equation}
-\mathbf{\"x} = f(\mathbf{x},\mathbf{\dot{x}}, \mathbf{u}, \mathbf{P})
+\mathbf{\"x} = f(\mathbf{x},\mathbf{\dot{x}}, \mathbf{u}, \mathbf{P}) \; ,
 \end{equation}
-Where $\mathbf{x} \in \mathbb{R}^d$ are the $d$ dimensional states of the vehicle, $\mathbf{u} \in \mathbb{R}^3$ are the driver inputs and $\mathbf{P} \in \mathbb{R}^k$ and the $k$ dimensional model parameters. The ODEs representing the vehicle dynamics models are cast as Initial Value Problems (IVPs) by provided an initial state $\mathbf{x}$ and are solved using implicit and semi-implicit numerical methods.<br>
-The LFDM encompasses three dynamic vehicle models, differentiated by their Degrees of Freedom (DoF): 11 DoF, 18 DoF, and 24 DoF, each operable on CPU and Nvidia GPUs.
+
+where $\mathbf{x} \in \mathbb{R}^d$ is the $d$ dimensional state of the vehicle, $\mathbf{u} \in \mathbb{R}^3$ contains the driver inputs, and $\mathbf{P} \in \mathbb{R}^k$ contains the $k$ model parameters. The ODEs evolving the vehicle dynamics models are cast as an Initial Value Problems (IVPs) by providing an initial state $\mathbf{x}$ and are solved using implicit and semi-implicit numerical methods.<br>
+
+The LFDM contains three dynamic vehicle models, differentiated by their Degrees of Freedom (DoF) counts: 11 DoF, 18 DoF, and 24 DoF. Each can be run on the CPU or an NVIDIA GPU.
 
 11 DoF Model: This is a foundational, single-track model with two wheels, primarily employed in controller design. It features a rigid chassis with three DoFs at the Center of Mass (C.M) – yaw, lateral, and longitudinal. The model includes a kinematic driveline, integrating a map-based engine and torque converter, gearbox, and differential, channeling torque to the wheels. It utilizes one of the two versions of the TMeasy non-linear tire model for traction-force generation. Steering inputs are converted to front wheel angles through a steering map.
 
