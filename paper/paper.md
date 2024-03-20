@@ -12,6 +12,7 @@ authors:
     corresponding: true
     affiliation: 1
   - name: Ishaan Mahajan
+    orcid: 0000-0001-9981-6699
     affiliation: 2
   - name: Radu Serban
     orcid: 0000-0002-4219-905X
