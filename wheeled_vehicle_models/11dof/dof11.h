@@ -6,11 +6,12 @@
 #include <stdlib.h>
 
 #include "utils.h"
+
+namespace d11 {
 /// @brief enum to decide what type of tire is being used. You will need to set this in case you wish to use the TMeasy
 /// tire without relaxation (TMeasyNr where Nr stands for no relaxation). See the HalfImplicit and Sundials solver
 /// documentation for more details
 enum class TireType { TMeasy, TMeasyNr };
-namespace d11 {
 
 // -----------------------------------------------------------------------------
 // Tire Structs
@@ -59,7 +60,6 @@ struct TMeasyParam {
           _symP2n(0.38786),
           _sysPn(0.82534),
           _sysP2n(0.91309) {}
-
 
     /// @brief Copy constructor that takes in a pointer to another TMeasyParam struct and copies all the values into the
     /// new struct
@@ -492,7 +492,7 @@ struct TMeasyNrState {
 /// uses only two TMeasy tires. Similarly, the driveline now only consists of the center differential, which splits the
 /// torque between the front and rear wheels based on the shaft speeds. The steering mechanism remains unchanged, with
 /// only one front wheel that is steered. The Bicycle model takes the same driver inputs as the 18 and 24 DOF models.
-/// See chapter 2 here for more details https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. 
+/// See chapter 2 here for more details https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc.
 struct VehicleParam {
     /// @brief This constructor sets default values for all the parameters in the VehicleParam struct. The values are an
     /// okay proxy for a truck (namely the HMMWV model).  It is highly recommended that you set the parameters yourself
@@ -569,10 +569,10 @@ struct VehicleParam {
      */
     std::vector<MapEntry> _steerMap;
 
-    double _maxSteer; //!< In case _nonLinearSteer is set to 0, this is the maximum wheel angle that can be achieved
+    double _maxSteer;  //!< In case _nonLinearSteer is set to 0, this is the maximum wheel angle that can be achieved
                        //!< (in radians). Values at other steering wheel inputs are then linearly interpolated.
 
-    double _crankInertia; //!< Inertia of the engine/motor crankshaft
+    double _crankInertia;             //!< Inertia of the engine/motor crankshaft
     std::vector<double> _gearRatios;  //!< Vector of gear ratios
     /**
      * @brief A shift map defines the RPMs at which the various gears shift.
@@ -583,8 +583,8 @@ struct VehicleParam {
      * examples)
      */
     std::vector<MapEntry> _shiftMap;
-    
-    bool _tcbool; //!< Boolean that checks for the presence of a torque converter. Can be set using "tcBool" in the
+
+    bool _tcbool;  //!< Boolean that checks for the presence of a torque converter. Can be set using "tcBool" in the
                    //!< JSON file. Defaults to 0 if not specified.
 
     double _maxBrakeTorque;  //!< The maximum braking torque (Nm) that the brakes applu to the wheels. Can be set using
@@ -618,7 +618,7 @@ struct VehicleParam {
      */
     std::vector<MapEntry> _lossesMap;
 
-        /**
+    /**
      * @brief In case a torque converter is part of the model, the capacity map needs to be defined.
      *
      * _CFmap is a vector of MapEntry's where the x component of the MapEntry is the speed ratio between the
@@ -739,11 +739,11 @@ struct VehicleState {
           _dOmega_crank(other._dOmega_crank),
           _current_gr(other._current_gr) {}
 
-    double _x;    //!< Global x position
-    double _y;    //!< Global y position
-    double _dx, _dy;   // This is basically u and v but transformed to global coordinates
-    double _u;    //!< Chassis x velocity in G-RF
-    double _v;    //!< Chassis y velocity in G-RF
+    double _x;        //!< Global x position
+    double _y;        //!< Global y position
+    double _dx, _dy;  // This is basically u and v but transformed to global coordinates
+    double _u;        //!< Chassis x velocity in G-RF
+    double _v;        //!< Chassis y velocity in G-RF
     double _psi;  //!< Yaw angle of chassis (rotation about z axis of G-RF) - this is the angle that is used to rotate
                   //!< the chassis frame to the global frame
     double _wz;   //!< Yaw rate of chassis
@@ -887,7 +887,6 @@ void computeTireRHS(TMeasyNrState& t_states,
                     const VehicleParam& v_params,
                     double steering);
 
-
 // -----------------------------------------------------------------------------
 // Powertrain RHS and helper functions
 // -----------------------------------------------------------------------------
@@ -951,7 +950,7 @@ void computePowertrainRHS(VehicleState& v_states,
 /// @param tirer_st TMeasyNr tire states (Tear (R))
 /// @param v_params Vehicle parameters
 /// @param t_params Tire parameters
-/// @param controls Vehicle driver inputs (throttle, brake, steering)                        
+/// @param controls Vehicle driver inputs (throttle, brake, steering)
 void computePowertrainRHS(VehicleState& v_states,
                           TMeasyNrState& tiref_st,
                           TMeasyNrState& tirer_st,
@@ -961,7 +960,7 @@ void computePowertrainRHS(VehicleState& v_states,
 
 // -----------------------------------------------------------------------------
 // Vehicle RHS and helper functions
-// -----------------------------------------------------------------------------       
+// -----------------------------------------------------------------------------
 
 /// @brief Computes the vehicle linear and angular accelerations that are to be integrated
 /// @param v_states Vehicle states
@@ -998,7 +997,6 @@ void setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName);
 /// @brief Helper function to compute the max tire load from the load index
 /// @param li Load index
 double GetTireMaxLoad(unsigned int li);
-
 
 /// @brief Functions to guess tire parameters from general truck tire. The ability to do this is one of the major
 /// advanatages of the TMeasy tire models.

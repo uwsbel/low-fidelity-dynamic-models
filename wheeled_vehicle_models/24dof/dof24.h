@@ -6,9 +6,12 @@
 #include <stdlib.h>
 
 #include "utils.h"
-// enum to decide what type of tire we have
-enum class TireType { TMeasy, TMeasyNr };
+
 namespace d24 {
+/// @brief enum to decide what type of tire is being used. You will need to set this in case you wish to use the TMeasy
+/// tire without relaxation (TMeasyNr where Nr stands for no relaxation). See the HalfImplicit and Sundials solver
+/// documentation for more details
+enum class TireType { TMeasy, TMeasyNr };
 
 // -----------------------------------------------------------------------------
 // Tire Structs

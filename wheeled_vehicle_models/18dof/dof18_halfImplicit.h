@@ -37,7 +37,7 @@ class d18SolverHalfImplicit {
     void Construct(const std::string& vehicle_params_file,
                    const std::string& tire_params_file,
                    const std::string& driver_inputs_file,
-                   TireType type);
+                   d18::TireType type);
 
     /// @brief Construct the the solver using path to vehicle parameters and tire parameters.
     /// TireType defualts to TMEasy tires
@@ -56,7 +56,7 @@ class d18SolverHalfImplicit {
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param type TireType (Either TMEasy or TMEasyNr)
-    void Construct(const std::string& vehicle_params_file, const std::string& tire_params_file, TireType type);
+    void Construct(const std::string& vehicle_params_file, const std::string& tire_params_file, d18::TireType type);
 
     /// @brief Set the simulation time step used to integrate all the vehicles using the solver
     /// @param step time step to set
@@ -158,26 +158,32 @@ class d18SolverHalfImplicit {
     /// @return The time at the end of the integration step
     double IntegrateStepWithJacobian(double t, double throttle, double steering, double braking, bool on);
 
-
-
     /// @brief Get the tire type being used by the solver
     /// @return TireType (Either TMEasy or TMEasyNr)
-    TireType GetTireType() const { return m_tire_type; }
+    d18::TireType GetTireType() const { return m_tire_type; }
 
     // Vehicle states and tire states
-    d18::VehicleState m_veh_state; //!< Vehicle state - can be accessed any time after construction
-    d18::TMeasyState m_tireTMlf_state; //!< TMeasy Tire state (Left Front (LF)) - can be accessed any time after construction
-    d18::TMeasyState m_tireTMrf_state; //!< TMeasy Tire state (Right Front (RF)) - can be accessed any time after construction
-    d18::TMeasyState m_tireTMlr_state; //!< TMeasy Tire state (Left Rear (LR)) - can be accessed any time after construction
-    d18::TMeasyState m_tireTMrr_state; //!< TMeasy Tire state (Right Rear (RR)) - can be accessed any time after construction
+    d18::VehicleState m_veh_state;  //!< Vehicle state - can be accessed any time after construction
+    d18::TMeasyState
+        m_tireTMlf_state;  //!< TMeasy Tire state (Left Front (LF)) - can be accessed any time after construction
+    d18::TMeasyState
+        m_tireTMrf_state;  //!< TMeasy Tire state (Right Front (RF)) - can be accessed any time after construction
+    d18::TMeasyState
+        m_tireTMlr_state;  //!< TMeasy Tire state (Left Rear (LR)) - can be accessed any time after construction
+    d18::TMeasyState
+        m_tireTMrr_state;  //!< TMeasy Tire state (Right Rear (RR)) - can be accessed any time after construction
     d18::VehicleParam m_veh_param;    //!< Vehicle parameters - can be accessed any time after construction
     d18::TMeasyParam m_tireTM_param;  //!< TMeasy tire parameters - can be accessed any time after construction
 
     // Tire states for the TM easy tire without relaxation
-    d18::TMeasyNrState m_tireTMNrlf_state;//!< TMeasyNr Tire state (Left Front (LF)) - can be accessed any time after construction
-    d18::TMeasyNrState m_tireTMNrrf_state; //!< TMeasyNr Tire state (Right Front (RF)) - can be accessed any time after construction
-    d18::TMeasyNrState m_tireTMNrlr_state; //!< TMeasyNr Tire state (Left Rear (LR)) - can be accessed any time after construction
-    d18::TMeasyNrState m_tireTMNrrr_state; //!< TMeasyNr Tire state (Right Rear (RR)) - can be accessed any time after construction
+    d18::TMeasyNrState
+        m_tireTMNrlf_state;  //!< TMeasyNr Tire state (Left Front (LF)) - can be accessed any time after construction
+    d18::TMeasyNrState
+        m_tireTMNrrf_state;  //!< TMeasyNr Tire state (Right Front (RF)) - can be accessed any time after construction
+    d18::TMeasyNrState
+        m_tireTMNrlr_state;  //!< TMeasyNr Tire state (Left Rear (LR)) - can be accessed any time after construction
+    d18::TMeasyNrState
+        m_tireTMNrrr_state;  //!< TMeasyNr Tire state (Right Rear (RR)) - can be accessed any time after construction
     d18::TMeasyNrParam m_tireTMNr_param;  //!< TMeasyNr tire parameters - can be accessed any time after construction
 
     /// @brief Write csv_writer to csv file in case of step by step simulation
@@ -200,7 +206,7 @@ class d18SolverHalfImplicit {
     void PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot);
 
     // variable to store the tire type
-    TireType m_tire_type;
+    d18::TireType m_tire_type;
     CSV_writer m_csv;           // CSV writer object
     double m_tend;              // final integration time
     double m_step;              // integration time step
@@ -306,6 +312,6 @@ void unpackY(const std::vector<double>& y,
              d18::TMeasyNrState& tirelr_st,
              d18::TMeasyNrState& tirerr_st);
 
-#endif // SWIG
+#endif  // SWIG
 
-#endif // DOF18_HALFIMPLICIT_H
+#endif  // DOF18_HALFIMPLICIT_H

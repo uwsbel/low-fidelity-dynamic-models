@@ -39,7 +39,7 @@ class d11SolverHalfImplicit {
     void Construct(const std::string& veh_params_file,
                    const std::string& tire_params_file,
                    const std::string& driver_file,
-                   TireType type);
+                   d11::TireType type);
 
     /// @brief Construct the the solver using path to vehicle parameters and tire parameters.
     /// TireType defualts to TMEasy tires
@@ -58,7 +58,7 @@ class d11SolverHalfImplicit {
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param type TireType (Either TMEasy or TMEasyNr)
-    void Construct(const std::string& vehicle_params_file, const std::string& tire_params_file, TireType type);
+    void Construct(const std::string& vehicle_params_file, const std::string& tire_params_file, d11::TireType type);
 
     /// @brief Set the simulation time step used to integrate all the vehicles using the solver
     /// @param step time step to set
@@ -157,16 +157,18 @@ class d11SolverHalfImplicit {
     double IntegrateStepWithJacobian(double t, double throttle, double steering, double braking, bool on);
 
     // Vehicle states and tire states
-    d11::VehicleState m_veh_state; //!< Vehicle state - can be accessed any time after construction
-    d11::TMeasyState m_tireTMf_state; //!< TMeasy Tire state (Front (F)) - can be accessed any time after construction
-    d11::TMeasyState m_tireTMr_state; //!< TMeasy Tire state (Rear (R)) - can be accessed any time after construction
-    d11::VehicleParam m_veh_param;   //!< Vehicle parameters - can be accessed any time after construction
-    d11::TMeasyParam m_tireTM_param;  //!< TMeasy tire parameters - can be accessed any time after construction
+    d11::VehicleState m_veh_state;     //!< Vehicle state - can be accessed any time after construction
+    d11::TMeasyState m_tireTMf_state;  //!< TMeasy Tire state (Front (F)) - can be accessed any time after construction
+    d11::TMeasyState m_tireTMr_state;  //!< TMeasy Tire state (Rear (R)) - can be accessed any time after construction
+    d11::VehicleParam m_veh_param;     //!< Vehicle parameters - can be accessed any time after construction
+    d11::TMeasyParam m_tireTM_param;   //!< TMeasy tire parameters - can be accessed any time after construction
 
     // TMeasyNr tire states
-    d11::TMeasyNrState m_tireTMNrf_state; //!< TMeasyNr Tire state (Front (F)) - can be accessed any time after construction
-    d11::TMeasyNrState m_tireTMNrr_state; //!< TMeasyNr Tire state (Rear (R)) - can be accessed any time after construction
-    d11::TMeasyNrParam m_tireTMNr_param; //!< TMeasyNr tire parameters - can be accessed any time after construction
+    d11::TMeasyNrState
+        m_tireTMNrf_state;  //!< TMeasyNr Tire state (Front (F)) - can be accessed any time after construction
+    d11::TMeasyNrState
+        m_tireTMNrr_state;  //!< TMeasyNr Tire state (Rear (R)) - can be accessed any time after construction
+    d11::TMeasyNrParam m_tireTMNr_param;  //!< TMeasyNr tire parameters - can be accessed any time after construction
 
     /// @brief Write csv_writer to csv file in case of step by step simulation
 
@@ -174,6 +176,7 @@ class d11SolverHalfImplicit {
     /// at each step states are only written to the csv writer object not to the csv file itself. Thus the user needs to
     /// call this function to write the data to the csv file by calling WriteToFile.
     void WriteToFile();
+
   private:
     void Integrate();
 
@@ -186,7 +189,7 @@ class d11SolverHalfImplicit {
     // For finite differencing for applications in MPC to perturb either controls or y
     void PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot);
 
-    TireType m_tire_type;       // Tire type
+    d11::TireType m_tire_type;  // Tire type
     CSV_writer m_csv;           // CSV writer object
     double m_tend;              // final integration time
     double m_step;              // integration time step
@@ -274,6 +277,6 @@ void unpackY(const std::vector<double>& y,
              d11::TMeasyNrState& tiref_st,
              d11::TMeasyNrState& tirer_st);
 
-#endif // SWIG
+#endif  // SWIG
 
-#endif // DOF11_HALFIMPLICIT_H
+#endif  // DOF11_HALFIMPLICIT_H

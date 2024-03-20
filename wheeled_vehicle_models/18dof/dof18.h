@@ -6,11 +6,12 @@
 #include <stdlib.h>
 
 #include "utils.h"
+
+namespace d18 {
 /// @brief enum to decide what type of tire is being used. You will need to set this in case you wish to use the TMeasy
 /// tire without relaxation (TMeasyNr where Nr stands for no relaxation). See the HalfImplicit and Sundials solver
 /// documentation for more details
 enum class TireType { TMeasy, TMeasyNr };
-namespace d18 {
 // -----------------------------------------------------------------------------
 // Tire Structs
 // -----------------------------------------------------------------------------
@@ -59,7 +60,6 @@ struct TMeasyParam {
           _symP2n(0.38786),
           _sysPn(0.82534),
           _sysP2n(0.91309) {}
-
 
     /// @brief Copy constructor that takes in a pointer to another TMeasyParam struct and copies all the values into the
     /// new struct
@@ -591,10 +591,10 @@ struct VehicleParam {
      */
     std::vector<MapEntry> _steerMap;
 
-    double _maxSteer; //!< In case _nonLinearSteer is set to 0, this is the maximum wheel angle that can be achieved
+    double _maxSteer;  //!< In case _nonLinearSteer is set to 0, this is the maximum wheel angle that can be achieved
                        //!< (in radians). Values at other steering wheel inputs are then linearly interpolated.
 
-    double _crankInertia; //!< Inertia of the engine/motor crankshaft
+    double _crankInertia;             //!< Inertia of the engine/motor crankshaft
     std::vector<double> _gearRatios;  //!< Vector of gear ratios
     /**
      * @brief A shift map defines the RPMs at which the various gears shift.
@@ -605,8 +605,8 @@ struct VehicleParam {
      * examples)
      */
     std::vector<MapEntry> _shiftMap;
-    
-    bool _tcbool; //!< Boolean that checks for the presence of a torque converter. Can be set using "tcBool" in the
+
+    bool _tcbool;  //!< Boolean that checks for the presence of a torque converter. Can be set using "tcBool" in the
                    //!< JSON file. Defaults to 0 if not specified.
 
     double _maxBrakeTorque;  //!< The maximum braking torque (Nm) that the brakes applu to the wheels. Can be set using
@@ -640,7 +640,7 @@ struct VehicleParam {
      */
     std::vector<MapEntry> _lossesMap;
 
-        /**
+    /**
      * @brief In case a torque converter is part of the model, the capacity map needs to be defined.
      *
      * _CFmap is a vector of MapEntry's where the x component of the MapEntry is the speed ratio between the
@@ -713,22 +713,22 @@ struct VehicleState {
     /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
     /// constructor below
     VehicleState(double x,
-                double y,
-                double dx,
-                double dy,
-                double u,
-                double v,
-                double psi,
-                double wz,
-                double phi,
-                double wx,
-                double udot,
-                double vdot,
-                double wxdot,
-                double wzdot,
-                double tor,
-                double crankOmega,
-                int current_gr)
+                 double y,
+                 double dx,
+                 double dy,
+                 double u,
+                 double v,
+                 double psi,
+                 double wz,
+                 double phi,
+                 double wx,
+                 double udot,
+                 double vdot,
+                 double wxdot,
+                 double wzdot,
+                 double tor,
+                 double crankOmega,
+                 int current_gr)
         : _x(x),
           _y(y),
           _dx(dx),
@@ -876,7 +876,6 @@ void tireToVehTransform(TMeasyNrState& tirelf_st,
                         const VehicleParam& v_params,
                         double steering);
 
-
 // -----------------------------------------------------------------------------
 // Tire RHS functions and helper functions
 // -----------------------------------------------------------------------------
@@ -894,7 +893,6 @@ void tmxy_combined(double& f, double& fos, double s, double df0, double sm, doub
 /// function.
 void computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 
-
 /// @brief Compute the vertical loads on the tire using quasi-static load transfer equations.
 
 /// See chapter 2 here for
@@ -908,7 +906,6 @@ void computeTireLoads(std::vector<double>& loads,
                       const VehicleParam& v_params,
                       const TMeasyParam& t_params);
 
-
 /// @brief computeTireLoads overloaded for TMeasyNr tire model
 /// @param v_states Vehicle states
 /// @param v_params Vehicle parameters
@@ -917,7 +914,6 @@ void computeTireLoads(std::vector<double>& loads,
                       const VehicleState& v_states,
                       const VehicleParam& v_params,
                       const TMeasyNrParam& t_params);
-
 
 /// @brief Computes the tire forces for the TMeasy tire model in the tire contact patch frame (T-RF)
 
@@ -928,7 +924,6 @@ void computeTireLoads(std::vector<double>& loads,
 /// @param v_params Vehicle Parameters
 /// @param steering Steering input used to calculate the lateral tire slip
 void computeTireRHS(TMeasyState& t_states, const TMeasyParam& t_params, const VehicleParam& v_params, double steering);
-
 
 /// @brief Computes the tire forces for the TMeasyNr tire model in the tire contact patch frame (T-RF)
 
@@ -1017,8 +1012,7 @@ void computePowertrainRHS(VehicleState& v_states,
                           TMeasyNrState& tirerr_st,
                           const VehicleParam& v_params,
                           const TMeasyNrParam& t_params,
-                          const DriverInput& controls);                      
-
+                          const DriverInput& controls);
 
 // -----------------------------------------------------------------------------
 // Vehicle RHS and helper functions
@@ -1033,7 +1027,6 @@ void computeVehRHS(VehicleState& v_states,
                    const VehicleParam& v_params,
                    const std::vector<double>& fx,
                    const std::vector<double>& fy);
-
 
 // -----------------------------------------------------------------------------
 // Json parsing functions
