@@ -42,7 +42,7 @@ double d18::driveTorque(const VehicleParam& v_params, const double throttle, con
 }
 
 // Function that calculates the torque split to each tire based on the
-// differential max bias Exactly the same as Chrono implementation
+// differential max bias exactly the same as Chrono implementation
 void d18::differentialSplit(double torque,
                             double max_bias,
                             double speed_left,
@@ -107,7 +107,7 @@ void d18::vehToTireTransform(TMeasyState& tirelf_st,
     tirelr_st._vsy = v_states._v - v_states._wz * v_params._b;
     tirelr_st._vsx = v_states._u - (v_states._wz * v_params._cr) / 2.;
 
-    // rigth rear - No steer
+    // right rear - No steer
     tirerr_st._fz = loads[3];
     tirerr_st._vsy = v_states._v - v_states._wz * v_params._b;
     tirerr_st._vsx = v_states._u + (v_states._wz * v_params._cr) / 2.;
@@ -149,7 +149,7 @@ void d18::vehToTireTransform(TMeasyNrState& tirelf_st,
     tirelr_st._vsy = v_states._v - v_states._wz * v_params._b;
     tirelr_st._vsx = v_states._u - (v_states._wz * v_params._cr) / 2.;
 
-    // rigth rear - No steer
+    // right rear - No steer
     tirerr_st._fz = loads[3];
     tirerr_st._vsy = v_states._v - v_states._wz * v_params._b;
     tirerr_st._vsx = v_states._u + (v_states._wz * v_params._cr) / 2.;
