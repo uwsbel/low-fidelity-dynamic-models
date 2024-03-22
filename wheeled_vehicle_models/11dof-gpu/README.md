@@ -32,10 +32,10 @@ Once you launch the curses-based GUI for CMake, you will see an `Empty Cache`, h
 - `CUDA_USE_STATIC_CUDA_RUNTIME` - Boolean for whether CUDA runtime is statically linked. Leave as is. Default: `ON`
 - `CUDA_rt_LIBRARY` - Path to CUDA runtime library. Should be automatically filled in. Default: `path_to_runtime_library_on_your_machine`
 
- Once the options are set, hit `c` to configure and `g` to generate. This will then populate your `build` directory with the necessary `makefile` with which you can build the 11dof-gpu model along with its demos by running
+ Once the options are set, hit `c` to configure and `g` to generate. This will then populate your `build` directory with the necessary `makefile` with which you can build the 11 DOF GPU model along with its demos by running
 ```bash
 make -j4
 ```
-We recommend to not run `make install` to ensure path consistencies for the demos (as they call upon certain data files relative to the build directory
+We recommend to not run `make install` to ensure path consistencies for the demos (as they call upon certain data files relative to the build directory). 
  
  
