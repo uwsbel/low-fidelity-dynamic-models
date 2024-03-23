@@ -226,7 +226,7 @@ struct TMeasyState {
           _My(other._My),
           _engTor(other._engTor) {}
 
-    // the actual state that are intgrated
+    // the actual state that are integrated
     double _xe;      //!< Longitudinal tire deflection
     double _ye;      //!< Lateral tire deflection
     double _xedot;   //!< Longitudinal tire deflection velocity
@@ -485,7 +485,7 @@ struct TMeasyNrState {
 /// @brief Defined here are chassis, engine/motor, powertrain, driveline and steering parameters required for the
 /// simualtion of a 11 DOF model.
 
-/// The single-track vehicle model, also known as the ’bicycle model’ and here the 11DOF model, is commonly used in
+/// The single-track vehicle model, also known as the ’bicycle model’ and here the 11 DOF model, is commonly used in
 /// controller design and serves as the entry point in our library of vehicle models. The Chassis includes 3 DOF at the
 /// vehicle lumped C.M, representing the vehicle’s yaw, lateral, and longitudinal motions. This model assumes the same
 /// engine, torque converter, and powertrain as the 18 DOF and 24 DOF models. However, as it is a single-track model, it
@@ -834,9 +834,9 @@ void tireToVehTransform(TMeasyNrState& tiref_st,
 /// input parameters
 void tmxy_combined(double& f, double& fos, double s, double df0, double sm, double fm, double ss, double fs);
 
-/// @brief Computes the combined columnb force for the TMeasyNr tire model
+/// @brief Computes the combined coulomb force for the TMeasyNr tire model
 
-/// This force provides the stability at low speeds and is belnded with the slip force provided by the tmxy_combined
+/// This force provides the stability at low speeds and is blended with the slip force provided by the tmxy_combined
 /// function.
 void computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 
@@ -875,7 +875,7 @@ void computeTireRHS(TMeasyState& t_states, const TMeasyParam& t_params, const Ve
 /// @brief Computes the tire forces for the TMeasyNr tire model in the tire contact patch frame (T-RF)
 
 /// For the TMeasyNr tire model, since there is no relaxation, the tire forces from slip are blended with the tire
-/// forces from columb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
+/// forces from coulomb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
 /// is an approximation of the original TMeasy tire model and is inspired by the Project Chrono implementation (see code
 /// at https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h).
 /// @param t_states TMeasyNr tire states
