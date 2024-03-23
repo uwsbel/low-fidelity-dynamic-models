@@ -154,7 +154,7 @@ __device__ void d11GPU::tireToVehTransform(TMeasyNrState* tiref_st,
 /// Tire Functions
 ////////////////////////////////////////////////////////////
 
-// Code for the TM easy tire model implemented with the 8DOF model
+// Code for the TM easy tire model implemented with the 11 DOF model
 __device__ __host__ void d11GPU::tireInit(TMeasyParam* t_params) {
     // calculates some critical values that are needed
     t_params->_fzRdynco = (t_params->_pn * (t_params->_rdyncoP2n - 2.0 * t_params->_rdyncoPn + 1.)) /
@@ -446,7 +446,7 @@ __device__ void d11GPU::computeTireRHS(TMeasyState* t_states,
 
     // Also compute the tire forces that need to be applied on the vehicle
     // Note here that these tire forces are computed using the current pre
-    // integreated xe, unline in the semi-implicit solver
+    // integrated xe, unlike in the semi-implicit solver
     double fxdyn = t_params->_dx * (-vtxs * t_params->_cx * t_states->_xe - fos * vsx) / (vtxs * t_params->_dx + fos) +
                    t_params->_cx * t_states->_xe;
 
@@ -550,7 +550,7 @@ __device__ void d11GPU::computeTireRHS(TMeasyNrState* t_states,
     double sxs = InterpL(fz, t_params->_sxsPn, t_params->_sxsP2n, t_params->_pn);
     double sys = InterpL(fz, t_params->_sysPn, t_params->_sysP2n, t_params->_pn);
 
-    // Compute the coefficient to "blend" the columb force with the slip force
+    // Compute the coefficient to "blend" the coulomb force with the slip force
     double frblend = sineStep(abs(t_states->_vsx), t_params->_frblend_begin, 0., t_params->_frblend_end, 1.);
     // Now standard TMeasy tire forces
     // For now, not using any normalization of the slips - similar to Chrono implementation
@@ -585,7 +585,7 @@ __device__ void d11GPU::computeTireRHS(TMeasyNrState* t_states,
         Fy = 0.;
     }
 
-    // Now that we have both the columb force and the slip force, we can combine them with the sine blend to prevent
+    // Now that we have both the coulomb force and the slip force, we can combine them with the sine blend to prevent
     // force jumping
 
     Fx = (1.0 - frblend) * Fx0 + frblend * Fx;
@@ -701,7 +701,7 @@ __device__ void d11GPU::computePowertrainRHS(VehicleState* v_states,
         v_states->_crankOmega =
             0.5 * (tiref_st->_omega + tirer_st->_omega) / v_params->_gearRatios[v_states->_current_gr];
 
-        // The torque after tranny will then just become as there is no torque
+        // The torque after transmission will then just become as there is no torque
         // converter
         torque_t = driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) /
                    v_params->_gearRatios[v_states->_current_gr];
@@ -847,7 +847,7 @@ __device__ void d11GPU::computePowertrainRHS(VehicleState* v_states,
         v_states->_crankOmega =
             0.5 * (tiref_st->_omega + tirer_st->_omega) / v_params->_gearRatios[v_states->_current_gr];
 
-        // The torque after tranny will then just become as there is no torque
+        // The torque after transmission will then just become as there is no torque
         // converter
         torque_t = driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) /
                    v_params->_gearRatios[v_states->_current_gr];
@@ -1119,7 +1119,7 @@ __host__ void d11GPU::setTireParamsJSON(TMeasyNrParam& t_params, const char* fil
     // level parameters
     if (d.HasMember("highLevelParams")) {
         if (d["highLevelParams"].GetBool()) {
-            // Set basic desing parameters
+            // Set basic design parameters
             t_params._jw = d["jw"].GetDouble() * 2.;
             t_params._rr = d["rr"].GetDouble() * 2.;
             t_params._mu = d["mu"].GetDouble() * 2.;
@@ -1287,7 +1287,7 @@ __host__ void d11GPU::setTireParamsJSON(TMeasyNrParam& t_params, const char* fil
 }
 
 // Utility functions that guess the tire parameters for a TMeasy tire based on standard tire specifications that user
-// can get from a spec sheet These functions are directly copy pasted from Chrono with minor modifications
+// can get from a spec sheet. These functions are directly copy pasted from Chrono with minor modifications
 
 // Function to compute the max tire load from the load index specified by the user
 __host__ double d11GPU::GetTireMaxLoad(unsigned int li) {

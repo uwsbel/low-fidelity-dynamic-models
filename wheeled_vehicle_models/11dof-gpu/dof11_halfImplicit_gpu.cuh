@@ -26,7 +26,7 @@ class d11SolverHalfImplicitGPU {
     /// Each of these vehicles will have the specified parameters and driver inputs. To add
     /// more vehicles (ensuring they are still lesser than the total number of vehicles initally specified in the class
     /// constructor) with different parameters, call the Construct function again. The tire type defaults to TMEasy and
-    /// is set for all the vehilces. It is also important to note thet the TireType has to be consistent across all the
+    /// is set for all the vehilces. It is also important to note that the TireType has to be consistent across all the
     /// vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
@@ -42,7 +42,7 @@ class d11SolverHalfImplicitGPU {
 
     /// Each of these vehicles will have the
     /// specified parameters and driver inputs. To add more vehicles with different parameters, call the Construct
-    /// function again. It is also important to note thet the TireType has to be consistent across all the
+    /// function again. It is also important to note that the TireType has to be consistent across all the
     /// vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
@@ -60,8 +60,8 @@ class d11SolverHalfImplicitGPU {
 
     /// Each of these vehicles will have the specified parameters. This function signature
     /// is mainly provided for cases where the driver inputs are not available at the start of the simulation but rather
-    /// come from a controller during the simualtion. TireType defualts to TMEasy tires. To add more vehicles with
-    /// different parameters, call the Construct function again. It is also important to note thet the TireType has to
+    /// come from a controller during the simulation. TireType defaults to TMEasy tires. To add more vehicles with
+    /// different parameters, call the Construct function again. It is also important to note that the TireType has to
     /// be consistent across all the vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
@@ -75,9 +75,9 @@ class d11SolverHalfImplicitGPU {
 
     /// Each of these vehicles will have the specified
     /// parameters. This is mainly provided for cases where the driver inputs are not available at the start of the
-    /// simulation but rather come from a controller during the simualtion and the user wants to specify a TireType. To
+    /// simulation but rather come from a controller during the simulation and the user wants to specify a TireType. To
     /// add more vehicles with different parameters, call the Construct function again. It is also important to note
-    /// thet the TireType has to be consistent across all the vehicles currently. For examples of use, see demos.
+    /// that the TireType has to be consistent across all the vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param num_vehicles Number of vehicles to be simulated with the specified parameters and driver inputs
@@ -330,7 +330,7 @@ class d11SolverHalfImplicitGPU {
     // Need a bunch of csv writers for each of the vehicles. We will store a pointer to this list
     std::unique_ptr<CSV_writer[]> m_csv_writers_ptr;
 };
-// Cannout have global function as class member function
+// Cannot have global function as class member function
 /// @brief Integrate the system of equations using the half implicit method - Calls the RHS function at each time step
 
 /// Used internally within Solve
@@ -393,7 +393,7 @@ __global__ void Integrate(double current_time,
                           d11GPU::SimData* sim_data,
                           d11GPU::SimState* sim_states);
 //===================================================================================================================
-// Integrate calss rhsFun so this also cannot be a class member function
+// Integrate calls rhsFun so this also cannot be a class member function
 
 /// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations) using the computeRHS functions
 /// within the vehicle model

@@ -291,7 +291,7 @@ void d11SolverHalfImplicitGPU::Initialize(d11GPU::VehicleState& vehicle_states,
                                           d11GPU::TMeasyState& tire_states_F,
                                           d11GPU::TMeasyState& tire_states_R,
                                           unsigned int num_vehicles) {
-    // Esnure that construct was called with TMeasy tire type
+    // Ensure that construct was called with TMeasy tire type
     assert((m_tire_type == TireType::TMeasy) &&
            "Construct function called with TMeasyNr tire type, but Initialize called with TMeasy tire type");
     assert((num_vehicles + m_vehicle_count_tracker_states <= m_total_num_vehicles) &&
@@ -312,7 +312,7 @@ void d11SolverHalfImplicitGPU::Initialize(d11GPU::VehicleState& vehicle_states,
                                           d11GPU::TMeasyNrState& tire_states_F,
                                           d11GPU::TMeasyNrState& tire_states_R,
                                           unsigned int num_vehicles) {
-    // Esnure that construct was called with TMeasyNr tire type
+    // Ensure that construct was called with TMeasyNr tire type
     assert((m_tire_type == TireType::TMeasyNr) &&
            "Construct function called with TMeasy tire type, but Initialize called with TMeasyNR tire type");
     assert((num_vehicles + m_vehicle_count_tracker_states <= m_total_num_vehicles) &&
@@ -338,7 +338,7 @@ __host__ void d11SolverHalfImplicitGPU::SetOutput(const std::string& output_file
     m_store_all = store_all;
     if (!m_store_all) {
         // Check if number of outputs asked is greater than the total number of vehicles, if this is the case, raise
-        // awarning and set to m_total_num_vehicles
+        // a warning and set to m_total_num_vehicles
         if (no_outs > m_total_num_vehicles) {
             std::cout << "Number of outputs asked is greater than the total number of vehicles, setting number of "
                          "outputs to total number of vehicles"
@@ -456,7 +456,7 @@ __host__ void d11SolverHalfImplicitGPU::Solve() {
 
         // If we have to save output, copy over the device into the response
         if (m_output) {
-            // Amount of respoonse already filled
+            // Amount of response already filled
             unsigned int filled_response = m_total_num_vehicles * m_collection_states * m_device_collection_timeSteps *
                                            kernel_launches_since_last_dump;
 
@@ -625,7 +625,7 @@ __host__ void d11SolverHalfImplicitGPU::WriteToFile() {
     }
     for (unsigned int sim_no = 0; sim_no < loop_limit; sim_no++) {
         unsigned int index_by = 0;
-        // If we are no storing all, we will have to index by random numbers
+        // If we are not storing all, we will have to index by random numbers
         if (m_store_all) {
             index_by = sim_no;
         } else {

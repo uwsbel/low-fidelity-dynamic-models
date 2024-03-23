@@ -129,8 +129,8 @@ struct TMeasyParam {
     // Longitudinal
     double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
     double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
-    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
-    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxmPn;    //!< Maximum longitudinal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longitudinal force [N] at max load
     double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
     double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
     double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
@@ -366,8 +366,8 @@ struct TMeasyNrParam {
     // Longitudinal
     double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
     double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
-    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
-    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxmPn;    //!< Maximum longitudinal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longitudinal force [N] at max load
     double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
     double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
     double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
@@ -489,9 +489,9 @@ struct TMeasyNrState {
 // -----------------------------------------------------------------------------
 
 /// @brief Defined here are chassis, engine/motor, powertrain, driveline and steering parameters required for the
-/// simualtion of a 11 DOF model.
+/// simulation of a 11 DOF model.
 
-/// The single-track vehicle model, also known as the ’bicycle model’ and here the 11DOF model, is commonly used in
+/// The single-track vehicle model, also known as the ’bicycle model’ and here the 11 DOF model, is commonly used in
 /// controller design and serves as the entry point in our library of vehicle models. The Chassis includes 3 DOF at the
 /// vehicle lumped C.M, representing the vehicle’s yaw, lateral, and longitudinal motions. This model assumes the same
 /// engine, torque converter, and powertrain as the 18 DOF and 24 DOF models. However, as it is a single-track model, it
@@ -677,11 +677,11 @@ struct VehicleParam {
 };
 
 /// @brief The VehicleState struct holds the chassis, engine/motor, powertrain, driveline and steering states required
-/// for the simualtion.
+/// for the simulation.
 
 /// Apart from the states that are updated by time integration, this struct also holds "non-states"
 ///  such as accelerations, forces and torques that are not updated by time integration. See here for more details
-///  https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. important to note that this implementation within the
+///  https://uwmadison.box.com/s/2tsvr4adbrzklle30z0twpu2nlzvlayc. Important to note that this implementation within the
 ///  d11GPU namespace is exactly the same as the implementation in the d11 namespace. The only difference is that the
 ///  d11GPU namespace is meant to be used on the GPU where standard library functions are not available.
 struct VehicleState {
@@ -765,14 +765,14 @@ struct VehicleState {
 };
 
 // -----------------------------------------------------------------------------
-// Data structures that help handing multiple vehicles as needed in GPU version
+// Data structures that help handling multiple vehicles as needed in GPU version
 // -----------------------------------------------------------------------------
-/// @brief The SimData struct holds the parameters of the vehicle and tire  needed in kernel along with the
+/// @brief The SimData struct holds the parameters of the vehicle and tire needed in kernel along with the
 /// driver inputs (steering, throttle, brake) in case specified at the beginning of the simulation.
 
 /// In essence, this
 /// stores all the "data" required to simulate 1 vehicle on the GPU. This is something largely the user does not have to
-/// worrry about.
+/// worry about.
 struct SimData {
     SimData() : _driver_data(nullptr), _driver_data_len(0) {}
 
@@ -913,7 +913,7 @@ __device__ void tireToVehTransform(TMeasyNrState* tiref_st,
 /// input parameters
 __device__ void tmxy_combined(double* f, double* fos, double s, double df0, double sm, double fm, double ss, double fs);
 
-/// @brief Computes the combined columnb force for the TMeasyNr tire model
+/// @brief Computes the combined coulomb force for the TMeasyNr tire model
 
 /// This force provides the stability at low speeds and is belnded with the slip force provided by the tmxy_combined
 /// function.
