@@ -131,8 +131,8 @@ struct TMeasyParam {
     // Longitudinal
     double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
     double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
-    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
-    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxmPn;    //!< Maximum longitudinal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longitudinal force [N] at max load
     double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
     double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
     double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
@@ -367,8 +367,8 @@ struct TMeasyNrParam {
     // Longitudinal
     double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
     double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
-    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
-    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxmPn;    //!< Maximum longitudinal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longitudinal force [N] at max load
     double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
     double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
     double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
@@ -634,7 +634,7 @@ struct VehicleParam {
     bool _tcbool;  //!< Boolean that checks for the presence of a torque converter. Can be set using "tcBool" in the
                    //!< JSON file. Defaults to 0 if not specified.
 
-    double _maxBrakeTorque;  //!< The maximum braking torque (Nm) that the brakes applu to the wheels. Can be set using
+    double _maxBrakeTorque;  //!< The maximum braking torque (Nm) that the brakes apply to the wheels. Can be set using
                              //!< "maxBrakeTorque" in the JSON file. Based on the normalized brake input between 0 and
                              //!< 1, a torque input*_maxBrakeTorque is applied to the wheel.
 
@@ -1001,7 +1001,7 @@ __device__ void tmxy_combined(double* f, double* fos, double s, double df0, doub
 /// This force provides the stability at low speeds and is belnded with the slip force provided by the tmxy_combined
 /// function.
 __device__ void
-computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
+computeCombinedcoulombForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 
 /// @brief Compute the vertical loads on the tire using quasi-static load transfer equations.
 
@@ -1041,7 +1041,7 @@ __device__ void computeTireRHS(TMeasyState* t_states,
 /// @brief Computes the tire forces for the TMeasyNr tire model in the tire contact patch frame (T-RF)
 
 /// For the TMeasyNr tire model, since there is no relaxation, the tire forces from slip are blended with the tire
-/// forces from columb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
+/// forces from coulomb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
 /// is an approximation of the original TMeasy tire model and is inspired by the Project Chrono implementation (see code
 /// at https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h).
 /// @param t_states TMeasyNr tire states

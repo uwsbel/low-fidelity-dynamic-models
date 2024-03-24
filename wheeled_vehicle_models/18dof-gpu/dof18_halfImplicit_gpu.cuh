@@ -59,7 +59,7 @@ class d18SolverHalfImplicitGPU {
 
     /// Each of these vehicles will have the specified parameters. This function signature
     /// is mainly provided for cases where the driver inputs are not available at the start of the simulation but rather
-    /// come from a controller during the simualtion. TireType defualts to TMEasy tires. To add more vehicles with
+    /// come from a controller during the simulation. TireType defualts to TMEasy tires. To add more vehicles with
     /// different parameters, call the Construct function again. It is also important to note thet the TireType has to
     /// be consistent across all the vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
@@ -74,7 +74,7 @@ class d18SolverHalfImplicitGPU {
 
     /// Each of these vehicles will have the specified
     /// parameters. This is mainly provided for cases where the driver inputs are not available at the start of the
-    /// simulation but rather come from a controller during the simualtion and the user wants to specify a TireType. To
+    /// simulation but rather come from a controller during the simulation and the user wants to specify a TireType. To
     /// add more vehicles with different parameters, call the Construct function again. It is also important to note
     /// thet the TireType has to be consistent across all the vehicles currently. For examples of use, see demos.
     /// @param vehicle_params_file Path to the vehicle parameter json file
@@ -404,7 +404,7 @@ __global__ void Integrate(double current_time,
                           d18GPU::SimData* sim_data,
                           d18GPU::SimState* sim_states);
 //===================================================================================================================
-// Integrate calss rhsFun so this also cannot be a class member function
+// Integrate calls rhsFun so this also cannot be a class member function
 
 /// @brief Computes the RHS of all the ODEs (tire velocities, chassis accelerations) using the computeRHS functions
 /// within the vehicle model
