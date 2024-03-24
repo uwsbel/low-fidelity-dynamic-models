@@ -129,8 +129,8 @@ struct TMeasyParam {
     // Longitudinal
     double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
     double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
-    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
-    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxmPn;    //!< Maximum longitudinal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longitudinal force [N] at max load
     double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
     double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
     double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
@@ -361,8 +361,8 @@ struct TMeasyNrParam {
     // Longitudinal
     double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
     double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
-    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
-    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxmPn;    //!< Maximum longitudinal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longitudinal force [N] at max load
     double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
     double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
     double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
@@ -889,7 +889,7 @@ void tmxy_combined(double& f, double& fos, double s, double df0, double sm, doub
 
 /// @brief Computes the combined columnb force for the TMeasyNr tire model
 
-/// This force provides the stability at low speeds and is belnded with the slip force provided by the tmxy_combined
+/// This force provides the stability at low speeds and is blended with the slip force provided by the tmxy_combined
 /// function.
 void computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 
@@ -928,7 +928,7 @@ void computeTireRHS(TMeasyState& t_states, const TMeasyParam& t_params, const Ve
 /// @brief Computes the tire forces for the TMeasyNr tire model in the tire contact patch frame (T-RF)
 
 /// For the TMeasyNr tire model, since there is no relaxation, the tire forces from slip are blended with the tire
-/// forces from columb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
+/// forces from coulomb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
 /// is an approximation of the original TMeasy tire model and is inspired by the Project Chrono implementation (see code
 /// at https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h).
 /// @param t_states TMeasyNr tire states
