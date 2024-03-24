@@ -264,7 +264,7 @@ __device__ void d24GPU::vehToSusTransform(const VehicleState* v_states,
     susrr_st->_vs = -v_params->_b * v_states->_wz + v_states->_v;         // y direction
     susrr_st->_ws = (-v_params->_cr * v_states->_wx / 2.) + v_params->_b * v_states->_wy + v_states->_w;  // z direction
 
-    // Evalute the length of the struct and its compression velocity in current time step
+    // Evaluate the length of the struct and its compression velocity in current time step
     // This is to get the unsprung mass velocity and accelerations in G-RF
 
     // Instantaneous length of the strut
@@ -942,7 +942,7 @@ __device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
     double fs = hypot(fxs * calpha, fys * salpha);
     double ss = hypot(sxs * calpha / hsxn, sys * salpha / hsyn);
 
-    // calculate force and force /slip from the curve characteritics
+    // calculate force and force /slip from the curve characteristics
     double f, fos;
     tmxy_combined(&f, &fos, sc, df0, sm, fm, ss, fs);
 
@@ -953,7 +953,7 @@ __device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
     t_states->_My =
         -sineStep(vta, vx_min, 0., vx_max, 1.) * t_params->_rr * fz * t_states->_rStat * sgn(t_states->_omega);
 
-    // some normalised slip velocities
+    // some normalized slip velocities
     double vtxs = r_eff * abs(t_states->_omega) * hsxn + 0.01;
     double vtys = r_eff * abs(t_states->_omega) * hsyn + 0.01;
 
@@ -966,7 +966,7 @@ __device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
 
     // Also compute the tire forces that need to be applied on the vehicle
     // Note here that these tire forces are computed using the current pre
-    // integreated xe, unline in the semi-implicit solver
+    // integrated xe, unline in the semi-implicit solver
     double fxdyn = t_params->_dx * (-vtxs * t_params->_cx * t_states->_xe - fos * vsx) / (vtxs * t_params->_dx + fos) +
                    t_params->_cx * t_states->_xe;
 
@@ -1071,7 +1071,7 @@ __device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
     double sxs = InterpL(fz, t_params->_sxsPn, t_params->_sxsP2n, t_params->_pn);
     double sys = InterpL(fz, t_params->_sysPn, t_params->_sysP2n, t_params->_pn);
 
-    // Compute the coefficient to "blend" the columb force with the slip force
+    // Compute the coefficient to "blend" the coulomb force with the slip force
     double frblend = sineStep(abs(t_states->_vsx), t_params->_frblend_begin, 0., t_params->_frblend_end, 1.);
     // Now standard TMeasy tire forces
     // For now, not using any normalization of the slips - similar to Chrono implementation
@@ -1106,7 +1106,7 @@ __device__ void d24GPU::computeTireRHS(const VehicleState* v_states,
         Fy = 0.;
     }
 
-    // Now that we have both the columb force and the slip force, we can combine them with the sine blend to prevent
+    // Now that we have both the coulomb force and the slip force, we can combine them with the sine blend to prevent
     // force jumping
 
     Fx = (1.0 - frblend) * Fx0 + frblend * Fx;
@@ -1288,7 +1288,7 @@ __device__ double d24GPU::driveTorque(const VehicleParam* v_params, const double
             powertrain_map[i]._y = v_params->_powertrainMap[i]._y * throttle;
         }
 
-        // interpolate in the torque map to get the torque at this paticular
+        // interpolate in the torque map to get the torque at this particular
         // speed
         motor_torque = getMapY(powertrain_map, motor_speed, v_params->_powertrainMapSize);
         double motor_losses = getMapY(v_params->_lossesMap, motor_speed, v_params->_lossesMapSize);
@@ -1438,7 +1438,7 @@ __device__ void d24GPU::computePowertrainRHS(VehicleState* v_states,
         v_states->_crankOmega = 0.25 * (tirelf_st->_omega + tirerf_st->_omega + tirelr_st->_omega + tirerr_st->_omega) /
                                 v_params->_gearRatios[v_states->_current_gr];
 
-        // The torque after tranny will then just become as there is no torque
+        // The torque after transmission will then just become as there is no torque
         // converter
         torque_t = driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) /
                    v_params->_gearRatios[v_states->_current_gr];
@@ -1614,7 +1614,7 @@ __device__ void d24GPU::computePowertrainRHS(VehicleState* v_states,
         v_states->_crankOmega = 0.25 * (tirelf_st->_omega + tirerf_st->_omega + tirelr_st->_omega + tirerr_st->_omega) /
                                 v_params->_gearRatios[v_states->_current_gr];
 
-        // The torque after tranny will then just become as there is no torque
+        // The torque after transmission will then just become as there is no torque
         // converter
         torque_t = driveTorque(v_params, controls->m_throttle, v_states->_crankOmega) /
                    v_params->_gearRatios[v_states->_current_gr];
@@ -1804,8 +1804,7 @@ __host__ void d24GPU::setTireParamsJSON(TMeasyParam& t_params, const char* fileN
         std::cout << "Error with rapidjson:" << std::endl << d.GetParseError() << std::endl;
     }
 
-    // pray to what ever you believe in and hope that the json file has all
-    // these
+    
     t_params._jw = d["jw"].GetDouble();
     t_params._rr = d["rr"].GetDouble();
     t_params._r0 = d["r0"].GetDouble();
@@ -2203,7 +2202,7 @@ __host__ void d24GPU::setSuspensionParamsJSON(SuspensionParam& sus_params, const
         std::cout << "Error with rapidjson:" << std::endl << d.GetParseError() << std::endl;
     }
 
-    // pray to what ever you believe in and hope that the json file has all these
+   
     sus_params._ks = d["ks"].GetDouble();
     sus_params._bs = d["bs"].GetDouble();
 }

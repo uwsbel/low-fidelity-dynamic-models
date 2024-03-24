@@ -318,7 +318,7 @@ __host__ void d24SolverHalfImplicitGPU::Initialize(d24GPU::VehicleState& vehicle
                                                    d24GPU::SuspensionState& sus_states_LR,
                                                    d24GPU::SuspensionState& sus_states_RR,
                                                    unsigned int num_vehicles) {
-    // Esnure that construct was called with TMeasy tire type
+    // Ensure that construct was called with TMeasy tire type
     assert((m_tire_type == TireType::TMeasy) &&
            "Construct function called with TMeasyNr tire type, but Initialize called with TMeasy tire type");
     assert((num_vehicles + m_vehicle_count_tracker_states <= m_total_num_vehicles) &&
@@ -354,7 +354,7 @@ __host__ void d24SolverHalfImplicitGPU::Initialize(d24GPU::VehicleState& vehicle
                                                    d24GPU::SuspensionState& sus_states_LR,
                                                    d24GPU::SuspensionState& sus_states_RR,
                                                    unsigned int num_vehicles) {
-    // Esnure that construct was called with TMeasy tire type
+    // Ensure that construct was called with TMeasy tire type
     assert((m_tire_type == TireType::TMeasy) &&
            "Construct function called with TMeasyNr tire type, but Initialize called with TMeasy tire type");
     assert((num_vehicles + m_vehicle_count_tracker_states <= m_total_num_vehicles) &&
@@ -390,7 +390,7 @@ __host__ void d24SolverHalfImplicitGPU::SetOutput(const std::string& output_file
     m_store_all = store_all;
     if (!m_store_all) {
         // Check if number of outputs asked is greater than the total number of vehicles, if this is the case, raise
-        // awarning and set to m_total_num_vehicles
+        // a warning and set to m_total_num_vehicles
         if (no_outs > m_total_num_vehicles) {
             std::cout << "Number of outputs asked is greater than the total number of vehicles, setting number of "
                          "outputs to total number of vehicles"
@@ -506,7 +506,7 @@ __host__ void d24SolverHalfImplicitGPU::Solve() {
 
         // If we have to save output, copy over the device into the response
         if (m_output) {
-            // Amount of respoonse already filled
+            // Amount of response already filled
             unsigned int filled_response = m_total_num_vehicles * m_collection_states * m_device_collection_timeSteps *
                                            kernel_launches_since_last_dump;
 
