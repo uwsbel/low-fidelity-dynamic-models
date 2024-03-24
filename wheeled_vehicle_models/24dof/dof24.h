@@ -130,8 +130,8 @@ struct TMeasyParam {
     // Longitudinal
     double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
     double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
-    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
-    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxmPn;    //!< Maximum longitudinal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longitudinal force [N] at max load
     double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
     double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
     double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
@@ -187,7 +187,7 @@ struct TMeasyState {
 
     /// @brief Constructor that takes in all the states and sets them to the values that are passed in. Note, its
     /// usually very difficult to set all the states to physical meaningful values while ensuring that the tire is in
-    /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
+    /// equilibrium. This is also largely untested and its thus recommended to initialize the states to 0 or use the copy
     /// constructor below
     TMeasyState(double xe,
                 double ye,
@@ -410,8 +410,8 @@ struct TMeasyNrParam {
     // Longitudinal
     double _dfx0Pn;   //!< Initial longitudinal slopes dFx/dsx [N] at Nominal load
     double _dfx0P2n;  //!< Intial longitudinal slopes dFx/dsx [N] at max load
-    double _fxmPn;    //!< Maximum longituidnal force [N] at nominal load
-    double _fxmP2n;   //!< Maximum longituidnal force [N] at max load
+    double _fxmPn;    //!< Maximum longitudinal force [N] at nominal load
+    double _fxmP2n;   //!< Maximum longitudinal force [N] at max load
     double _fxsPn;    //!< Longitudinal load at sliding [N] at nominal load
     double _fxsP2n;   //!< Longitudinal load at sliding [N] at max load
     double _sxmPn;    //!< Slip sx at maximum longitudinal load Fx at nominal load
@@ -539,7 +539,7 @@ struct TMeasyNrState {
           _My(other._My),
           _engTor(other._engTor) {}
 
-    // Sates that are integrated - these are actually wheel states but we don't use that abstraction
+    // States that are integrated - these are actually wheel states but we don't use that abstraction
     double _omega;   //!< Angular velocity of wheel
     double _dOmega;  //!< Angular acceleration of wheel
     double _xt;      //!< Vertical tire compression
@@ -637,7 +637,7 @@ struct VehicleParam {
           _CFmap(other._CFmap),
           _TRmap(other._TRmap) {}
 
-    // Declaration of all the 14 DOF vehicle parameters pretty much the same as the 8DOF model
+    // Declaration of all the 24 DOF vehicle parameters pretty much the same as the 18 DOF model
     double _a;     //!< Distance of C.G to front axle (m)
     double _b;     //!< Distance of C.G to rear axle (m)
     double _h;     //!< Height of C.G
@@ -690,7 +690,7 @@ struct VehicleParam {
     bool _tcbool;  //!< Boolean that checks for the presence of a torque converter. Can be set using "tcBool" in the
                    //!< JSON file. Defaults to 0 if not specified.
 
-    double _maxBrakeTorque;  //!< The maximum braking torque (Nm) that the brakes applu to the wheels. Can be set using
+    double _maxBrakeTorque;  //!< The maximum braking torque (Nm) that the brakes apply to the wheels. Can be set using
                              //!< "maxBrakeTorque" in the JSON file. Based on the normalized brake input between 0 and
                              //!< 1, a torque input*_maxBrakeTorque is applied to the wheel.
 
@@ -985,7 +985,7 @@ struct SuspensionState {
 
     /// @brief Constructor that takes in all the states and sets them to the values that are passed in. Note, its
     /// usually very difficult to set all the states to physical meaningful values while ensuring that the tire is in
-    /// equilibrium. This is also largely untested and its thus recommended to initiaize the states to 0 or use the copy
+    /// equilibrium. This is also largely untested and its thus recommended to initialize the states to 0 or use the copy
     /// constructor below
     SuspensionState(double xs,
                     double xsi,
@@ -1341,7 +1341,7 @@ void tmxy_combined(double& f, double& fos, double s, double df0, double sm, doub
 
 /// @brief Computes the combined columnb force for the TMeasyNr tire model
 
-/// This force provides the stability at low speeds and is belnded with the slip force provided by the tmxy_combined
+/// This force provides the stability at low speeds and is blended with the slip force provided by the tmxy_combined
 /// function.
 void computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 
@@ -1363,7 +1363,7 @@ void computeTireRHS(const VehicleState& v_states,
 /// @brief Computes the tire forces for the TMeasyNr tire model in the tire contact patch frame (T-RF)
 
 /// For the TMeasyNr tire model, since there is no relaxation, the tire forces from slip are blended with the tire
-/// forces from columb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
+/// forces from coulomb friction. The blend coefficient depends on the longitudinal slip velocity of the tire. This model
 /// is an approximation of the original TMeasy tire model and is inspired by the Project Chrono implementation (see code
 /// at https://github.com/projectchrono/chrono/blob/main/src/chrono_vehicle/wheeled_vehicle/tire/ChTMeasyTire.h).
 /// @param v_states Vehicle States

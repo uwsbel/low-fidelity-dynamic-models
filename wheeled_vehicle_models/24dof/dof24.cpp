@@ -175,7 +175,7 @@ void d24::vehToSusTransform(const VehicleState& v_states,
     susrr_st._vs = -v_params._b * v_states._wz + v_states._v;         // y direction
     susrr_st._ws = (-v_params._cr * v_states._wx / 2.) + v_params._b * v_states._wy + v_states._w;  // z direction
 
-    // Evalute the length of the struct and its compression velocity in current time step
+    // Evaluate the length of the struct and its compression velocity in current time step
     // This is to get the unsprung mass velocity and accelerations in G-RF
 
     // Instantaneous length of the strut
@@ -258,7 +258,7 @@ void d24::vehToSusTransform(const VehicleState& v_states,
     susrr_st._vs = -v_params._b * v_states._wz + v_states._v;         // y direction
     susrr_st._ws = (-v_params._cr * v_states._wx / 2.) + v_params._b * v_states._wy + v_states._w;  // z direction
 
-    // Evalute the length of the struct and its compression velocity in current time step
+    // Evaluate the length of the struct and its compression velocity in current time step
     // This is to get the unsprung mass velocity and accelerations in G-RF
 
     // Instantaneous length of the strut
@@ -964,7 +964,7 @@ void d24::computeTireRHS(const VehicleState& v_states,
 
     // Also compute the tire forces that need to be applied on the vehicle
     // Note here that these tire forces are computed using the current pre
-    // integreated xe, unline in the semi-implicit solver
+    // integrated xe, unline in the semi-implicit solver
     double fxdyn = t_params._dx * (-vtxs * t_params._cx * t_states._xe - fos * vsx) / (vtxs * t_params._dx + fos) +
                    t_params._cx * t_states._xe;
 
@@ -1068,7 +1068,7 @@ void d24::computeTireRHS(const VehicleState& v_states,
     double sxs = InterpL(fz, t_params._sxsPn, t_params._sxsP2n, t_params._pn);
     double sys = InterpL(fz, t_params._sysPn, t_params._sysP2n, t_params._pn);
 
-    // Compute the coefficient to "blend" the columb force with the slip force
+    // Compute the coefficient to "blend" the coulomb force with the slip force
     double frblend = sineStep(std::abs(t_states._vsx), t_params._frblend_begin, 0., t_params._frblend_end, 1.);
     // Now standard TMeasy tire forces
     // For now, not using any normalization of the slips - similar to Chrono implementation
@@ -1103,7 +1103,7 @@ void d24::computeTireRHS(const VehicleState& v_states,
         Fy = 0.;
     }
 
-    // Now that we have both the columb force and the slip force, we can combine them with the sine blend to prevent
+    // Now that we have both the coulomb force and the slip force, we can combine them with the sine blend to prevent
     // force jumping
 
     Fx = (1.0 - frblend) * Fx0 + frblend * Fx;
@@ -1291,7 +1291,7 @@ double d24::driveTorque(const VehicleParam& v_params, const double throttle, con
             powertrain_map[i]._y = v_params._powertrainMap[i]._y * throttle;
         }
 
-        // interpolate in the torque map to get the torque at this paticular
+        // interpolate in the torque map to get the torque at this particular
         // speed
         motor_torque = getMapY(powertrain_map, motor_speed);
         double motor_losses = getMapY(v_params._lossesMap, motor_speed);
@@ -1334,7 +1334,7 @@ void d24::differentialSplit(double torque,
         torque_right = slow;
     }
 }
-// Computes the powertrain and produces the wheel angular veloocity differential equations
+// Computes the powertrain and produces the wheel angular velocity differential equations
 void d24::computePowertrainRHS(VehicleState& v_states,
                                TMeasyState& tirelf_st,
                                TMeasyState& tirerf_st,
@@ -1438,7 +1438,7 @@ void d24::computePowertrainRHS(VehicleState& v_states,
         v_states._crankOmega = 0.25 * (tirelf_st._omega + tirerf_st._omega + tirelr_st._omega + tirerr_st._omega) /
                                v_params._gearRatios[v_states._current_gr];
 
-        // The torque after tranny will then just become as there is no torque
+        // The torque after transmission will then just become as there is no torque
         // converter
         torque_t = driveTorque(v_params, controls.m_throttle, v_states._crankOmega) /
                    v_params._gearRatios[v_states._current_gr];
@@ -1610,7 +1610,7 @@ void d24::computePowertrainRHS(VehicleState& v_states,
         v_states._crankOmega = 0.25 * (tirelf_st._omega + tirerf_st._omega + tirelr_st._omega + tirerr_st._omega) /
                                v_params._gearRatios[v_states._current_gr];
 
-        // The torque after tranny will then just become as there is no torque
+        // The torque after transmission will then just become as there is no torque
         // converter
         torque_t = driveTorque(v_params, controls.m_throttle, v_states._crankOmega) /
                    v_params._gearRatios[v_states._current_gr];
@@ -1807,8 +1807,7 @@ void d24::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
         std::cout << "Error with rapidjson:" << std::endl << d.GetParseError() << std::endl;
     }
 
-    // pray to what ever you believe in and hope that the json file has all
-    // these
+    
     t_params._jw = d["jw"].GetDouble();
     t_params._rr = d["rr"].GetDouble();
     t_params._r0 = d["r0"].GetDouble();
@@ -2206,7 +2205,7 @@ void d24::setSuspensionParamsJSON(SuspensionParam& sus_params, const char* fileN
         std::cout << "Error with rapidjson:" << std::endl << d.GetParseError() << std::endl;
     }
 
-    // pray to what ever you believe in and hope that the json file has all these
+    
     sus_params._ks = d["ks"].GetDouble();
     sus_params._bs = d["bs"].GetDouble();
 }
