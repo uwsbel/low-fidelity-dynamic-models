@@ -41,7 +41,7 @@ int main(int argc, char** argv) {
     d11SolverHalfImplicitGPU solver(num_vehicles);
     // The number of vehicles here sets these parameters and inputs for all these vehicles
     // If there is a need to set different parameters for different vehicles, then the solver
-    // needs to be constructed for each vehicle separately (using the same sovler object)
+    // needs to be constructed for each vehicle separately (using the same solver object)
     solver.Construct(vehParamsJSON, tireParamsJSON, num_vehicles, driver_file);
 
     // Set the threads per block

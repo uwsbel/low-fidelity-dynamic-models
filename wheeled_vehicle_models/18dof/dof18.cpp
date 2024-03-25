@@ -28,7 +28,7 @@ double d18::driveTorque(const VehicleParam& v_params, const double throttle, con
             powertrain_map[i]._y = v_params._powertrainMap[i]._y * throttle;
         }
 
-        // interpolate in the torque map to get the torque at this paticular
+        // interpolate in the torque map to get the torque at this particular
         // speed
         motor_torque = getMapY(powertrain_map, motor_speed);
         double motor_losses = getMapY(v_params._lossesMap, motor_speed);
@@ -42,7 +42,7 @@ double d18::driveTorque(const VehicleParam& v_params, const double throttle, con
 }
 
 // Function that calculates the torque split to each tire based on the
-// differential max bias Exactly the same as Chrono implementation
+// differential max bias exactly the same as Chrono implementation
 void d18::differentialSplit(double torque,
                             double max_bias,
                             double speed_left,
@@ -107,7 +107,7 @@ void d18::vehToTireTransform(TMeasyState& tirelf_st,
     tirelr_st._vsy = v_states._v - v_states._wz * v_params._b;
     tirelr_st._vsx = v_states._u - (v_states._wz * v_params._cr) / 2.;
 
-    // rigth rear - No steer
+    // right rear - No steer
     tirerr_st._fz = loads[3];
     tirerr_st._vsy = v_states._v - v_states._wz * v_params._b;
     tirerr_st._vsx = v_states._u + (v_states._wz * v_params._cr) / 2.;
@@ -149,7 +149,7 @@ void d18::vehToTireTransform(TMeasyNrState& tirelf_st,
     tirelr_st._vsy = v_states._v - v_states._wz * v_params._b;
     tirelr_st._vsx = v_states._u - (v_states._wz * v_params._cr) / 2.;
 
-    // rigth rear - No steer
+    // right rear - No steer
     tirerr_st._fz = loads[3];
     tirerr_st._vsy = v_states._v - v_states._wz * v_params._b;
     tirerr_st._vsx = v_states._u + (v_states._wz * v_params._cr) / 2.;
@@ -227,7 +227,7 @@ void d18::tireToVehTransform(TMeasyNrState& tirelf_st,
 /// Tire Functions
 ////////////////////////////////////////////////////////////
 
-// Code for the TM easy tire model implemented with the 8DOF model
+// Code for the TM easy tire model implemented with the 18 DOF model
 void d18::tireInit(TMeasyParam& t_params) {
     // calculates some critical values that are needed
     t_params._fzRdynco = (t_params._pn * (t_params._rdyncoP2n - 2.0 * t_params._rdyncoPn + 1.)) /
@@ -287,7 +287,7 @@ void d18::tmxy_combined(double& f, double& fos, double s, double df0, double sm,
     }
 }
 
-void d18::computeCombinedColumbForce(double& fx,
+void d18::computeCombinedcoulombForce(double& fx,
                                      double& fy,
                                      double mu,
                                      double vsx,
@@ -590,7 +590,7 @@ void d18::computeTireRHS(TMeasyNrState& t_states,
     // Compute the combined column force (used for low speed stability)
     double Fx0 = 0;
     double Fy0 = 0;
-    computeCombinedColumbForce(Fx0, Fy0, t_params._mu, vsx, vsy, fz, t_params._vcoulomb);
+    computeCombinedcoulombForce(Fx0, Fy0, t_params._mu, vsx, vsy, fz, t_params._vcoulomb);
 
     // evaluate the slips
     double sx = -vsx / vta;
@@ -620,7 +620,7 @@ void d18::computeTireRHS(TMeasyNrState& t_states,
     double sxs = InterpL(fz, t_params._sxsPn, t_params._sxsP2n, t_params._pn);
     double sys = InterpL(fz, t_params._sysPn, t_params._sysP2n, t_params._pn);
 
-    // Compute the coefficient to "blend" the columb force with the slip force
+    // Compute the coefficient to "blend" the coulomb force with the slip force
     double frblend = sineStep(std::abs(t_states._vsx), t_params._frblend_begin, 0., t_params._frblend_end, 1.);
     // Now standard TMeasy tire forces
     // For now, not using any normalization of the slips - similar to Chrono implementation
@@ -655,7 +655,7 @@ void d18::computeTireRHS(TMeasyNrState& t_states,
         Fy = 0.;
     }
 
-    // Now that we have both the columb force and the slip force, we can combine them with the sine blend to prevent
+    // Now that we have both the coulomb force and the slip force, we can combine them with the sine blend to prevent
     // force jumping
 
     Fx = (1.0 - frblend) * Fx0 + frblend * Fx;
@@ -1231,8 +1231,7 @@ void d18::setTireParamsJSON(TMeasyParam& t_params, const char* fileName) {
         std::cout << "Error with rapidjson:" << std::endl << d.GetParseError() << std::endl;
     }
 
-    // pray to what ever you believe in and hope that the json file has all
-    // these
+    
     t_params._jw = d["jw"].GetDouble();
     t_params._rr = d["rr"].GetDouble();
     t_params._r0 = d["r0"].GetDouble();

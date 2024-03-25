@@ -293,7 +293,7 @@ __host__ void d18SolverHalfImplicitGPU::Initialize(d18GPU::VehicleState& vehicle
                                                    d18GPU::TMeasyState& tire_states_LR,
                                                    d18GPU::TMeasyState& tire_states_RR,
                                                    unsigned int num_vehicles) {
-    // Esnure that construct was called with TMeasy tire type
+    // Ensure that construct was called with TMeasy tire type
     assert((m_tire_type == TireType::TMeasy) &&
            "Construct function called with TMeasyNr tire type, but Initialize called with TMeasy tire type");
     assert((num_vehicles + m_vehicle_count_tracker_states <= m_total_num_vehicles) &&
@@ -319,7 +319,7 @@ __host__ void d18SolverHalfImplicitGPU::Initialize(d18GPU::VehicleState& vehicle
                                                    d18GPU::TMeasyNrState& tire_states_LR,
                                                    d18GPU::TMeasyNrState& tire_states_RR,
                                                    unsigned int num_vehicles) {
-    // Esnure that construct was called with TMeasyNr tire type
+    // Ensure that construct was called with TMeasyNr tire type
     assert((m_tire_type == TireType::TMeasyNr) &&
            "Construct function called with TMeasy tire type, but Initialize called with TMeasyNR tire type");
     assert((num_vehicles + m_vehicle_count_tracker_states <= m_total_num_vehicles) &&
@@ -644,7 +644,7 @@ __host__ void d18SolverHalfImplicitGPU::WriteToFile() {
     }
     for (unsigned int sim_no = 0; sim_no < loop_limit; sim_no++) {
         unsigned int index_by = 0;
-        // If we are no storing all, we will have to index by random numbers
+        // If we are not storing all, we will have to index by random numbers
         if (m_store_all) {
             index_by = sim_no;
         } else {

@@ -428,7 +428,7 @@ double d24SolverHalfImplicit::IntegrateStepWithJacobian(double t,
 
         // Set a vector of del Ys - for now set this to some scale of y
         std::vector<double> delY(y.begin(), y.end());
-        // In a loop pertub each state and get the corresponding perturbed ydot
+        // In a loop perturb each state and get the corresponding perturbed ydot
         int ySize = y.size();
 
 #pragma omp parallel for simd
@@ -465,9 +465,9 @@ double d24SolverHalfImplicit::IntegrateStepWithJacobian(double t,
         // ==============================
         // Computing the control jacobian
         //===============================
-        // Set a vector of del controls - for now we ingnore braking
+        // Set a vector of del controls - for now we ignore braking
         std::vector<double> delControls = {1e-3, 1e-3};
-        // In a loop pertub each control and get the corresponding perturbed ydot
+        // In a loop perturb each control and get the corresponding perturbed ydot
         int controlSize = delControls.size();
 
         for (int i = 0; i < controlSize; i++) {
@@ -783,7 +783,7 @@ void d24SolverHalfImplicit::rhsFun(double t, DriverInput& controls) {
     }
 }
 // ======================================================================================================================
-// Function takes (y +- dely) and provides a new ydot for the pertubed y (ydot is the rhs of the system of equations)
+// Function takes (y +- dely) and provides a new ydot for the perturbed y (ydot is the rhs of the system of equations)
 void d24SolverHalfImplicit::PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot) {
     VehicleState veh_st;
     SuspensionState suslf_st;

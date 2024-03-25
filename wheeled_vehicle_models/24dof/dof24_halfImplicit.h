@@ -48,7 +48,7 @@ class d24SolverHalfImplicit {
     /// TireType defualts to TMEasy tires
 
     /// This function signature is mainly provided for cases where the driver inputs are not available at the start of
-    /// the simulation but rather come from a controller during the simualtion.
+    /// the simulation but rather come from a controller during the simulation.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param sus_params_file Path to the suspension parameter json file
@@ -60,7 +60,7 @@ class d24SolverHalfImplicit {
     /// TireType (Either TMEasy or TMEasyNr).
 
     ///  This is mainly provided for cases where the driver inputs are not available at the start of the
-    /// simulation but rather come from a controller during the simualtion and the user wants to specify a TireType.
+    /// simulation but rather come from a controller during the simulation and the user wants to specify a TireType.
     /// @param vehicle_params_file Path to the vehicle parameter json file
     /// @param tire_params_file Path to the tire parameter json file
     /// @param sus_params_file Path to the suspension parameter json file
@@ -106,7 +106,7 @@ class d24SolverHalfImplicit {
 
     /// @brief Solve the system of equations and run the simulation uptil m_tend
 
-    /// Note: If the user wants to simulate step by step (where step is the simualtion time step), use IntegrateStep or
+    /// Note: If the user wants to simulate step by step (where step is the simulation time step), use IntegrateStep or
     /// IntegrateStepWithJacobian (in case m_jacobian_state and m_jacobian_controls is desired). If the user has set the
     /// output to a csv file, then the csv files will be written to the data/output folder.
     void Solve();
@@ -223,7 +223,7 @@ class d24SolverHalfImplicit {
 
     /// @brief Write csv_writer to csv file in case of step by step simulation
 
-    /// In case the user calls IntegrateStepWithJacobian or IntegrateStep as well as set's output to true, then
+    /// In case the user calls IntegrateStepWithJacobian or IntegrateStep as well as sets output to true, then
     /// at each step states are only written to the csv writer object not to the csv file itself. Thus the user needs to
     /// call this function to write the data to the csv file by calling WriteToFile.
     void WriteToFile();

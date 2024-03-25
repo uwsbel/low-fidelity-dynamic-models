@@ -28,7 +28,7 @@ double d11::driveTorque(const VehicleParam& v_params, const double throttle, con
             powertrain_map[i]._y = v_params._powertrainMap[i]._y * throttle;
         }
 
-        // interpolate in the torque map to get the torque at this paticular
+        // interpolate in the torque map to get the torque at this particular
         // speed
         motor_torque = getMapY(powertrain_map, motor_speed);
         double motor_losses = getMapY(v_params._lossesMap, motor_speed);
@@ -218,7 +218,7 @@ void d11::computeCombinedColumbForce(double& fx,
     fx = tanh(-2.0 * vsx / vcoulomb) * fz * mu;
     fy = tanh(-2.0 * vsy / vcoulomb) * fz * mu;
 
-    // Nromalize F to the circle
+    // Normalize F to the circle
     if (std::hypot(fx, fy) > fz * mu) {
         double f = fz * mu / std::hypot(fx, fy);
         fx *= f;
@@ -449,7 +449,7 @@ void d11::computeTireRHS(TMeasyState& t_states,
 
     // Also compute the tire forces that need to be applied on the vehicle
     // Note here that these tire forces are computed using the current pre
-    // integreated xe, unline in the semi-implicit solver
+    // integrated xe, unline in the semi-implicit solver
     double fxdyn = t_params._dx * (-vtxs * t_params._cx * t_states._xe - fos * vsx) / (vtxs * t_params._dx + fos) +
                    t_params._cx * t_states._xe;
 
@@ -587,7 +587,7 @@ void d11::computeTireRHS(TMeasyNrState& t_states,
         Fy = 0.;
     }
 
-    // Now that we have both the columb force and the slip force, we can combine them with the sine blend to prevent
+    // Now that we have both the coulomb force and the slip force, we can combine them with the sine blend to prevent
     // force jumping
 
     Fx = (1.0 - frblend) * Fx0 + frblend * Fx;
@@ -847,7 +847,7 @@ void d11::computePowertrainRHS(VehicleState& v_states,
               // have a state so we directly updated the crankOmega to be used
         v_states._crankOmega = 0.5 * (tiref_st._omega + tirer_st._omega) / v_params._gearRatios[v_states._current_gr];
 
-        // The torque after tranny will then just become as there is no torque
+        // The torque after transmission will then just become wheel torque as there is no torque
         // converter
         torque_t = driveTorque(v_params, controls.m_throttle, v_states._crankOmega) /
                    v_params._gearRatios[v_states._current_gr];
@@ -1108,7 +1108,7 @@ void d11::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
     // level parameters
     if (d.HasMember("highLevelParams")) {
         if (d["highLevelParams"].GetBool()) {
-            // Set basic desing parameters
+            // Set basic design parameters
             t_params._jw = d["jw"].GetDouble() * 2.;
             t_params._rr = d["rr"].GetDouble() * 2.;
             t_params._mu = d["mu"].GetDouble() * 2.;
@@ -1276,7 +1276,7 @@ void d11::setTireParamsJSON(TMeasyNrParam& t_params, const char* fileName) {
 }
 
 // Utility functions that guess the tire parameters for a TMeasy tire based on standard tire specifications that user
-// can get from a spec sheet These functions are directly copy pasted from Chrono with minor modifications
+// can get from a spec sheet. These functions are directly copy pasted from Chrono with minor modifications
 
 // Function to compute the max tire load from the load index specified by the user
 double d11::GetTireMaxLoad(unsigned int li) {

@@ -39,7 +39,7 @@ Once Sundials is built successfully, `USE_SUNDIALS` is set to `ON` and `c` is hi
 - `SUNDIALS_DIR` - Here, set the absolute path to the sundials build directory. This is the directory in which the `SUNDIALSConfig.cmake` file is found.
 Once this path is correctly set, hit `c` to configure.
 
-Once all the required options are set hit `c` to configure and `g` to generate. This will then populate your `build` directory with the necessary `makefile` with which you can build the 24dof model along with its demos by running
+Once all the required options are set hit `c` to configure and `g` to generate. This will then populate your `build` directory with the necessary `makefile` with which you can build the 24 DOF model along with its demos by running
 ```bash
 make -j4
 ```
@@ -47,7 +47,7 @@ We recommend to not run `make install` to ensure path consistencies for the demo
 Once this is run, the `build` folder will be populated with the executables of the [demos](./demos) and the Python library (if `BUILD_PYTHON_MODULE` is set to `ON`).  
 
 ### Python Wrapper
-Since the Python module is built using SWIG, the path to the Python wrapper library needs to be appened to `PYTHON_PATH`. This library can be found in the build directory mentioned above and its path can be set (on Linux) permanently using the following instructions
+Since the Python module is built using SWIG, the path to the Python wrapper library needs to be appended to `PYTHON_PATH`. This library can be found in the build directory mentioned above and its path can be set (on Linux) permanently using the following instructions
 1) First, open your `bashrc` or `zshrc` file in a text-editor.
 2) To this file add the following line
 ```bash

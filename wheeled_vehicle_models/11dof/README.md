@@ -25,7 +25,7 @@ It's important to highlight that there are several methods to set the CMake opti
 Once you launch the curses-based GUI for CMake, you will see an `Empty Cache`, hit `c` on your keyboard to see the CMake options. Here is the description of the CMake options
 - `BUILD_PYTHON_MODULE` - Bool to switch on the building of the Python wrapper. Default: `OFF`
 - `CMAKE_BUILD_TYPE` - Set the Build type (`Release` or `Debug`). Press `t` on your keyboard to toggle to `advanced mode` and see what Flags these build types use. Default: `Debug`
-- `CMAKE_INSTALL_PREFIX` - Define's the root directory for installation when using the install target. Default (on Linux): `/usr/local`
+- `CMAKE_INSTALL_PREFIX` - Defines the root directory for installation when using the install target. Default (on Linux): `/usr/local`
 - `USE_OPENMP` - Option to switch `ON` OpenMP for calculation of system RHS Jacobians. Leads to about 2X speed up. Default: `OFF`
 - `USE_SUNDIALS` - Option to link against [Sundials](https://sundials.readthedocs.io/en/latest/) and use the [CVODES](https://sundials.readthedocs.io/en/latest/cvodes/index.html) integrator to solve the system ODE's - Default: `OFF`
 
@@ -40,7 +40,7 @@ Once Sundials is built successfully, `USE_SUNDIALS` is set to `ON` and `c` is hi
 - `SUNDIALS_DIR` - Here, set the absolute path to the sundials build directory. This is the directory in which the `SUNDIALSConfig.cmake` file is found.
 Once this path is correctly set, hit `c` to configure.
 
-Once all the required options are set hit `c` to configure and `g` to generate. This will then populate your `build` directory with the necessary `makefile` with which you can build the 11DOF model along with its demos by running
+Once all the required options are set hit `c` to configure and `g` to generate. This will then populate your `build` directory with the necessary `makefile` with which you can build the 11 DOF model along with its demos by running
 ```bash
 make -j4
 ```
@@ -48,7 +48,7 @@ We recommend to not run `make install` to ensure path consistencies for the demo
 Once this is run, the `build` folder will be populated with the executables of the [demos](./demos) and the Python library (if `BUILD_PYTHON_MODULE` is set to `ON`).  
 
 ### Python Wrapper
-Since the Python module is built using SWIG, the path to the Python wrapper library needs to be appened to `PYTHON_PATH`. This library can be found in the build directory mentioned above and its path can be set (on Linux) permanently using the following instructions
+Since the Python module is built using SWIG, the path to the Python wrapper library needs to be appended to `PYTHON_PATH`. This library can be found in the build directory mentioned above and its path can be set (on Linux) permanently using the following instructions
 1) First, open your `bashrc` or `zshrc` file in a text-editor.
 2) To this file add the following line
 ```bash

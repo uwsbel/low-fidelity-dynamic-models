@@ -385,12 +385,12 @@ double d18SolverHalfImplicit::IntegrateStepWithJacobian(double t,
 
         // Set a vector of del Ys - for now set this to some scale of y
         std::vector<double> delY(y.begin(), y.end());
-        // In a loop pertub each state and get the corresponding perturbed ydot
+        // In a loop perturb each state and get the corresponding perturbed ydot
         int ySize = y.size();
 
 #pragma omp parallel for simd
         for (int i = 0; i < ySize; i++) {
-            // Perterbation is 1e-3 * y (since some states are really small values wile some are huge)
+            // Perturbation is 1e-3 * y (since some states are really small values wile some are huge)
             delY[i] = std::abs(delY[i] * 1e-3);
             if (delY[i] < 1e-8) {
                 // This means that the particular state is 0. In this case set dels to 1e-3
@@ -423,9 +423,9 @@ double d18SolverHalfImplicit::IntegrateStepWithJacobian(double t,
         // Computing the control jacobian
         //===============================
 
-        // Set a vector of del controls - for now we ingnore braking
+        // Set a vector of del controls - for now we ignore braking
         std::vector<double> delControls = {1e-3, 1e-3};
-        // In a loop pertub each control and get the corresponding perturbed ydot
+        // In a loop perturb each control and get the corresponding perturbed ydot
         int controlSize = delControls.size();
 
         for (int i = 0; i < controlSize; i++) {
@@ -674,7 +674,7 @@ void d18SolverHalfImplicit::rhsFun(double t, DriverInput& controls) {
 
 // ======================================================================================================================
 
-// Function takes (y +- dely) and provides a new ydot for the pertubed y (ydot is the rhs of the system of equations)
+// Function takes (y +- dely) and provides a new ydot for the perturbed y (ydot is the rhs of the system of equations)
 
 void d18SolverHalfImplicit::PerturbRhsFun(std::vector<double>& y, DriverInput& controls, std::vector<double>& ydot) {
     // Extract the vehicle and tire states vector state

@@ -370,5 +370,5 @@ static int check_retval(void* returnvalue, const char* funcname, int opt) {
 
 void printSUNMatrix(SUNMatrix A, sunindextype matrows, sunindextype matcols);
 }  // namespace d11
-#endif  // SWIG
-#endif  // DOF18_SUNDIALS_H
+#endif  
+#endif 

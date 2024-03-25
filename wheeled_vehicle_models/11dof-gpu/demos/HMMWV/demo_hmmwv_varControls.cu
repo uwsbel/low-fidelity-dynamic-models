@@ -79,7 +79,7 @@ int main(int argc, char** argv) {
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "Solve time (ms): " << milliseconds << "\n";
 
-    // Extract terminal state of choosen vehicles and print the position
+    // Extract terminal state of chosen vehicles and print the position
     SimState sim_state_1 = solver.GetSimState(499);
     SimState sim_state_2 = solver.GetSimState(999);
 

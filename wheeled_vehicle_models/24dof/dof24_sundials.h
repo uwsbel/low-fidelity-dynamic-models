@@ -162,7 +162,7 @@ class d24SolverSundials {
     /// @brief Set the maximum step size for the solver.
 
     /// Since the sundials integrator is an adaptive time step integrator, users can and only need to specify the
-    /// maximum time-step that the solver can take to integrata the system. See sundials documentation for more details
+    /// maximum time-step that the solver can take to integrate the system. See sundials documentation for more details
     /// - https://sundials.readthedocs.io/en/latest/cvodes/Mathematics_link.html
     /// @param hmax Maximum time-step (s)
     void SetMaxStep(double hmax);
