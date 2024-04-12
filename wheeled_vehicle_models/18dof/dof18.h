@@ -891,7 +891,7 @@ void tmxy_combined(double& f, double& fos, double s, double df0, double sm, doub
 
 /// This force provides the stability at low speeds and is blended with the slip force provided by the tmxy_combined
 /// function.
-void computeCombinedColumbForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
+void computeCombinedCoulombForce(double& fx, double& fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 
 /// @brief Compute the vertical loads on the tire using quasi-static load transfer equations.
 

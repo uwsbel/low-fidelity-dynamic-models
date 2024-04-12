@@ -82,7 +82,7 @@ class UserData {
 
     void SetCurrentGear(int gear) { m_current_gr = gear; }
     int GetCurrentGear() const { return m_current_gr; }
-    TireType GetTireType() const { return m_tire_type; }
+    d18::TireType GetTireType() const { return m_tire_type; }
 
     // Indices of vehicle position in state vectors
     int m_vx_idx;
@@ -100,7 +100,7 @@ class UserData {
     // Current transmission gear
     int m_current_gr;
     // Tire type - changes how we pack and unpack the state vectors
-    TireType m_tire_type;
+    d18::TireType m_tire_type;
 
     // Sensitivity parameters
     int m_param_flags;
@@ -144,7 +144,7 @@ class d18SolverSundials {
     void Construct(const std::string& vehicle_params_file,
                    const std::string& tire_params_file,
                    const std::string& driver_inputs_file,
-                   TireType type);
+                   d18::TireType type);
 
     /// @brief Set the absolute and relative tolerances for the solver.
 
@@ -234,7 +234,7 @@ class d18SolverSundials {
 
     /// @brief Get the TireType
     /// @return TireType (Either TMEasy or TMEasyNr)
-    TireType GetTireType() const { return m_tire_type; }
+    d18::TireType GetTireType() const { return m_tire_type; }
 
     /// @brief Solve the system of equations and run the simulation uptil m_tend
 
@@ -285,7 +285,7 @@ class d18SolverSundials {
     bool m_verbose;             // verbose output?
     bool m_output;              // generate output file?
     std::string m_output_file;  // output file name
-    TireType m_tire_type;       // Tire type - changes how we pack and unpack the state vectors
+    d18::TireType m_tire_type;       // Tire type - changes how we pack and unpack the state vectors
 };
 
 // =============================================================================

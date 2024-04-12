@@ -918,7 +918,7 @@ __device__ void tmxy_combined(double* f, double* fos, double s, double df0, doub
 /// This force provides the stability at low speeds and is belnded with the slip force provided by the tmxy_combined
 /// function.
 __device__ void
-computeCombinedColumbForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
+computeCombinedCoulombForce(double* fx, double* fy, double mu, double vsx, double vsy, double fz, double vcoulomb);
 
 /// @brief Compute the vertical loads on the tire using quasi-static load transfer equations.
 

@@ -213,7 +213,7 @@ d11GPU::tmxy_combined(double* f, double* fos, double s, double df0, double sm, d
         *fos = 0.0;
     }
 }
-__device__ void d11GPU::computeCombinedColumbForce(double* fx,
+__device__ void d11GPU::computeCombinedCoulombForce(double* fx,
                                                    double* fy,
                                                    double mu,
                                                    double vsx,
@@ -520,7 +520,7 @@ __device__ void d11GPU::computeTireRHS(TMeasyNrState* t_states,
     // Compute the combined column force (used for low speed stability)
     double Fx0 = 0;
     double Fy0 = 0;
-    computeCombinedColumbForce(&Fx0, &Fy0, t_params->_mu, vsx, vsy, fz, t_params->_vcoulomb);
+    computeCombinedCoulombForce(&Fx0, &Fy0, t_params->_mu, vsx, vsy, fz, t_params->_vcoulomb);
 
     // evaluate the slips
     double sx = -vsx / vta;
