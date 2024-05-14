@@ -3,7 +3,7 @@
 // =============================================================================
 //
 // A HMMWV vehicle is defined using example JSON files.
-// In addition, the user is required to provide a driver input file. 
+// In addition, the user is required to provide a driver input file.
 // Example driver input files are provided in the data/input folder.
 // The Sundials solver is then Constructed and Initialized.
 // Since the sundials solver is used, the user can optionally
@@ -13,28 +13,48 @@
 //
 // =============================================================================
 
+#include <iostream>
+#include <filesystem>
 #include <numeric>
 #include <algorithm>
 #include <iterator>
 
 #include "dof11_sundials.h"
 
+namespace fs = std::filesystem;
 using namespace d11;
 
 int main(int argc, char** argv) {
-    // Driver inputs and reference trajectory
-    std::string driver_file = "../../11dof/data/input/" + std::string(argv[1]) + ".txt";
-    // std::string driver_file = "../../11dof/data/input/sedan_specific/" + std::string(argv[1]) + ".txt";
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <inputSubName>" << std::endl;
+        return 1;
+    }
+
+    // Construct file paths
+    std::string inputBasePath = "../../11dof/data/input/";
+    std::string outputBasePath = "../../11dof/data/output/";
+    std::string inputFileName = inputBasePath + argv[1] + ".txt";
+    std::string outputFileName = outputBasePath + argv[1] + "_sedanNr11Sundials.csv";
+
+    // Check if input file exists
+    if (!fs::exists(inputFileName)) {
+        std::cerr << "Error: Input file does not exist: " << inputFileName << std::endl;
+        return 1;
+    }
+
+    // Ensure output directory exists
+    if (!fs::exists(outputBasePath)) {
+        fs::create_directories(outputBasePath);
+    }
 
     // Vehicle specification
-    std::string vehParamsJSON = (char*)"../../11dof/data/json/Sedan/vehicle.json";
-    std::string tireParamsJSON = (char*)"../../11dof/data/json/Sedan/tmeasyNr.json";
+    std::string vehParamsJSON = "../../11dof/data/json/Sedan/vehicle.json";
+    std::string tireParamsJSON = "../../11dof/data/json/Sedan/tmeasyNr.json";
 
     // Construct the solver
     d11SolverSundials solver;
-    // Since the TMeasy tire without relaxation is used, the TireType must be set
-    TireType type = TireType::TMeasyNr;
-    solver.Construct(vehParamsJSON, tireParamsJSON, driver_file, type);
+    TireType type = TireType::TMeasyNr;  // Specific tire type without relaxation
+    solver.Construct(vehParamsJSON, tireParamsJSON, inputFileName, type);
 
     // Set optional inputs
     // Solver tolerances and maximum step size
@@ -48,9 +68,10 @@ int main(int argc, char** argv) {
     solver.Initialize(veh_st, tiref_st, tirer_st);
 
     // Enable output
-    solver.SetOutput("../../11dof/data/output/" + std::string(argv[1]) + "_sedanNr11Sundials.csv");
+    solver.SetOutput(outputFileName);
 
     // Solve without quadratures (no reference path required)
-    // False flag solves without forward sensitivity analysis
     solver.Solve(false);
+
+    return 0;
 }

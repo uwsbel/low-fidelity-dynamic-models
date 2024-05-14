@@ -8,19 +8,35 @@
 // output frequency is written to the specified output file.
 //
 // =============================================================================
+#include <iostream>
+#include <filesystem>
 #include <numeric>
 #include <algorithm>
 #include <iterator>
 
 #include "dof18_halfImplicit.h"
 
+namespace fs = std::filesystem;
 using namespace d18;
 
 int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <outputSubName>" << std::endl;
+        return 1;
+    }
+
+    // Construct file paths
+    std::string outputBasePath = "../../18dof/data/output/";
+    std::string outputFileName = outputBasePath + argv[1] + "_hmmwv18HiStep.csv";
+
+    // Ensure output directory exists
+    if (!fs::exists(outputBasePath)) {
+        fs::create_directories(outputBasePath);
+    }
 
     // Vehicle specification
-    std::string vehParamsJSON = (char*)"../../18dof/data/json/HMMWV/vehicle.json";
-    std::string tireParamsJSON = (char*)"../../18dof/data/json/HMMWV/tmeasy.json";
+    std::string vehParamsJSON = "../../18dof/data/json/HMMWV/vehicle.json";
+    std::string tireParamsJSON = "../../18dof/data/json/HMMWV/tmeasy.json";
 
     // Construct the solver
     d18SolverHalfImplicit solver;
@@ -38,7 +54,7 @@ int main(int argc, char** argv) {
     solver.Initialize(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st);
 
     // Enable output
-    solver.SetOutput("../../18dof/data/output/" + std::string(argv[1]) + "_hmmwv18HiStep.csv", 100);
+    solver.SetOutput(outputFileName, 100);
 
     double timeStep = solver.GetStep();
     double endTime = 10;
@@ -53,12 +69,11 @@ int main(int argc, char** argv) {
     // Start the loop
     while (t < (endTime - timeStep / 10.)) {
         // Inputs based on time provided externally
-        if(t > 0.5) {
+        if (t > 0.5) {
             throttle = 0.5;
             steering = 0.1;
             braking = 0;
-        }
-        else {
+        } else {
             throttle = 0;
             steering = 0;
             braking = 0;
@@ -68,4 +83,6 @@ int main(int argc, char** argv) {
     }
     // Write the writer to file (required when using the step-by-step solver)
     solver.WriteToFile();
+
+    return 0;
 }

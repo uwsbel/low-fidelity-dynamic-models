@@ -4,11 +4,13 @@
 //
 // A HMMWV vehicle is defined using example JSON files.
 // In this case, a driver input file is not required as the vehicle can also be simulated step-by-step.
-// In addition, this demo shows how to use the Jacobian functionality of the Half-Implicit solver can be used. 
+// In addition, this demo shows how to use the Jacobian functionality of the Half-Implicit solver can be used.
 // The Half-Implicit solver is then Constructed, Initialized and solved. Data at the specified
 // output frequency is written to the specified output file.
 //
 // =============================================================================
+#include <iostream>
+#include <filesystem>
 #include <numeric>
 #include <algorithm>
 #include <iterator>
@@ -16,6 +18,7 @@
 
 #include "dof18_halfImplicit.h"
 
+namespace fs = std::filesystem;
 using std::chrono::high_resolution_clock;
 using namespace d18;
 
@@ -29,10 +32,23 @@ void printVectorOfVectors(const std::vector<std::vector<double>>& vec) {
 }
 
 int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <outputSubName>" << std::endl;
+        return 1;
+    }
+
+    // Construct file paths
+    std::string outputBasePath = "../../18dof/data/output/";
+    std::string outputFileName = outputBasePath + argv[1] + "_hmmwv18HiStep.csv";
+
+    // Ensure output directory exists
+    if (!fs::exists(outputBasePath)) {
+        fs::create_directories(outputBasePath);
+    }
 
     // Vehicle specification
-    std::string vehParamsJSON = (char*)"../../18dof/data/json/HMMWV/vehicle.json";
-    std::string tireParamsJSON = (char*)"../../18dof/data/json/HMMWV/tmeasy.json";
+    std::string vehParamsJSON = "../../18dof/data/json/HMMWV/vehicle.json";
+    std::string tireParamsJSON = "../../18dof/data/json/HMMWV/tmeasy.json";
 
     // Construct the solver
     d18SolverHalfImplicit solver;
@@ -50,10 +66,10 @@ int main(int argc, char** argv) {
     solver.Initialize(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st);
 
     // Enable output
-    solver.SetOutput("../../18dof/data/output/" + std::string(argv[1]) + "_hmmwv18HiStep.csv", 100);
+    solver.SetOutput(outputFileName, 100);
 
-    double timeStep = solver.GetStep(); // Get the time step
-    double endTime = 10; // Get the end time
+    double timeStep = solver.GetStep();  // Get the time step
+    double endTime = 10;                 // Get the end time
     double t = 0;
     double new_time = 0;
 
@@ -68,22 +84,20 @@ int main(int argc, char** argv) {
     // Start the loop
     while (t < (endTime - timeStep / 10.)) {
         // Inputs based on time provided externally
-        if(t > 0.5) {
+        if (t > 0.5) {
             throttle = 0.5;
             steering = 0.1;
             braking = 0;
-        }
-        else {
+        } else {
             throttle = 0;
             steering = 0;
             braking = 0;
         }
         // Integrate one step. Last argument "true" indicates that the Jacobian should be computed
-        new_time =
-            solver.IntegrateStepWithJacobian(t, throttle, steering, braking, true);
+        new_time = solver.IntegrateStepWithJacobian(t, throttle, steering, braking, true);
 
-// Print the Jacobian state and controls if compiled with DEBUG flag
 #ifdef DEBUG
+        // Print the Jacobian state and controls if compiled with DEBUG flag
         std::cout << "Jacobian state: " << std::endl;
         printVectorOfVectors(solver.GetJacobianState());
         std::cout << "Jacobian controls: " << std::endl;
@@ -96,7 +110,7 @@ int main(int argc, char** argv) {
 
     auto stop = high_resolution_clock::now();
     auto duration = std::chrono::duration_cast<std::chrono::microseconds>(stop - start);
-    // Print time in milli seconds
+    // Print time in milliseconds
     std::cout << "Time taken by function: " << duration.count() / 1000.0 << " milliseconds" << std::endl;
     // Write the output to file (required when solving step-by-step)
     solver.WriteToFile();

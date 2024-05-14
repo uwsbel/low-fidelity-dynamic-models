@@ -2,8 +2,8 @@
 // Authors: Huzaifa Unjhawala
 // =============================================================================
 //
-// This demo describes simulating user 1000 HMMWVs (specified with JSON files), 500 operating on one driver inpput file 
-// and the rest operating on another driver input file. Since the Half Implicit solver is the only one supported 
+// This demo describes simulating 1000 HMMWVs (specified with JSON files), 500 operating on one driver input file
+// and the rest operating on another driver input file. Since the Half Implicit solver is the only one supported
 // for the GPU models, that is what is used here.
 // Use ./executable_name <threads_per_block>
 //
@@ -11,6 +11,7 @@
 #include <cuda.h>
 #include <iostream>
 #include <random>
+#include <filesystem>
 #include <cuda_runtime.h>
 #include <math.h>
 #include <numeric>
@@ -20,9 +21,15 @@
 
 #include "dof11_halfImplicit_gpu.cuh"
 
-
+namespace fs = std::filesystem;
 using namespace d11GPU;
+
 int main(int argc, char** argv) {
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <threads_per_block>" << std::endl;
+        return 1;
+    }
+
     // Set the total number of vehicles
     unsigned int num_vehicles = 1000;
     // Set the threads per block from command line
@@ -30,16 +37,20 @@ int main(int argc, char** argv) {
 
     // Get two driver files
     std::string file_name_1 = "acc3";
-    // Driver inputs -> All vehicles have the same driver inputs
     std::string driver_file_1 = "../../11dof-gpu/data/input/" + file_name_1 + ".txt";
 
     std::string file_name_2 = "double_lane4";
-    // Driver inputs -> All vehicles have the same driver inputs
     std::string driver_file_2 = "../../11dof-gpu/data/input/" + file_name_2 + ".txt";
 
+    // Check if driver files exist
+    if (!fs::exists(driver_file_1) || !fs::exists(driver_file_2)) {
+        std::cerr << "Error: One or both driver files do not exist." << std::endl;
+        return 1;
+    }
+
     // Vehicle specification -> We assume that all vehicles have the same parameters
-    std::string vehParamsJSON = (char*)"../../11dof-gpu/data/json/HMMWV/vehicle.json";
-    std::string tireParamsJSON = (char*)"../../11dof-gpu/data/json/HMMWV/tmeasy.json";
+    std::string vehParamsJSON = "../../11dof-gpu/data/json/HMMWV/vehicle.json";
+    std::string tireParamsJSON = "../../11dof-gpu/data/json/HMMWV/tmeasy.json";
 
     // Construct the solver
     d11SolverHalfImplicitGPU solver(num_vehicles);
@@ -61,13 +72,11 @@ int main(int argc, char** argv) {
     TMeasyState tirer_st;
     // Again we initialize the same states for all vehicles
     solver.Initialize(veh_st, tiref_st, tirer_st, num_vehicles);
-    // This is the end time of the longer driver file
-    // Note: This means that the last control input is applied till the end of the simulation for the shorter driver
-    // file
+
+    // Set the simulation end time
     solver.SetEndTime(22.0);
 
     // Solve
-    // Time the solve
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
@@ -85,4 +94,6 @@ int main(int argc, char** argv) {
 
     std::cout << "X Position of vehicle 499: " << sim_state_1._veh_state._x << std::endl;
     std::cout << "X Position of vehicle 999: " << sim_state_2._veh_state._x << std::endl;
+
+    return 0;
 }

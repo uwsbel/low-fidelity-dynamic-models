@@ -2,14 +2,14 @@
 // Authors: Huzaifa Unjhawala
 // =============================================================================
 //
-// This demo describes simulating user 1000 HMMWVs (specified with JSON files), 500 operating on one driver inpput file 
-// and the rest operating on another driver input file. Since the Half Implicit solver is the only one supported 
-// for the GPU models, that is what is used here.
-// Use ./executable_name <threads_per_block>
+// This demo describes simulating 1000 HMMWVs (specified with JSON files), split between two driver input files.
+// The Half Implicit solver, which is designed for GPU models, is utilized here.
+// Usage: ./executable_name <threads_per_block>
 //
 // =============================================================================
 #include <cuda.h>
 #include <iostream>
+#include <filesystem>
 #include <random>
 #include <cuda_runtime.h>
 #include <math.h>
@@ -20,43 +20,40 @@
 
 #include "dof24_halfImplicit_gpu.cuh"
 
-
+namespace fs = std::filesystem;
 using namespace d24GPU;
+
 int main(int argc, char** argv) {
-    // Set the total number of vehicles
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <threads_per_block>" << std::endl;
+        return 1;
+    }
+
     unsigned int num_vehicles = 1000;
-    // Set the threads per block from command line
     unsigned int threads_per_block = std::stoul(argv[1]);
 
-    // Get two driver files
     std::string file_name_1 = "acc3";
-    // Driver inputs -> All vehicles have the same driver inputs
-    std::string driver_file_1 = "../../24dof-gpu/data/input/" + file_name_1 + ".txt";
+    std::string inputPath1 = "../../24dof-gpu/data/input/" + file_name_1 + ".txt";
 
     std::string file_name_2 = "double_lane4";
-    // Driver inputs -> All vehicles have the same driver inputs
-    std::string driver_file_2 = "../../24dof-gpu/data/input/" + file_name_2 + ".txt";
+    std::string inputPath2 = "../../24dof-gpu/data/input/" + file_name_2 + ".txt";
 
-    // Vehicle specification -> We assume that all vehicles have the same parameters
-    std::string vehParamsJSON = (char*)"../../24dof-gpu/data/json/HMMWV/vehicle.json";
-    std::string tireParamsJSON = (char*)"../../24dof-gpu/data/json/HMMWV/tmeasy.json";
-    std::string susParamsJSON = (char*)"../../24dof-gpu/data/json/HMMWV/suspension.json";
+    if (!fs::exists(inputPath1) || !fs::exists(inputPath2)) {
+        std::cerr << "Error: One or both driver input files do not exist." << std::endl;
+        return 1;
+    }
 
-    // Construct the solver
+    std::string vehParamsJSON = "../../24dof-gpu/data/json/HMMWV/vehicle.json";
+    std::string tireParamsJSON = "../../24dof-gpu/data/json/HMMWV/tmeasy.json";
+    std::string susParamsJSON = "../../24dof-gpu/data/json/HMMWV/suspension.json";
+
     d24SolverHalfImplicitGPU solver(num_vehicles);
+    solver.Construct(vehParamsJSON, tireParamsJSON, susParamsJSON, 500, inputPath1);
+    solver.Construct(vehParamsJSON, tireParamsJSON, susParamsJSON, 500, inputPath2);
 
-    // First construct half the vehicles for driver file 1
-    solver.Construct(vehParamsJSON, tireParamsJSON, susParamsJSON, 500, driver_file_1);
-    // Then construct the other half for driver file 2
-    solver.Construct(vehParamsJSON, tireParamsJSON, susParamsJSON, 500, driver_file_2);
-
-    // Set the threads per block
     solver.SetThreadsPerBlock(threads_per_block);
-
-    // Set the time step of the solver
     solver.SetTimeStep(1e-3);
 
-    // Now we initialize the states -> These are all set to 0 (struct initializer)
     VehicleState veh_st;
     TMeasyState tirelf_st;
     TMeasyState tirerf_st;
@@ -66,29 +63,35 @@ int main(int argc, char** argv) {
     SuspensionState susrf_st;
     SuspensionState suslr_st;
     SuspensionState susrr_st;
-    // Again we initialize the same states for all vehicles
+
     solver.Initialize(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, suslf_st, susrf_st, suslr_st, susrr_st,
                       num_vehicles);
-    // This is the end time of the longer driver file
-    // Note: This means that the last control input is applied till the end of the simulation for the shorter driver
-    // file
+
+    std::string outputPath = "../../24dof-gpu/data/output/";
+    if (!fs::exists(outputPath)) {
+        fs::create_directories(outputPath);
+    }
+
     solver.SetEndTime(22.0);
 
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     cudaEventRecord(start);
+
     solver.Solve();
+
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "Solve time (ms): " << milliseconds << "\n";
 
-    // Extract terminal state of choosen vehicles and print the position
     SimState sim_state_1 = solver.GetSimState(499);
     SimState sim_state_2 = solver.GetSimState(999);
 
     std::cout << "X Position of vehicle 499: " << sim_state_1._v_states._x << std::endl;
     std::cout << "X Position of vehicle 999: " << sim_state_2._v_states._x << std::endl;
+
+    return 0;
 }

@@ -12,29 +12,49 @@
 // is written to the specified output file.
 //
 // =============================================================================
+#include <iostream>
+#include <filesystem>
 #include <numeric>
 #include <algorithm>
 #include <iterator>
 
 #include "dof24_sundials.h"
 
+namespace fs = std::filesystem;
 using namespace d24;
 
 int main(int argc, char** argv) {
-    // Driver inputs and reference trajectory
-    std::string driver_file = "../../24dof/data/input/" + std::string(argv[1]) + ".txt";
+    if (argc != 2) {
+        std::cerr << "Usage: " << argv[0] << " <inputFileName>" << std::endl;
+        return 1;
+    }
+
+    std::string baseInputPath = "../../24dof/data/input/";
+    std::string baseOutputPath = "../../24dof/data/output/";
+    std::string inputFileName = baseInputPath + argv[1] + ".txt";
+    std::string outputFileName = baseOutputPath + argv[1] + "_hmmwv24Sundials.csv";
+
+    // Ensure the input file exists
+    if (!fs::exists(inputFileName)) {
+        std::cerr << "Error: Input file does not exist: " << inputFileName << std::endl;
+        return 1;
+    }
+
+    // Ensure the output directory exists
+    if (!fs::exists(baseOutputPath)) {
+        fs::create_directories(baseOutputPath);
+    }
 
     // Vehicle specification
-    std::string vehParamsJSON = (char*)"../../24dof/data/json/HMMWV/vehicle.json";
-    std::string tireParamsJSON = (char*)"../../24dof/data/json/HMMWV/tmeasy.json";
-    std::string susParamsJSON = (char*)"../../24dof/data/json/HMMWV/suspension.json";
+    std::string vehParamsJSON = "../../24dof/data/json/HMMWV/vehicle.json";
+    std::string tireParamsJSON = "../../24dof/data/json/HMMWV/tmeasy.json";
+    std::string susParamsJSON = "../../24dof/data/json/HMMWV/suspension.json";
 
     // Construct the solver
     d24SolverSundials solver;
-    solver.Construct(vehParamsJSON, tireParamsJSON, susParamsJSON, driver_file);
+    solver.Construct(vehParamsJSON, tireParamsJSON, susParamsJSON, inputFileName);
 
-    // Set optional inputs
-    // Solver tolerances and maximum step size
+    // Set optional inputs for solver tolerances and maximum step size
     solver.SetTolerances(1e-5, 1e-3);
     solver.SetMaxStep(1e-2);
 
@@ -51,9 +71,11 @@ int main(int argc, char** argv) {
     solver.Initialize(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, suslf_st, susrf_st, suslr_st, susrr_st);
 
     // Enable output
-    solver.SetOutput("../../24dof/data/output/" + std::string(argv[1]) + "_hmmwv24Sundials.csv");
+    solver.SetOutput(outputFileName);
     solver.SetVerbose(false);
 
-    // Solve without quadratures (no reference path required)
+    // Solve without quadratures
     solver.Solve(false);
+
+    return 0;
 }

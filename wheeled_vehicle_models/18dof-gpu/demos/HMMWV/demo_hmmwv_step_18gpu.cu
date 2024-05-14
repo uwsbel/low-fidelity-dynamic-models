@@ -12,7 +12,7 @@
 // =============================================================================
 #include <cuda.h>
 #include <iostream>
-#include <random>
+#include <filesystem>
 #include <cuda_runtime.h>
 #include <math.h>
 #include <numeric>
@@ -22,61 +22,53 @@
 
 #include "dof18_halfImplicit_gpu.cuh"
 
+namespace fs = std::filesystem;
 using namespace d18GPU;
+
 int main(int argc, char** argv) {
-    // Get total number of vehicles from command line
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <total_number_of_vehicles> <threads_per_block>" << std::endl;
+        return 1;
+    }
+
     unsigned int num_vehicles = std::stoul(argv[1]);
-    // Set the threads per block from command line
     unsigned int threads_per_block = std::stoul(argv[2]);
     std::string file_name = "acc3";
-    // Driver inputs -> All vehicles have the same driver inputs
-    std::string driver_file = "../../18dof-gpu/data/input/" + file_name + ".txt";
+    std::string inputPath = "../../18dof-gpu/data/input/" + file_name + ".txt";
 
-    // Vehicle specification -> We assume that all vehicles have the same parameters
-    std::string vehParamsJSON = (char*)"../../18dof-gpu/data/json/HMMWV/vehicle.json";
-    std::string tireParamsJSON = (char*)"../../18dof-gpu/data/json/HMMWV/tmeasy.json";
+    // Ensure the input file exists
+    if (!fs::exists(inputPath)) {
+        std::cerr << "Error: Input file does not exist: " << inputPath << std::endl;
+        return 1;
+    }
+
+    std::string vehParamsJSON = "../../18dof-gpu/data/json/HMMWV/vehicle.json";
+    std::string tireParamsJSON = "../../18dof-gpu/data/json/HMMWV/tmeasy.json";
 
     // Construct the solver
     d18SolverHalfImplicitGPU solver(num_vehicles);
-    // The number of vehicles here sets these parameters and inputs for all these vehicles
-    // If there is a need to set different parameters for different vehicles, then the solver
-    // needs to be constructed for each vehicle separately (using the same sovler object)
-    // No driver file
     solver.Construct(vehParamsJSON, tireParamsJSON, num_vehicles);
 
-    // Set the threads per block
     solver.SetThreadsPerBlock(threads_per_block);
-
-    // Set the time step of the solver
     solver.SetTimeStep(1e-3);
+    solver.SetKernelSimTime(0.1);
 
-    // Decide on the "step" timestep and set it here
-    double control_time_step = 1e-1;
-    solver.SetKernelSimTime(control_time_step);
-
-    // Now we initialize the states -> These are all set to 0 (struct initializer)
     VehicleState veh_st;
     TMeasyState tirelf_st;
     TMeasyState tirerf_st;
     TMeasyState tirelr_st;
     TMeasyState tirerr_st;
-    // Again we initialize the same states for all vehicles
     solver.Initialize(veh_st, tirelf_st, tirerf_st, tirelr_st, tirerr_st, num_vehicles);
-
-    // NOTE: SolveStep does not support storing output so both of these need to stay commented
-    // solver.SetOutput("../../18dof-gpu/data/output/" + file_name + "_hmmwv18", 100, true);
-    // Enable output for 50 of the vehicles
-    // solver.SetOutput("../../18dof-gpu/data/output/" + file_name + "_hmmwv18step", 100, false, 50);
 
     double endTime = 10.0;
     double timeStep = solver.GetStep();
     double t = 0;
     double new_time = 0;
-    // Now solve in loop
     cudaEvent_t start, stop;
     cudaEventCreate(&start);
     cudaEventCreate(&stop);
     cudaEventRecord(start);
+
     double throttle;
     double steering;
     double braking;
@@ -91,17 +83,16 @@ int main(int argc, char** argv) {
             braking = 0.0;
         }
 
-        new_time = solver.SolveStep(t, steering, throttle,
-                                    braking);  // Solve for the current time
+        new_time = solver.SolveStep(t, steering, throttle, braking);  // Solve for the current time
         t = new_time;
     }
+
     cudaEventRecord(stop);
     cudaEventSynchronize(stop);
     float milliseconds = 0;
     cudaEventElapsedTime(&milliseconds, start, stop);
     std::cout << "Solve time (ms): " << milliseconds << "\n";
-    // Extract terminal state of choosen vehicles and print the position
-    SimState sim_state_1 = solver.GetSimState(0);
 
+    SimState sim_state_1 = solver.GetSimState(0);
     std::cout << "X Position of vehicle 1: " << sim_state_1._veh_state._x << std::endl;
 }
