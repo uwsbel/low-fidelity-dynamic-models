@@ -3,7 +3,7 @@ project(d24dof_gpu LANGUAGES CXX CUDA)
 # -----------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_BINARY_DIR  ${CMAKE_SOURCE_DIR}/build)
+set(CMAKE_BINARY_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
 # -----------------------------------------------------
 enable_language(CUDA)
@@ -33,34 +33,34 @@ endif()
 
 
 set(MODEL_FILES
-    dof24_gpu.cuh
-    dof24_gpu.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/dof24_gpu.cuh
+    ${CMAKE_CURRENT_SOURCE_DIR}/dof24_gpu.cu
 )
 
 set(UTILS_FILES
-    ${CMAKE_SOURCE_DIR}/../utils/utils_gpu.cuh
-    ${CMAKE_SOURCE_DIR}/../utils/utils_gpu.cu
+    ${CMAKE_CURRENT_SOURCE_DIR}/../utils/utils_gpu.cuh
+    ${CMAKE_CURRENT_SOURCE_DIR}/../utils/utils_gpu.cu
 )
 
 # Only half implicit solver available for GPU
 set(SOLVER_FILES
-  dof24_halfImplicit_gpu.cuh
-  dof24_halfImplicit_gpu.cu
+  ${CMAKE_CURRENT_SOURCE_DIR}/dof24_halfImplicit_gpu.cuh
+  ${CMAKE_CURRENT_SOURCE_DIR}/dof24_halfImplicit_gpu.cu
 )
 
 # Build the demos
 set(HMMWV_PROGRAMS
-    demo_hmmwv
-    demo_hmmwv_varControls
-    demo_hmmwv_step
-    demo_hmmwv_controlsFunctor
+    demo_hmmwv_24gpu
+    demo_hmmwv_varControls_24gpu
+    demo_hmmwv_step_24gpu
+    demo_hmmwv_controlsFunctor_24gpu
 )
 
 # -----------------------------------------------------
 
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/../utils)
-include_directories(${CMAKE_SOURCE_DIR}/../third_party)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/utils)
+include_directories(${CMAKE_SOURCE_DIR}/third_party)
 
 
 # -----------------------------------------------------
@@ -68,7 +68,7 @@ include_directories(${CMAKE_SOURCE_DIR}/../third_party)
 # -----------------------------------------------------
 foreach(PROGRAM ${HMMWV_PROGRAMS})
     message(STATUS "...add ${PROGRAM}")
-    add_executable(${PROGRAM} ${CMAKE_SOURCE_DIR}/demos/HMMWV/${PROGRAM}.cu ${UTILS_FILES} ${MODEL_FILES} ${SOLVER_FILES})
+    add_executable(${PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/demos/HMMWV/${PROGRAM}.cu ${UTILS_FILES} ${MODEL_FILES} ${SOLVER_FILES})
     # Enable separate compilation for CUDA
     set_property(TARGET ${PROGRAM} PROPERTY CUDA_SEPARABLE_COMPILATION ON)
     # Set architecure based on this link - https://arnon.dk/matching-sm-architectures-arch-and-gencode-for-various-nvidia-cards/
