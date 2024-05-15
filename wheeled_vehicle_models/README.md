@@ -64,16 +64,18 @@ If you set the `ON` for the GPU models, you also have the choice to set the foll
 - `CUDA_rt_LIBRARY` - Path to CUDA runtime library. Should be automatically filled in. Default: `path_to_runtime_library_on_your_machine`
 
 #### Optional - Sundials
-To use the Sundials integrator, the user must have the Sundials library built and set `USE_SUNDIALS` to `ON`.  
+To use the Sundials integrator, you must have the Sundials library built and set `USE_SUNDIALS` to `ON`.  
 ##### Building Sundials
 For linux users we provide a build script [here](./build_sundials.sh) which can be used to build Sundials. Just run
 ```bash
 bash buildSundials.sh
 ```
-This will create a sundials build directory in the `PATH_TO_REPO/wheeled_vehicle_models/` called `sundials-build`. When configuring the CMake options, you will need to set the `SUNDIALS_DIR` to the absolute path of this directory.
+This will create a sundials build directory in the `PATH_TO_REPO/wheeled_vehicle_models/` called `sundials-build`. When configuring the CMake options, you will need to set the `SUNDIALS_DIR` to the absolute path of this directory.  
+
+For Windows users, please refer to the official [Sundials' installation instructions](https://computing.llnl.gov/projects/sundials/faq#inst). Ensure that you set options BUILD_CVODE and BUILD_CVODES to ON.
 ##### Setting Sundials directory
 Once Sundials is built successfully, `USE_SUNDIALS` is set to `ON` and `c` is hit to configure, the following option will appear
-- `SUNDIALS_DIR` - Here, set the absolute path to the sundials build directory. This is the directory in which the `SUNDIALSConfig.cmake` file is found.
+- `SUNDIALS_DIR` - Here, set the absolute path to the sundials build directory. This is the directory in which the `SUNDIALSConfig.cmake` file is found. If you used the build script provided above, this path will be `PATH_TO_REPO/wheeled_vehicle_models/sundials-build`.
 Once this path is correctly set, hit `c` to configure.
 
 ### Generate
