@@ -8,7 +8,7 @@ Using CMake, the user can choose to build the models to execute on the CPU or NV
 ### Key Features
 1. **High-Speed Performance**: Models surpass real-time processing speeds. For instance, the 18 Degrees of Freedom (DOF) model achieves 2000x faster performance than real-time on standard CPUs, with an integration timestep of `1e-3` s.
    
-2. **GPU Optimization for Scalability**: The GPU models are adept at parallel simulations of multiple vehicles. The 18 DOF GPU model, for example, can simulate 300,000 vehicles in real-time on an NVIDIA A100 GPU.
+2. **GPU Optimization for Scalability**: The GPU models are adept at parallel simulations of multiple vehicles. The 18 DOF GPU model, for example, can simulate 300,000 vehicles in real-time on an NVIDIA A100 GPU. Note: The GPU models are only available for Nvidia GPUs.
 
 3. **Python API**: The SWIG-wrapped Python version maintains significant speed, being only 8 times slower than the C++ models, thereby offering Python's ease of use with C++ efficiency.
 
