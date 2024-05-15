@@ -8,9 +8,21 @@ Details about the model can be found in the respective READMEs or in the paper [
 
 ## Pre-requisites
 1. [CMake Version 3.10 or higher](https://cmake.org/download/)
+For linux users, you can install CMake using the following command
+```bash
+sudo apt-get install cmake
+```
 2. C++ Compiler (GCC/Clang) with C++17 support
+For linux users, you can install GCC using the following command
+```bash
+sudo apt-get install g++
+```
 3. Python3 (for the Python Wrapper)
 4. [SWIG (for the Python Wrapper)](https://www.swig.org/download.html)
+For linux users, you can install SWIG using the following command
+```bash
+sudo apt-get install swig
+```
 5. [Sundials](https://sundials.readthedocs.io/en/latest/) (Optional - for the Sundials integrator) - See build instructions [here](#optional---sundials)
 6. Nvidia GPU along with NVCC and CUDA Version 8.0 or higher (for the GPU versions of models). We recommend installing the [CUDA Toolkit](https://developer.nvidia.com/cuda-12-0-0-download-archive) to meet these dependencies
 
@@ -54,7 +66,11 @@ If you set the `ON` for the GPU models, you also have the choice to set the foll
 #### Optional - Sundials
 To use the Sundials integrator, the user must have the Sundials library built and set `USE_SUNDIALS` to `ON`.  
 ##### Building Sundials
-To Build Sundials, please refer to the [official Sundials installation instructions](https://sundials.readthedocs.io/en/latest/Install_link.html). Ensure that you set options `BUILD_CVODE` and `BUILD_CVODES` to `ON`.
+For linux users we provide a build script [here](./build_sundials.sh) which can be used to build Sundials. Just run
+```bash
+bash buildSundials.sh
+```
+This will create a sundials build directory in the `PATH_TO_REPO/wheeled_vehicle_models/` called `sundials-build`. When configuring the CMake options, you will need to set the `SUNDIALS_DIR` to the absolute path of this directory.
 ##### Setting Sundials directory
 Once Sundials is built successfully, `USE_SUNDIALS` is set to `ON` and `c` is hit to configure, the following option will appear
 - `SUNDIALS_DIR` - Here, set the absolute path to the sundials build directory. This is the directory in which the `SUNDIALSConfig.cmake` file is found.
