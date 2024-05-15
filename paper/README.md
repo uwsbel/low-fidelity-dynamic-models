@@ -1,0 +1,2 @@
+# Reproducing Results From the Paper
+This folder contains the paper submitted to the [Journal of Open Source Software (JOSS)](https://joss.theoj.org/). To reproduce the results presented in the paper, follow please move to the [paper_results](./paper_results/) directory and follow the instructions [there](./paper_results/README.md).
