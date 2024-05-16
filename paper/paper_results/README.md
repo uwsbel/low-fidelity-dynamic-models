@@ -8,7 +8,7 @@ Before you begin, ensure that you have the following installed on your system:
 
 - CMake (version 3.10 or later)
 - A modern C++ compiler that supports C++11 (e.g., GCC, Clang)
-- Python 3 (with matplotlib library for plotting)
+- Python3 (with matplotlib library for plotting)
 - GPU drivers and CUDA Toolkit (if you wish to run GPU benchmarks)
 
 Please refer to the official documentation of each software for installation instructions.
@@ -21,27 +21,16 @@ Please refer to the official documentation of each software for installation ins
 
 ## Running Benchmarks
 
-1. **Clone the Repository**
-
-   Ensure you have cloned the repository containing this folder to your local machine.
-
-2. **Navigate to the `paper_results` Directory**
-
-   Open a terminal and change to the `paper_results` directory within the cloned repo.
-
-   ```bash
-   cd path/to/paper_results
-   ```
-3. **Run the script**
+1. **Run the script**
 
     Execute the script `bench.sh` to start the process:
 
     ```bash
     bash bench.sh
     ```
-    The script will first ask if you want to build and run GPU benchmarks. Type y for yes or n for no, then press Enter. Based on your input, the script will either build with or without GPU benchmark support and then proceed to run the CPU and GPU benchmarks.  
+    The script will first ask if you want to build and run GPU benchmarks. Type y for yes or n for no, then press Enter. Based on your input, the script will either build with or without GPU benchmark support and then proceed to run the CPU and GPU benchmarks.
 
     Note: Running GPU benchmarks requires a CUDA-compatible GPU and appropriate drivers and toolkit installed.
-4. **Results**  
+2. **Results**  
 
-    Benchmark results will be saved in the `data/` directory. Plots will be generated and saved in the `plotting/images/` directory.
+    Benchmark results will be saved in the `data/` directory. Plots that you see in the paper will be generated and saved in the `plotting/images/` directory. 

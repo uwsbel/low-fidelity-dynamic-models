@@ -1,9 +1,9 @@
-cmake_minimum_required(VERSION 3.12)
+cmake_minimum_required(VERSION 3.10)
 project(d18dof)
 # -----------------------------------------------------
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
-set(CMAKE_BINARY_DIR  ${CMAKE_SOURCE_DIR}/build)
+set(CMAKE_BINARY_DIR  ${CMAKE_CURRENT_SOURCE_DIR}/build)
 
 # -----------------------------------------------------
 
@@ -24,99 +24,92 @@ endif()
 # -----------------------------------------------------
 
 # Option to use openMP for parallelization
-option(USE_OPENMP "Use OpenMP for Jacobian" OFF)
-if(USE_OPENMP)
+if(${USE_OPENMP})
     find_package(OpenMP REQUIRED)
     add_definitions(-DUSE_OPENMP)
 endif()
 
-# -----------------------------------------------------
-
-# Option to use sundials
-option(USE_SUNDIALS "Use SUNDIALS library" OFF)
-if(USE_SUNDIALS)
-  find_package(SUNDIALS REQUIRED)
+# Option to use SUNDIALS
+if(${USE_SUNDIALS})
+    find_package(SUNDIALS REQUIRED)
 endif()
 
-# -----------------------------------------------------
-
 # Option to build Python module
-option(BUILD_PYTHON_MODULE "Build Python module" OFF)
-if(BUILD_PYTHON_MODULE)
+if(${BUILD_PYTHON_MODULE})
     message(STATUS "Building Python module")
     add_subdirectory(py)
 endif()
 
 
 set(MODEL_FILES
-    dof18.h
-    dof18.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/dof18.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/dof18.cpp
 )
 
 set(UTILS_FILES
-    ${CMAKE_SOURCE_DIR}/../utils/utils.h
-    ${CMAKE_SOURCE_DIR}/../utils/utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../utils/utils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../utils/utils.cpp
 )
 
 # Use half implicit solver by default
 set(SOLVER_FILES
-  dof18_halfImplicit.h
-  dof18_halfImplicit.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/dof18_halfImplicit.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/dof18_halfImplicit.cpp
 )
 # Add sundials solver if required
-if(USE_SUNDIALS)
+if(${USE_SUNDIALS})
   set(SOLVER_FILES ${SOLVER_FILES}
-      dof18_sundials.h
-      dof18_sundials.cpp
+      ${CMAKE_CURRENT_SOURCE_DIR}/dof18_sundials.h
+      ${CMAKE_CURRENT_SOURCE_DIR}/dof18_sundials.cpp
   )
 endif()
 
 # Build half implicit demos by default
 # HMMWV demos
 set(HMMWV_PROGRAMS
-    demo_hmmwv_hi
-    demo_hmmwvNr_hi
-    demo_hmmwv_hi_step
-    demo_hmmwv_hi_stepWithJac
+    demo_hmmwv_hi_18
+    demo_hmmwvNr_hi_18
+    demo_hmmwv_hi_step_18
+    demo_hmmwv_hi_stepWithJac_18
 )
 # Sedan demos
 set(SEDAN_PROGRAMS
-    demo_sedan_hi
-    demo_sedanNr_hi
+    demo_sedan_hi_18
+    demo_sedanNr_hi_18
 )
 
 # Add sundials demos if required
-if(USE_SUNDIALS)
+if(${USE_SUNDIALS})
   set(HMMWV_PROGRAMS ${HMMWV_PROGRAMS}
-      demo_hmmwv_sundials_withFSA
-      demo_hmmwv_sundials
+      demo_hmmwv_sundials_withFSA_18
+      demo_hmmwv_sundials_18
   )
   set(SEDAN_PROGRAMS ${SEDAN_PROGRAMS}
-      demo_sedan_sundials
-      demo_sedanNr_sundials
+      demo_sedan_sundials_18
+      demo_sedanNr_sundials_18
   )
 endif()
 
 
 # -----------------------------------------------------
 
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/../utils)
-include_directories(${CMAKE_SOURCE_DIR}/../third_party)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR}/utils)
+include_directories(${CMAKE_SOURCE_DIR}/third_party)
 
 # -----------------------------------------------------
 ## Build HMMWV demos
 # -----------------------------------------------------
 foreach(PROGRAM ${HMMWV_PROGRAMS})
   message(STATUS "...add ${PROGRAM}")
-  add_executable(${PROGRAM} ${CMAKE_SOURCE_DIR}/demos/HMMWV/${PROGRAM}.cpp ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES})
+  add_executable(${PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/demos/HMMWV/${PROGRAM}.cpp ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES})
 
-  if(USE_OPENMP)
+  if(${USE_OPENMP})
     target_link_libraries(${PROGRAM} PUBLIC OpenMP::OpenMP_CXX)
   endif()
 
     # Link sundials libraries if required
-  if(USE_SUNDIALS)
+  if(${USE_SUNDIALS})
     target_link_libraries(${PROGRAM} PUBLIC SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense )
   endif()
 
@@ -128,13 +121,13 @@ endforeach()
 # -----------------------------------------------------
 foreach(PROGRAM ${SEDAN_PROGRAMS})
   message(STATUS "...add ${PROGRAM}")
-  add_executable(${PROGRAM} ${CMAKE_SOURCE_DIR}/demos/Sedan/${PROGRAM}.cpp ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES})
+  add_executable(${PROGRAM} ${CMAKE_CURRENT_SOURCE_DIR}/demos/Sedan/${PROGRAM}.cpp ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES})
 
-  if(USE_OPENMP)
+  if(${USE_OPENMP})
     target_link_libraries(${PROGRAM} PUBLIC OpenMP::OpenMP_CXX)
   endif()
   # Link sundials libraries if required
-  if(USE_SUNDIALS)
+  if(${USE_SUNDIALS})
     target_link_libraries(${PROGRAM} PUBLIC SUNDIALS::cvodes SUNDIALS::nvecserial SUNDIALS::sunlinsoldense SUNDIALS::sunmatrixdense )
   endif()
 

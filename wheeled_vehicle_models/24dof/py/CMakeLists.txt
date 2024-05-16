@@ -16,7 +16,7 @@ message(STATUS "Found python: ${Python3_EXECUTABLE}")
 INCLUDE_DIRECTORIES(${PYTHON_INCLUDE_DIR})
 
 # Option to use openMP for parallelization
-if(USE_OPENMP)
+if(${USE_OPENMP})
     find_package(OpenMP REQUIRED)
 endif()
 
@@ -31,33 +31,33 @@ set(CMAKE_SWIG_OUTDIR "${CMAKE_BINARY_DIR}")
 set(CMAKE_SWIG_FLAGS "")
 
 # ---------------------------------------------------------------------
-include_directories(${CMAKE_SOURCE_DIR})
-include_directories(${CMAKE_SOURCE_DIR}/../utils)
-include_directories(${CMAKE_SOURCE_DIR}/../third_party)
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/../)
+include_directories(${CMAKE_SOURCE_DIR}/utils)
+include_directories(${CMAKE_SOURCE_DIR}/third_party)
 
 # ---------------------------------------------------------------------
 
 # For some reason still need to put these here
 set(MODEL_FILES
-    ${CMAKE_SOURCE_DIR}/dof24.h
-    ${CMAKE_SOURCE_DIR}/dof24.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dof24.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../dof24.cpp
 )
 
 set(UTILS_FILES
-    ${CMAKE_SOURCE_DIR}/../utils/utils.h
-    ${CMAKE_SOURCE_DIR}/../utils/utils.cpp
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../utils/utils.h
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../utils/utils.cpp
 )
 
 # Use half implicit solver by default
 set(SOLVER_FILES
-   ${CMAKE_SOURCE_DIR}/dof24_halfImplicit.h
-   ${CMAKE_SOURCE_DIR}/dof24_halfImplicit.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/../dof24_halfImplicit.h
+   ${CMAKE_CURRENT_SOURCE_DIR}/../dof24_halfImplicit.cpp
 )
 # Add sundials solver if required
-if(USE_SUNDIALS)
+if(${USE_SUNDIALS})
   set(SOLVER_FILES ${SOLVER_FILES}
-  ${CMAKE_SOURCE_DIR}/dof24_sundials.h
-  ${CMAKE_SOURCE_DIR}/dof24_sundials.cpp
+  ${CMAKE_CURRENT_SOURCE_DIR}/../dof24_sundials.h
+  ${CMAKE_CURRENT_SOURCE_DIR}/../dof24_sundials.cpp
   )
 endif()
 
@@ -65,7 +65,7 @@ endif()
 
 # ---------------------------------------------------------------------
 
-if(USE_SUNDIALS)
+if(${USE_SUNDIALS})
     SET_SOURCE_FILES_PROPERTIES(dof24Sundials.i PROPERTIES CPLUSPLUS ON)
     SWIG_ADD_LIBRARY(${LIBRARY_NAME} LANGUAGE python SOURCES ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES} dof24Sundials.i)
 
@@ -82,7 +82,7 @@ else()
     SWIG_ADD_LIBRARY(${LIBRARY_NAME} LANGUAGE python SOURCES ${MODEL_FILES} ${UTILS_FILES} ${SOLVER_FILES} dof24.i)
 
     # Link to OpenMP if required
-    if(USE_OPENMP)
+    if(${USE_OPENMP})
         SWIG_LINK_LIBRARIES(${LIBRARY_NAME} ${PYTHON_LIBRARIES} OpenMP::OpenMP_CXX)
     else()
         SWIG_LINK_LIBRARIES(${LIBRARY_NAME} ${PYTHON_LIBRARIES})
