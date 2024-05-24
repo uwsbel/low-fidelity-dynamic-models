@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(MultiProject LANGUAGES CXX CUDA)
+project(MultiProject LANGUAGES CXX)
 
 # -----------------------------------------------------
 # User options to select which projects to build
@@ -23,10 +23,13 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 # -----------------------------------------------------
 # Enable CUDA language globally
-enable_language(CUDA)
-find_package(CUDA 8.0 REQUIRED)
-message(STATUS "Found CUDA ${CUDA_VERSION_STRING} at ${CUDA_TOOLKIT_ROOT_DIR}")
-set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
+if(BUILD_11DOF_GPU OR BUILD_18DOF_GPU OR BUILD_24DOF_GPU)
+    enable_language(CUDA)
+    find_package(CUDA 8.0 REQUIRED)
+    message(STATUS "Found CUDA ${CUDA_VERSION_STRING} at ${CUDA_TOOLKIT_ROOT_DIR}")
+    set(CUDA_NVCC_FLAGS "${CUDA_NVCC_FLAGS}")
+    message("We come into this")
+endif()
 
 # -----------------------------------------------------
 # Optionally set build type
