@@ -19,36 +19,34 @@ authors:
     affiliation: 3
   - name: Dan Negrut
     orcid: 0000-0003-1565-2784
-    affiliation: 4
+    affiliation: 3
 affiliations:
- - name: PhD. Student, Mechanical Engineering, University of Wisconsin-Madison, Madison, USA
+ - name: Mechanical Engineering, University of Wisconsin-Madison, Madison, USA
    index: 1
- - name: Undergraduate Student, Computer Science, University of Wisconsin-Madison, Madison, USA
+ - name: Computer Science, University of Wisconsin-Madison, Madison, USA
    index: 2
- - name: Distinguished Scientist, University of Wisconsin-Madison, Madison, USA
+ - name: University of Wisconsin-Madison, Madison, USA
    index: 3
- - name: Professor, University of Wisconsin-Madison, Madison, USA
-   index: 4
 date: 25 Jan 2024
 bibliography: paper.bib
 ---
 
 # Summary
-Lower Fidelity Dynamic Models (LFDM) is a library of on-road wheeled vehicles that is written in C++ and CUDA and wrapped to Python using SWIG. Each of these on-road wheeled-vehicle dynamics models is described as a set of Ordinary Differential Equations (ODEs) that take a driver input - a normalized throttle between 0 and 1, a normalized steering between -1 and 1 (with -1 representing max steering toward a left turn), and a normalized braking input between 0 and 1, and subsequently advance the state of the vehicle (its position and velocity) forward in time.<br>
+Lower Fidelity Dynamic Models (LFDM) is a library of dynamics models for on-road wheeled vehicles that is written in C++ and CUDA and wrapped to Python using SWIG. Each model is described as a set of Ordinary Differential Equations (ODEs) that take a driver input - a normalized throttle between 0 and 1, a normalized steering between -1 and 1 (with -1 representing max steering toward a left turn), and a normalized braking input between 0 and 1, and subsequently advance the state of the vehicle (its position and velocity) forward in time.
 
 In mathematical notation, these ODEs are of second order and are expressed as
 $$
 \mathbf{\"x} = f(\mathbf{x},\mathbf{\dot{x}}, \mathbf{u}, \mathbf{P}) \; ,
 $$
-where $\mathbf{x} \in \mathbb{R}^d$ is the $d$ dimensional state of the vehicle, $\mathbf{u} \in \mathbb{R}^3$ contains the driver inputs, and $\mathbf{P} \in \mathbb{R}^k$ contains the $k$ model parameters. The ODEs evolving the vehicle dynamics models are cast as an Initial Value Problem (IVP) by providing an initial state $\mathbf{x}$. The latter's solution is found using implicit or semi-implicit numerical integration methods.<br>
+where $\mathbf{x} \in \mathbb{R}^d$ is the $d$ dimensional state of the vehicle, $\mathbf{u} \in \mathbb{R}^3$ contains the driver inputs, and $\mathbf{P} \in \mathbb{R}^k$ contains the $k$ model parameters. The ODEs evolving the vehicle dynamics models are cast as an Initial Value Problem (IVP) by providing an initial state $\mathbf{x}$. The solution is found using implicit or semi-implicit numerical integration methods.
 
 The LFDM library contains three dynamic vehicle models, differentiated by their Degrees of Freedom (DoF) counts: 11 DoF, 18 DoF, and 24 DoF. Each can be run on the CPU or an NVIDIA GPU.
 
 11 DoF Model: This is a foundational, single-track model with two wheels, primarily employed in controller design. In the literature, it also known as the bicycle model. It features a rigid chassis with three DoFs at the Center of Mass (CM) – yaw, lateral, and longitudinal. The model includes a kinematic driveline, integrating a map-based engine and torque converter, gearbox, and a differential that enables transfer of torque to the wheels. The vehicle model can use one of the two versions of the TMeasy non-linear tire model [@Hirschberg:2002] for traction-force generation. A steering input is converted to a front wheel angle through a steering map.
 
-18 DoF Model: A step up above the simple 11 DoF model, this double-track model includes four wheels and introduces a roll DoF, enriching the chassis' dynamics. The model shares the driveline structure with the 11 DoF model but adds front and rear differentials for torque distribution across wheels (See \autoref{fig:driveline}). The steering map in this model simultaneously changes the orientation of the front left and right wheels by the same angle. The other model subsystems are identical to those of the 11 DoF model.
+18 DoF Model: A step above the simple 11 DoF model, this double-track model includes four wheels and introduces a roll DoF, enriching the chassis' dynamics. The model shares the driveline structure with the 11 DoF model but adds front and rear differentials for torque distribution across wheels (see \autoref{fig:driveline}). The steering map in this model simultaneously changes the orientation of the front left and right wheels by the same angle. The other model subsystems are identical to those of the 11 DoF model.
 
-24 DoF Model: This model incorporates all the features of the 18 DoF and extends the DoF count in order to predict vehicle heave and pitch motions. As such, it captures the chassis's six DoFs: lateral, longitudinal, vertical, yaw, roll, and pitch. Additionally, the model includes a DoF at each corner for vertical suspension travel. Subsystems, excluding the suspension aspect, are identical to the 18 DoF model.
+24 DoF Model: This model incorporates all the features of the 18 DoF and extends the DoF count in order to predict vehicle heave and pitch motions. As such, it captures the chassis' six DoFs: lateral, longitudinal, vertical, yaw, roll, and pitch. Additionally, the model includes a DoF at each corner for vertical suspension travel. Subsystems, excluding the suspension aspect, are identical to the 18 DoF model.
 
 ![A flow chart of the torques (blue arrows) and angular velocities (red arrows) that are exchanged all across the drive line. An overview of the symbols is provided below.\label{fig:driveline}](images/driveline.png)
 
@@ -62,12 +60,12 @@ The LFDM library contains three dynamic vehicle models, differentiated by their 
 
 These models have their own sets of customizable features, which are set based on user preferences. For example, the inclusion of the torque converter can be modified, and drivetrain configurations such as four-wheel drive (4WD), rear-wheel drive (RWD), or front-wheel drive (FWD) can be selected and adjusted through parameter configurations in a JSON file, offering flexibility to suit various simulation requirements.
 
-In what follows, we discuss a [Statement of need](#statement-of-need) describing in what applications these models are most useful. In Section [LFDM Accuracy](#LFDM-Accuracy), we present a comparison of the LFDM library's accuracy with the High-Fidelity Vehicle Model, Chrono::Vehicle [@Serban:2019]. We then demonstrate in [LFDM Speed and Scaling](#LFDM-Speed-and-Scaling) that the LFDMs, while closely matching the accuracy of Chrono::Vehicle, operate approximately 3000 times faster. Additionally, by utilizing the GPU version of the models, it is possible to simulate about 300,000 vehicles in real-time, i.e., simulating one second of dynamics for 300,000 vehicles takes only one real-world second. Further details on the model formulation are available in Chapter two of @huzaifa:2023. Therein, the users can find the actual equations of motion, for each of the three models.
+In what follows, we discuss a [Statement of need](#statement-of-need) describing in what applications these models are most useful. In Section [LFDM Accuracy](#LFDM-Accuracy), we present a comparison of the LFDM library's accuracy with the High-Fidelity Vehicle Model, Chrono::Vehicle [@Serban:2019]. We then demonstrate in [LFDM Speed and Scaling](#LFDM-Speed-and-Scaling) that the LFDMs, while closely matching the accuracy of Chrono::Vehicle, operate approximately 3000 times faster. Additionally, by utilizing the GPU version of the models, it is possible to simulate about 300,000 vehicles in real-time, i.e., simulating one second of dynamics for 300,000 vehicles takes only one real-world second. Further details on the model formulation are available in Chapter 2 of @huzaifa:2023. Therein, the users can find the actual equations of motion, for each of the three models.
 
 # Statement of need
-The open-source vehicle models in LFDM aim to provide accurate vehicle simulations that exceed real-time speeds ideal for state estimation, control, reinforcement learning, and traffic simulation, with or without a human in the loop. Informed by existing models in literature [@Pepy:2006; @Kong:2015; @Jin:2019], they go beyond the state of the art to introduce additional benefits tailored for faster-than-real-time applications.
+The open-source vehicle models in LFDM aim to provide accurate vehicle simulations that exceed real-time speeds ideal for state estimation, control, reinforcement learning, and traffic simulation, with or without a human in the loop. Informed by existing models in the literature [@Pepy:2006; @Kong:2015; @Jin:2019], they go beyond the state of the art to introduce additional benefits tailored for faster-than-real-time applications.
 
-1. In the domain literature, the focus is on simplistic single-track models with linear tires or fully kinematic models for their speed, despite a trade-off in accuracy. @Liu:2016 found that while a double-track model with non-linear tires is more accurate, its Real Time Factor (RTF - the time require to simulate one second of vehicle dynamics) of 1 and higher, limits its use in Control stacks. The LFDM library, with efficient C++ coding, offers faster-than-real-time (RTF<1) double-track models with accurate non-linear tires and realistic subsystems, including drivelines, engines, and torque converters.
+1. In the domain literature, the focus is on simplistic single-track models with linear tires or fully kinematic models for their speed, despite a trade-off in accuracy. @Liu:2016 found that while a double-track model with non-linear tires is more accurate, its Real Time Factor (RTF - the time require to simulate one second of vehicle dynamics) of 1 and higher limits its use in Control stacks. The LFDM library, with efficient C++ coding, offers faster-than-real-time (RTF<1) double-track models with accurate non-linear tires and realistic subsystems, including drivelines, engines, and torque converters.
 
 2. The existing state of the art for open-source vehicle models lacks documentation, hindering their use by researchers. Where open-source options exist, models of varying fidelity are scattered across multiple repositories. The LFDM library addresses this by providing a centralized source for researchers to access and select vehicle models of different fidelities, tailored to their specific speed-accuracy requirements and hardware capabilities. 
 
