@@ -1,0 +1,50 @@
+cff-version: "1.2.0"
+authors:
+- family-names: Unjhawala
+  given-names: Huzaifa Mustafa
+  orcid: "https://orcid.org/0009-0004-4273-1212"
+- family-names: Mahajan
+  given-names: Ishaan
+  orcid: "https://orcid.org/0000-0001-9981-6699"
+- family-names: Serban
+  given-names: Radu
+  orcid: "https://orcid.org/0000-0002-4219-905X"
+- family-names: Negrut
+  given-names: Dan
+  orcid: "https://orcid.org/0000-0003-1565-2784"
+contact:
+- family-names: Unjhawala
+  given-names: Huzaifa Mustafa
+  orcid: "https://orcid.org/0009-0004-4273-1212"
+doi: 10.5281/zenodo.12703022
+message: If you use this software, please cite our article in the
+  Journal of Open Source Software.
+preferred-citation:
+  authors:
+  - family-names: Unjhawala
+    given-names: Huzaifa Mustafa
+    orcid: "https://orcid.org/0009-0004-4273-1212"
+  - family-names: Mahajan
+    given-names: Ishaan
+    orcid: "https://orcid.org/0000-0001-9981-6699"
+  - family-names: Serban
+    given-names: Radu
+    orcid: "https://orcid.org/0000-0002-4219-905X"
+  - family-names: Negrut
+    given-names: Dan
+    orcid: "https://orcid.org/0000-0003-1565-2784"
+  date-published: 2024-07-12
+  doi: 10.21105/joss.06548
+  issn: 2475-9066
+  issue: 99
+  journal: Journal of Open Source Software
+  publisher:
+    name: Open Journals
+  start: 6548
+  title: A Library of Lower Fidelity Dynamics Models (LFDMs) For On-Road
+    Vehicle Dynamics Targeting Faster Than Real-Time Applications
+  type: article
+  url: "https://joss.theoj.org/papers/10.21105/joss.06548"
+  volume: 9
+title: A Library of Lower Fidelity Dynamics Models (LFDMs) For On-Road
+  Vehicle Dynamics Targeting Faster Than Real-Time Applications
