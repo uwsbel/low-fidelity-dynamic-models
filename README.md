@@ -41,3 +41,12 @@ Each vehicle model has its own (although very similar) CMake configuration and b
 
 
 ## If you are interested to contribute, see [Contribution Guidelines](docs/CONTRIBUTING.md)
+
+### Link to paper
+Markdown:
+[![DOI](https://joss.theoj.org/papers/10.21105/joss.06548/status.svg)](https://doi.org/10.21105/joss.06548)
+
+HTML:
+<a style="border-width:0" href="https://doi.org/10.21105/joss.06548">
+  <img src="https://joss.theoj.org/papers/10.21105/joss.06548/status.svg" alt="DOI badge" >
+</a>
